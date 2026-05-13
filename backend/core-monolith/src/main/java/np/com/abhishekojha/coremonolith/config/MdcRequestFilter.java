@@ -35,6 +35,7 @@ public class MdcRequestFilter extends OncePerRequestFilter {
                 .orElseGet(() -> UUID.randomUUID().toString());
 
         MDC.put(MDC_REQUEST_ID, requestId);
+        MDC.put("requestPath", request.getRequestURI());
         response.setHeader(REQUEST_ID_HEADER, requestId);
 
         long start = System.currentTimeMillis();
