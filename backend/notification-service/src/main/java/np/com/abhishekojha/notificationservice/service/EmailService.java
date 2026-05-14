@@ -30,9 +30,15 @@ public class EmailService {
     private final SendGrid sendGrid;
     private final EmailProperties props;
 
-    public void sendInvitation(InviteEmailRequest req) {
+    public void sendUserInvitation(InviteEmailRequest req) {
         String subject = "You've been invited to join " + req.getTenantName();
-        String body = buildInvitationHtml(req);
+        String body = buildUserInvitationHtml(req);
+        send(req.getRecipientEmail(), subject, body);
+    }
+
+    public void sendAdminInvitation(InviteEmailRequest req) {
+        String subject = "You've been invited as Administrator of " + req.getTenantName();
+        String body = buildAdminInvitationHtml(req);
         send(req.getRecipientEmail(), subject, body);
     }
 
@@ -68,7 +74,31 @@ public class EmailService {
         }
     }
 
-    private String buildInvitationHtml(InviteEmailRequest req) {
+    private String buildAdminInvitationHtml(InviteEmailRequest req) {
+        String expiry = req.getExpiresAt() != null ? DATE_FMT.format(req.getExpiresAt()) : "N/A";
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="UTF-8"></head>
+                <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1e293b;background:#f8fafc;">
+                  <div style="background:#fff;border-radius:8px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,.1);">
+                    <div style="background:#7c3aed;border-radius:6px;padding:12px 16px;margin:0 0 24px;">
+                      <p style="margin:0;color:#fff;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">Administrator Invitation</p>
+                    </div>
+                    <h2 style="margin:0 0 8px;color:#7c3aed;font-size:22px;">You've been invited as Administrator</h2>
+                    <p style="margin:0 0 20px;color:#475569;">You have been selected to administer <strong>%s</strong>. As an administrator, you will have full control over the workspace settings, users, and billing.</p>
+                    <p style="margin:0 0 8px;color:#475569;">Use the token below when accepting your invitation:</p>
+                    <div style="background:#f5f3ff;border-radius:6px;padding:16px;margin:0 0 20px;font-family:monospace;font-size:13px;word-break:break-all;color:#0f172a;border:1px solid #ddd6fe;">%s</div>
+                    <p style="margin:0 0 24px;font-size:13px;color:#94a3b8;">This invitation expires on <strong>%s</strong>.</p>
+                    <hr style="border:none;border-top:1px solid #e2e8f0;margin:0 0 16px;">
+                    <p style="margin:0;font-size:12px;color:#cbd5e1;">If you did not expect this invitation, you can safely ignore this email.</p>
+                  </div>
+                </body>
+                </html>
+                """.formatted(req.getTenantName(), req.getInviteToken(), expiry);
+    }
+
+    private String buildUserInvitationHtml(InviteEmailRequest req) {
         String expiry = req.getExpiresAt() != null ? DATE_FMT.format(req.getExpiresAt()) : "N/A";
         return """
                 <!DOCTYPE html>

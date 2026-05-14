@@ -17,9 +17,15 @@ public class NotificationController {
 
     private final EmailService emailService;
 
-    @PostMapping("/invitation")
-    public ResponseEntity<Void> sendInvitation(@RequestBody InviteEmailRequest req) {
-        emailService.sendInvitation(req);
+    @PostMapping("/invitation-user")
+    public ResponseEntity<Void> sendUserInvitation(@RequestBody InviteEmailRequest req) {
+        emailService.sendUserInvitation(req);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/invitation-admin")
+    public ResponseEntity<Void> sendAdminInvitation(@RequestBody InviteEmailRequest req) {
+        emailService.sendAdminInvitation(req);
         return ResponseEntity.noContent().build();
     }
 
