@@ -5,6 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -55,6 +57,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleNoHandler(NoHandlerFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiError(ErrorResponse.of("NOT_FOUND", "No endpoint found for this request")));
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ApiError> handlePropertyReference(PropertyReferenceException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError(ErrorResponse.of("INVALID_PARAMETER", "Invalid sort field: " + e.getPropertyName())));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AuthorizationDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiError(ErrorResponse.of("FORBIDDEN", "Access denied")));
     }
 
     @ExceptionHandler(Exception.class)
