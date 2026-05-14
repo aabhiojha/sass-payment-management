@@ -1,8 +1,11 @@
 package np.com.abhishekojha.coremonolith.modules.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import np.com.abhishekojha.coremonolith.common.enums.InvitationRole;
+import np.com.abhishekojha.coremonolith.common.enums.InvitationStatus;
 import np.com.abhishekojha.coremonolith.common.enums.UserRole;
 import np.com.abhishekojha.coremonolith.common.enums.UserStatus;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.AcceptInviteRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AuthResponse;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.LoginRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.RegisterRequest;
@@ -10,6 +13,8 @@ import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserSessionEntity;
 import np.com.abhishekojha.coremonolith.modules.auth.repository.UserRepository;
 import np.com.abhishekojha.coremonolith.modules.auth.repository.UserSessionRepository;
+import np.com.abhishekojha.coremonolith.modules.invitation.model.UserInvitationEntity;
+import np.com.abhishekojha.coremonolith.modules.invitation.repository.InvitationRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
 import np.com.abhishekojha.coremonolith.modules.tenant.repository.TenantRepository;
 import org.springframework.http.HttpStatus;
@@ -35,6 +40,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final UserSessionRepository userSessionRepository;
+    private final InvitationRepository invitationRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -73,6 +79,45 @@ public class AuthService {
         userSessionRepository.findByRefreshTokenHash(tokenHash).ifPresent(session -> {
             session.setRevokedAt(Instant.now());
         });
+    }
+
+    public AuthResponse acceptInvite(AcceptInviteRequest req) {
+        String tokenHash = sha256Hex(req.token());
+
+        UserInvitationEntity inv = invitationRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_TOKEN"));
+
+        if (inv.getStatus() != InvitationStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_NOT_PENDING");
+        }
+        if (inv.getExpiresAt().isBefore(Instant.now())) {
+            inv.setStatus(InvitationStatus.EXPIRED);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_EXPIRED");
+        }
+        if (userRepository.existsByEmail(inv.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "EMAIL_ALREADY_REGISTERED");
+        }
+
+        UserEntity user = new UserEntity();
+        user.setEmail(inv.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(req.password()));
+        user.setRole(toUserRole(inv.getRole()));
+        user.setTenant(inv.getTenant());
+        user.setStatus(UserStatus.ACTIVE);
+        user.setEmailVerifiedAt(Instant.now());
+        userRepository.save(user);
+
+        inv.setStatus(InvitationStatus.ACCEPTED);
+        inv.setAcceptedAt(Instant.now());
+
+        return buildSession(user);
+    }
+
+    private UserRole toUserRole(InvitationRole role) {
+        return switch (role) {
+            case TENANT_ADMIN -> UserRole.TENANT_ADMIN;
+            case TENANT_USER  -> UserRole.TENANT_USER;
+        };
     }
 
     private AuthResponse buildSession(UserEntity user) {

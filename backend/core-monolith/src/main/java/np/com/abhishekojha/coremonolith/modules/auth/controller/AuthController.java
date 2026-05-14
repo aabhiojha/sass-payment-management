@@ -6,17 +6,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.AcceptInviteRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AuthResponse;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.LoginRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.RefreshTokenRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.service.AuthService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@EnableMethodSecurity
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "Login, token refresh, and logout")
 public class AuthController {
@@ -41,6 +40,17 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest req) {
         return ResponseEntity.ok(authService.refresh(req.refreshToken()));
+    }
+
+    @Operation(summary = "Accept invitation", description = "Set a password and activate account using an invitation token; returns auth tokens")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Account created and logged in"),
+            @ApiResponse(responseCode = "400", description = "Invalid, expired, or already-used token"),
+            @ApiResponse(responseCode = "409", description = "Email already registered")
+    })
+    @PostMapping("/accept-invite")
+    public ResponseEntity<AuthResponse> acceptInvite(@Valid @RequestBody AcceptInviteRequest req) {
+        return ResponseEntity.ok(authService.acceptInvite(req));
     }
 
     @Operation(summary = "Logout", description = "Revoke the provided refresh token")
