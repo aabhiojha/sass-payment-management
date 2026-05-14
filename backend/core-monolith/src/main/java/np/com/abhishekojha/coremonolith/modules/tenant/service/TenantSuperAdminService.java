@@ -2,7 +2,9 @@ package np.com.abhishekojha.coremonolith.modules.tenant.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.TenantStatus;
+import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.auth.repository.UserRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.dto.CreateTenantRequest;
 import np.com.abhishekojha.coremonolith.modules.tenant.dto.TenantResponse;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -26,6 +29,7 @@ public class TenantSuperAdminService {
 
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
+    private final AuditService auditService;
 
     public TenantResponse createTenant(CreateTenantRequest req) {
         TenantEntity tenant = new TenantEntity();
@@ -33,26 +37,12 @@ public class TenantSuperAdminService {
         tenant.setSlug(generateUniqueSlug(req.name()));
         tenant.setCompanyEmail(req.companyEmail());
         tenant.setTimezone(req.timezone());
-        return TenantResponse.from(tenantRepository.save(tenant));
-    }
+        tenantRepository.save(tenant);
 
-    private String generateUniqueSlug(String name) {
-        String base = name.toLowerCase()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-+|-+$", "")
-                .substring(0, Math.min(name.length(), 50));
-
-        if (!tenantRepository.existsBySlug(base)) {
-            return base;
-        }
-        int suffix = 2;
-        String candidate;
-        do {
-            String suffixStr = "-" + suffix++;
-            int maxBase = 50 - suffixStr.length();
-            candidate = base.substring(0, Math.min(base.length(), maxBase)) + suffixStr;
-        } while (tenantRepository.existsBySlug(candidate));
-        return candidate;
+        auditService.log(AuditAction.CREATE, "TENANT", tenant.getId(), null,
+                Map.of("name", tenant.getName(), "slug", tenant.getSlug(),
+                        "companyEmail", tenant.getCompanyEmail()));
+        return TenantResponse.from(tenant);
     }
 
     @Transactional(readOnly = true)
@@ -70,10 +60,15 @@ public class TenantSuperAdminService {
 
     public TenantResponse updateTenant(Long id, UpdateTenantRequest req) {
         TenantEntity tenant = findActive(id);
+        TenantResponse oldState = TenantResponse.from(tenant);
+
         if (req.name() != null) tenant.setName(req.name());
         if (req.companyEmail() != null) tenant.setCompanyEmail(req.companyEmail());
         if (req.timezone() != null) tenant.setTimezone(req.timezone());
-        return TenantResponse.from(tenant);
+
+        TenantResponse newState = TenantResponse.from(tenant);
+        auditService.log(AuditAction.UPDATE, "TENANT", id, oldState, newState);
+        return newState;
     }
 
     public TenantResponse suspend(Long id) {
@@ -82,6 +77,8 @@ public class TenantSuperAdminService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_STATUS_TRANSITION");
         }
         tenant.setStatus(TenantStatus.SUSPENDED);
+        auditService.log(AuditAction.STATUS_CHANGE, "TENANT", id,
+                Map.of("status", "ACTIVE"), Map.of("status", "SUSPENDED"));
         return TenantResponse.from(tenant);
     }
 
@@ -90,17 +87,38 @@ public class TenantSuperAdminService {
         if (tenant.getStatus() == TenantStatus.ARCHIVED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_STATUS_TRANSITION");
         }
+        String previousStatus = tenant.getStatus().name();
         tenant.setStatus(TenantStatus.ARCHIVED);
         tenant.setArchivedAt(Instant.now());
         tenant.setDeletedAt(Instant.now());
         tenant.setDeletedBy(userRepository.findByEmailAndDeletedAtIsNull(currentUserEmail())
                 .orElseThrow(() -> new EntityNotFoundException("Authenticated user not found")));
+        auditService.log(AuditAction.STATUS_CHANGE, "TENANT", id,
+                Map.of("status", previousStatus), Map.of("status", "ARCHIVED"));
         return TenantResponse.from(tenant);
     }
 
     private TenantEntity findActive(Long id) {
         return tenantRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new EntityNotFoundException("Tenant not found: " + id));
+    }
+
+    private String generateUniqueSlug(String name) {
+        String base = name.toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+|-+$", "")
+                .substring(0, Math.min(name.length(), 50));
+
+        if (!tenantRepository.existsBySlug(base)) return base;
+
+        int suffix = 2;
+        String candidate;
+        do {
+            String suffixStr = "-" + suffix++;
+            int maxBase = 50 - suffixStr.length();
+            candidate = base.substring(0, Math.min(base.length(), maxBase)) + suffixStr;
+        } while (tenantRepository.existsBySlug(candidate));
+        return candidate;
     }
 
     private String currentUserEmail() {
