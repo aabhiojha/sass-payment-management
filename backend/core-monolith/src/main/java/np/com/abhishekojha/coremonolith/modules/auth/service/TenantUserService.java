@@ -2,6 +2,7 @@ package np.com.abhishekojha.coremonolith.modules.auth.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.UserRole;
 import np.com.abhishekojha.coremonolith.common.enums.UserStatus;
@@ -24,6 +25,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class TenantUserService {
 
     private final UserRepository userRepository;
@@ -52,6 +54,7 @@ public class TenantUserService {
 
         auditService.log(AuditAction.UPDATE, "USER", userId,
                 Map.of("role", oldRole), Map.of("role", req.role().name()));
+        log.info("User role updated userId={} tenantId={} oldRole={} newRole={}", userId, tenantId, oldRole, req.role());
         return UserResponse.from(user);
     }
 
@@ -63,6 +66,7 @@ public class TenantUserService {
 
         auditService.log(AuditAction.STATUS_CHANGE, "USER", userId,
                 Map.of("status", oldStatus), Map.of("status", "DISABLED"));
+        log.info("User disabled userId={} tenantId={}", userId, tenantId);
         return UserResponse.from(user);
     }
 
@@ -75,6 +79,7 @@ public class TenantUserService {
 
         auditService.log(AuditAction.DELETE, "USER", userId,
                 Map.of("email", user.getEmail(), "role", user.getRole().name()), null);
+        log.info("User deleted userId={} tenantId={}", userId, tenantId);
     }
 
     private UserEntity findUser(Long tenantId, Long userId) {

@@ -2,6 +2,7 @@ package np.com.abhishekojha.coremonolith.modules.customerproduct.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
@@ -31,6 +32,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class CustomerProductService {
 
     private final CustomerProductRepository customerProductRepository;
@@ -65,6 +67,7 @@ public class CustomerProductService {
 
         auditService.log(AuditAction.CREATE, "CUSTOMER_PRODUCT", cp.getId(),
                 null, Map.of("customerId", customerId, "productId", req.productId()));
+        log.debug("Plan assigned id={} customerId={} productId={} tenantId={}", cp.getId(), customerId, req.productId(), tenantId);
         return CustomerProductResponse.from(cp);
     }
 
@@ -115,6 +118,7 @@ public class CustomerProductService {
 
         auditService.log(AuditAction.DELETE, "CUSTOMER_PRODUCT", cpId,
                 Map.of("customerId", customerId, "productId", cp.getProduct().getId()), null);
+        log.debug("Plan deleted id={} customerId={} tenantId={}", cpId, customerId, tenantId);
     }
 
     @Transactional(readOnly = true)

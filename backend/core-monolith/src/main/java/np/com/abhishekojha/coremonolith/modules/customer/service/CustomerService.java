@@ -2,6 +2,7 @@ package np.com.abhishekojha.coremonolith.modules.customer.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.CustomerStatus;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
@@ -26,6 +27,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
@@ -53,6 +55,7 @@ public class CustomerService {
 
         auditService.log(AuditAction.CREATE, "CUSTOMER", customer.getId(), null,
                 Map.of("name", customer.getName(), "email", customer.getEmail()));
+        log.debug("Customer created id={} tenantId={}", customer.getId(), tenantId);
         return CustomerResponse.from(customer);
     }
 
@@ -98,6 +101,7 @@ public class CustomerService {
 
         auditService.log(AuditAction.DELETE, "CUSTOMER", customerId,
                 Map.of("name", customer.getName(), "email", customer.getEmail()), null);
+        log.debug("Customer deleted id={} tenantId={}", customerId, tenantId);
     }
 
     private CustomerEntity findCustomer(Long tenantId, Long customerId) {

@@ -73,6 +73,7 @@ public class InvitationService {
         inv.setStatus(InvitationStatus.REVOKED);
         auditService.log(AuditAction.STATUS_CHANGE, "INVITATION", invitationId,
                 Map.of("status", "PENDING"), Map.of("status", "REVOKED"));
+        log.info("Invitation revoked invitationId={} tenantId={}", invitationId, tenantId);
     }
 
     public InvitationResponse resendInvitation(Long tenantId, Long invitationId) {
@@ -88,6 +89,7 @@ public class InvitationService {
                 inv.getTenant().getId(), inv.getTenant().getName(), inv.getEmail(),
                 inv.getRole().name(), rawToken, inv.getExpiresAt()
         ));
+        log.info("Invitation resent invitationId={} tenantId={}", invitationId, tenantId);
         return InvitationResponse.from(inv);
     }
 
@@ -95,7 +97,6 @@ public class InvitationService {
 
     private InvitationResponse saveAndDispatch(TenantEntity tenant, String email, InvitationRole role) {
         String rawToken = generateRawToken();
-        log.info("The generated raw invitation token is: {}", rawToken);
         Instant now = Instant.now();
 
         UserInvitationEntity invitation = new UserInvitationEntity();
@@ -109,6 +110,7 @@ public class InvitationService {
         invitationRepository.save(invitation);
         auditService.log(AuditAction.CREATE, "INVITATION", invitation.getId(),
                 null, Map.of("email", email, "role", role.name(), "tenantId", tenant.getId()));
+        log.info("Invitation created invitationId={} role={} tenantId={}", invitation.getId(), role, tenant.getId());
 
         InviteNotificationPayload payload = new InviteNotificationPayload(
                 tenant.getId(), tenant.getName(), email, role.name(), rawToken, invitation.getExpiresAt()

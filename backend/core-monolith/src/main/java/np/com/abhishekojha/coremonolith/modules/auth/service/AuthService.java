@@ -1,6 +1,7 @@
 package np.com.abhishekojha.coremonolith.modules.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.InvitationRole;
 import np.com.abhishekojha.coremonolith.common.enums.InvitationStatus;
@@ -36,6 +37,7 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private static final long REFRESH_TOKEN_TTL_SECONDS = 30L * 24 * 3600;
@@ -50,17 +52,23 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest req) {
         UserEntity user = userRepository.findByEmailAndDeletedAtIsNull(req.email())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed — no account found for email={}", req.email());
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+                });
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+            log.warn("Login failed — wrong password for userId={}", user.getId());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
         if (user.getStatus() != UserStatus.ACTIVE) {
+            log.warn("Login rejected — account not active userId={} status={}", user.getId(), user.getStatus());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is not active");
         }
 
         user.setLastLoginAt(Instant.now());
         auditService.log(user, AuditAction.LOGIN, "USER", user.getId(), null, null);
+        log.info("Login successful userId={} role={}", user.getId(), user.getRole());
 
         return buildSession(user);
     }
@@ -68,13 +76,18 @@ public class AuthService {
     public AuthResponse refresh(String rawRefreshToken) {
         String tokenHash = sha256Hex(rawRefreshToken);
         UserSessionEntity session = userSessionRepository.findByRefreshTokenHash(tokenHash)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+                .orElseThrow(() -> {
+                    log.warn("Token refresh failed — session not found");
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+                });
 
         if (session.getRevokedAt() != null || session.getExpiresAt().isBefore(Instant.now())) {
+            log.warn("Token refresh rejected — session expired or revoked userId={}", session.getUser().getId());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired or revoked");
         }
 
         session.setRevokedAt(Instant.now());
+        log.debug("Token refreshed userId={}", session.getUser().getId());
 
         return buildSession(session.getUser());
     }
@@ -84,6 +97,7 @@ public class AuthService {
         userSessionRepository.findByRefreshTokenHash(tokenHash).ifPresent(session -> {
             session.setRevokedAt(Instant.now());
             auditService.log(session.getUser(), AuditAction.LOGOUT, "USER", session.getUser().getId(), null, null);
+            log.info("Logout userId={}", session.getUser().getId());
         });
     }
 
@@ -94,13 +108,16 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_TOKEN"));
 
         if (inv.getStatus() != InvitationStatus.PENDING) {
+            log.warn("Accept-invite rejected — invitation not pending invitationId={} status={}", inv.getId(), inv.getStatus());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_NOT_PENDING");
         }
         if (inv.getExpiresAt().isBefore(Instant.now())) {
+            log.warn("Accept-invite rejected — invitation expired invitationId={}", inv.getId());
             inv.setStatus(InvitationStatus.EXPIRED);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_EXPIRED");
         }
         if (userRepository.existsByEmail(inv.getEmail())) {
+            log.warn("Accept-invite rejected — email already registered email={}", inv.getEmail());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "EMAIL_ALREADY_REGISTERED");
         }
 
@@ -119,6 +136,8 @@ public class AuthService {
         auditService.log(user, AuditAction.CREATE, "USER", user.getId(), null,
                 Map.of("email", user.getEmail(), "role", user.getRole().name(),
                         "tenantId", inv.getTenant().getId()));
+        log.info("Account created via invite userId={} role={} tenantId={}",
+                user.getId(), user.getRole(), inv.getTenant().getId());
 
         return buildSession(user);
     }

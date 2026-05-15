@@ -2,6 +2,7 @@ package np.com.abhishekojha.coremonolith.modules.tenant.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.TenantStatus;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
@@ -25,6 +26,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class TenantSuperAdminService {
 
     private final TenantRepository tenantRepository;
@@ -42,6 +44,7 @@ public class TenantSuperAdminService {
         auditService.log(AuditAction.CREATE, "TENANT", tenant.getId(), null,
                 Map.of("name", tenant.getName(), "slug", tenant.getSlug(),
                         "companyEmail", tenant.getCompanyEmail()));
+        log.info("Tenant created id={} slug={}", tenant.getId(), tenant.getSlug());
         return TenantResponse.from(tenant);
     }
 
@@ -79,6 +82,7 @@ public class TenantSuperAdminService {
         tenant.setStatus(TenantStatus.SUSPENDED);
         auditService.log(AuditAction.STATUS_CHANGE, "TENANT", id,
                 Map.of("status", "ACTIVE"), Map.of("status", "SUSPENDED"));
+        log.info("Tenant suspended id={}", id);
         return TenantResponse.from(tenant);
     }
 
@@ -95,6 +99,7 @@ public class TenantSuperAdminService {
                 .orElseThrow(() -> new EntityNotFoundException("Authenticated user not found")));
         auditService.log(AuditAction.STATUS_CHANGE, "TENANT", id,
                 Map.of("status", previousStatus), Map.of("status", "ARCHIVED"));
+        log.info("Tenant archived id={} previousStatus={}", id, previousStatus);
         return TenantResponse.from(tenant);
     }
 
