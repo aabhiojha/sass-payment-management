@@ -97,6 +97,7 @@ public class InvitationService {
 
     private InvitationResponse saveAndDispatch(TenantEntity tenant, String email, InvitationRole role) {
         String rawToken = generateRawToken();
+        System.out.println(rawToken);
         Instant now = Instant.now();
 
         UserInvitationEntity invitation = new UserInvitationEntity();
