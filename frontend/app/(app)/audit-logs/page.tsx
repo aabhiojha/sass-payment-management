@@ -85,7 +85,7 @@ export default function AuditLogsPage() {
   const [selectedResources, setSelectedResources] = useState<string[]>([])
   const [resourceIdInput, setResourceIdInput] = useState("")
   const [actorSearch, setActorSearch] = useState("")
-  const [showFilters, setShowFilters] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     if (!isSuperAdmin) router.replace("/dashboard")
