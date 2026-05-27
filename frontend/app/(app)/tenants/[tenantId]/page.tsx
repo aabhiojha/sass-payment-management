@@ -4,7 +4,21 @@ import { useState } from "react"
 import Link from "next/link"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Archive, ArrowLeft, Building2, Globe, Mail, PauseOctagon } from "lucide-react"
+import {
+  Archive,
+  ArrowLeft,
+  ArrowUpRight,
+  Bell,
+  Building2,
+  ClipboardList,
+  Globe,
+  Mail,
+  Mailbox,
+  Package,
+  PauseOctagon,
+  UserCircle2,
+  Users,
+} from "lucide-react"
 
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,8 +27,18 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { tenantsApi } from "@/lib/api/tenants"
+import { dashboardApi } from "@/lib/api/dashboard"
 import { friendlyError } from "@/lib/axios"
 import { formatDate } from "@/lib/utils"
+
+interface QuickLink {
+  href: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  accent: string
+  count?: number
+  sub?: string
+}
 
 export default function TenantDetailPage({
   params,
@@ -29,6 +53,11 @@ export default function TenantDetailPage({
   const tenant = useQuery({
     queryKey: ["tenants", tenantId],
     queryFn: () => tenantsApi.get(tenantId),
+  })
+
+  const summary = useQuery({
+    queryKey: ["dashboard-summary", tenantId],
+    queryFn: () => dashboardApi.summary(tenantId),
   })
 
   const suspend = useMutation({
@@ -121,25 +150,85 @@ export default function TenantDetailPage({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick links</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href={`/${tenantId}/customers`}>Customers</Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href={`/${tenantId}/products`}>Products</Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href={`/${tenantId}/users`}>Team</Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href={`/${tenantId}/audit-logs`}>Audit log</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {([
+              {
+                href: `/${tenantId}/customers`,
+                label: "Customers",
+                icon: UserCircle2,
+                count: summary.data?.totalCustomers,
+                accent: "from-primary to-[hsl(280_85%_55%)]",
+              },
+              {
+                href: `/${tenantId}/products`,
+                label: "Products",
+                icon: Package,
+                count: summary.data?.totalProducts,
+                accent: "from-[hsl(199_89%_48%)] to-[hsl(212_92%_45%)]",
+              },
+              {
+                href: `/${tenantId}/plans`,
+                label: "Plans",
+                icon: ClipboardList,
+                count:
+                  summary.data != null
+                    ? summary.data.activePlans +
+                      summary.data.pausedPlans +
+                      summary.data.cancelledPlans
+                    : undefined,
+                sub:
+                  summary.data != null
+                    ? `${summary.data.activePlans} active`
+                    : undefined,
+                accent: "from-[hsl(152_65%_38%)] to-[hsl(160_70%_42%)]",
+              },
+              {
+                href: `/${tenantId}/reminders`,
+                label: "Reminders",
+                icon: Bell,
+                accent: "from-[hsl(38_92%_50%)] to-[hsl(28_92%_55%)]",
+              },
+              {
+                href: `/${tenantId}/users`,
+                label: "Team",
+                icon: Users,
+                accent: "from-[hsl(340_65%_47%)] to-[hsl(350_70%_55%)]",
+              },
+              {
+                href: `/${tenantId}/invitations`,
+                label: "Invitations",
+                icon: Mailbox,
+                accent: "from-[hsl(270_55%_50%)] to-[hsl(280_60%_60%)]",
+              },
+            ] satisfies QuickLink[]).map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="group flex items-center gap-3 rounded-xl border border-border bg-card/50 px-4 py-3 transition-all hover:border-primary/30 hover:shadow-soft"
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${link.accent} text-white`}
+                >
+                  <link.icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{link.label}</p>
+                  {link.sub && (
+                    <p className="text-xs text-muted-foreground">
+                      {link.sub}
+                    </p>
+                  )}
+                </div>
+                {link.count != null ? (
+                  <span className="font-display text-lg font-semibold tabular-nums text-foreground">
+                    {link.count}
+                  </span>
+                ) : (
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 
