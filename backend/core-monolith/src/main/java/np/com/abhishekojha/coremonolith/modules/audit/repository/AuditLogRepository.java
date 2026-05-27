@@ -15,8 +15,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> 
     @Query("""
             SELECT a FROM AuditLogEntity a JOIN FETCH a.actor
             WHERE (:actorId IS NULL OR a.actor.id = :actorId)
-              AND (:#{#actions == null || #actions.isEmpty()} = true OR CAST(a.action AS string) IN :actions)
-              AND (:#{#resourceTypes == null || #resourceTypes.isEmpty()} = true OR a.resourceType IN :resourceTypes)
+              AND (:#{#actions.isEmpty()} = true OR CAST(a.action AS string) IN :actions)
+              AND (:#{#resourceTypes.isEmpty()} = true OR a.resourceType IN :resourceTypes)
               AND (:resourceId IS NULL OR a.resourceId = :resourceId)
               AND (:actorEmail IS NULL OR LOWER(a.actor.email) LIKE LOWER(CONCAT('%', :actorEmail, '%')))
             ORDER BY a.createdAt DESC
