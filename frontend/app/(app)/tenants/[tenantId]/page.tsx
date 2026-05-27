@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import Link from "next/link"
 import {
   AlertCircle,
   Archive,
+  ArrowLeft,
   Ban,
   Bell,
   Building2,
@@ -232,20 +234,28 @@ export default function TenantDetailPage({
 
       {t && (
         <>
+          {/* ── Mobile back link (sidebar hidden on <lg) ────── */}
+          <Link
+            href="/tenants"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground lg:hidden"
+          >
+            <ArrowLeft className="h-3 w-3" /> Back to tenants
+          </Link>
+
           {/* ── Info card + Reminder stats ─────────────────────── */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2 p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[hsl(280_85%_60%)] text-primary-foreground">
+          <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2 p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-3.5">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[hsl(280_85%_60%)] text-primary-foreground">
                     <Building2 className="h-4 w-4" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-display text-lg font-semibold leading-tight tracking-tight">{t.name}</h2>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="font-display text-base sm:text-lg font-semibold leading-tight tracking-tight truncate">{t.name}</h2>
                       <StatusBadge status={t.status} />
                     </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{t.slug}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground truncate">{t.slug}</p>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
@@ -261,10 +271,10 @@ export default function TenantDetailPage({
                   )}
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><Mail className="h-3 w-3" /> {t.companyEmail}</span>
-                <span className="inline-flex items-center gap-1.5"><Globe className="h-3 w-3" /> {t.timezone}</span>
-                <span className="inline-flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Created {formatDate(t.createdAt)}</span>
+              <div className="mt-3 sm:mt-4 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-1.5 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 truncate"><Mail className="h-3 w-3 shrink-0" /> {t.companyEmail}</span>
+                <span className="inline-flex items-center gap-1.5"><Globe className="h-3 w-3 shrink-0" /> {t.timezone}</span>
+                <span className="inline-flex items-center gap-1.5"><Calendar className="h-3 w-3 shrink-0" /> Created {formatDate(t.createdAt)}</span>
               </div>
             </Card>
 
@@ -369,7 +379,7 @@ export default function TenantDetailPage({
                         <p className="truncate text-sm font-medium">{p.customerName}</p>
                         <p className="truncate text-[11px] text-muted-foreground">{p.productName} · {timeAgo(p.createdAt)}</p>
                       </div>
-                      {p.endsAt && <Badge variant="outline" className="text-[10px] shrink-0">Due {formatDate(p.endsAt)}</Badge>}
+                      {p.endsAt && <Badge variant="outline" className="hidden text-[10px] shrink-0 sm:inline-flex">Due {formatDate(p.endsAt)}</Badge>}
                       <StatusBadge status={p.status} className="scale-90 shrink-0" />
                     </div>
                   ))}
@@ -381,26 +391,28 @@ export default function TenantDetailPage({
           {/* ── Expanded section ───────────────────────────────── */}
           {activeSection && (
             <Card className="animate-fade-in">
-              <CardHeader className="flex-row items-center justify-between pb-3">
-                <CardTitle className="text-base">{SECTIONS.find((sec) => sec.key === activeSection)?.label}</CardTitle>
-                <div className="flex items-center gap-1.5">
-                  {activeSection === "reminders" && (
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => triggerReminders.mutate()} disabled={triggerReminders.isPending}>
-                      <Send className="h-3 w-3" /> Trigger batch
-                    </Button>
-                  )}
-                  {activeSection === "invitations" && (
-                    <form className="flex items-center gap-1.5" onSubmit={(e) => { e.preventDefault(); if (inviteEmail.trim()) inviteUser.mutate(inviteEmail.trim()) }}>
-                      <Input placeholder="Email to invite…" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="h-7 w-48 text-xs" />
-                      <Button variant="outline" size="sm" className="h-7 text-xs" type="submit" disabled={inviteUser.isPending || !inviteEmail.trim()}>
-                        <Plus className="h-3 w-3" /> Invite
+              <CardHeader className="space-y-3 pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">{SECTIONS.find((sec) => sec.key === activeSection)?.label}</CardTitle>
+                  <div className="flex items-center gap-1.5">
+                    {activeSection === "reminders" && (
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => triggerReminders.mutate()} disabled={triggerReminders.isPending}>
+                        <Send className="h-3 w-3" /> <span className="hidden sm:inline">Trigger batch</span><span className="sm:hidden">Trigger</span>
                       </Button>
-                    </form>
-                  )}
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setActiveSection(null)}>
-                    <X className="h-3.5 w-3.5" /> Close
-                  </Button>
+                    )}
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setActiveSection(null)}>
+                      <X className="h-3.5 w-3.5" /> Close
+                    </Button>
+                  </div>
                 </div>
+                {activeSection === "invitations" && (
+                  <form className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1.5" onSubmit={(e) => { e.preventDefault(); if (inviteEmail.trim()) inviteUser.mutate(inviteEmail.trim()) }}>
+                    <Input placeholder="Email to invite…" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="h-8 sm:h-7 text-xs sm:flex-1 sm:max-w-xs" />
+                    <Button variant="outline" size="sm" className="h-8 sm:h-7 text-xs w-full sm:w-auto" type="submit" disabled={inviteUser.isPending || !inviteEmail.trim()}>
+                      <Plus className="h-3 w-3" /> Invite user
+                    </Button>
+                  </form>
+                )}
               </CardHeader>
               <CardContent className="space-y-0.5">
 
@@ -481,13 +493,13 @@ export default function TenantDetailPage({
                           <p className="truncate text-sm font-medium">{p.customerName}</p>
                           <p className="truncate text-[11px] text-muted-foreground">{p.productName} · {timeAgo(p.createdAt)}</p>
                         </div>
-                        {p.endsAt && <Badge variant="outline" className="text-[10px] shrink-0">Due {formatDate(p.endsAt)}</Badge>}
+                        {p.endsAt && <Badge variant="outline" className="hidden text-[10px] shrink-0 sm:inline-flex">Due {formatDate(p.endsAt)}</Badge>}
                         <StatusBadge status={p.status} className="scale-90 shrink-0" />
                         <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform", selectedPlan?.id === p.id && "rotate-180")} />
                       </button>
                       {selectedPlan?.id === p.id && (
                         <DetailPanel onClose={() => setSelectedPlan(null)} actions={
-                          <div className="flex items-center gap-1">
+                          <div className="flex flex-wrap items-center gap-1">
                             {p.status === "ACTIVE" && (
                               <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setPlanStatus.mutate({ customerId: p.customerId, cpId: p.id, status: "PAUSED" })}>
                                 <PauseCircle className="h-3 w-3" /> Pause
@@ -628,10 +640,10 @@ function Empty({ label }: { label: string }) {
 
 function DetailPanel({ onClose, actions, children }: { onClose: () => void; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="mx-2.5 mb-2 mt-1 animate-fade-in rounded-lg border border-border bg-card/50 p-3">
-      <div className="flex items-center justify-between">
+    <div className="mx-1 sm:mx-2.5 mb-2 mt-1 animate-fade-in rounded-lg border border-border bg-card/50 p-2.5 sm:p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Details</p>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           {actions}
           <button type="button" onClick={onClose} className="rounded p-0.5 text-muted-foreground hover:text-foreground">
             <X className="h-3 w-3" />
@@ -647,8 +659,8 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ComponentType<{ c
   return (
     <div className="flex items-start gap-2">
       <Icon className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
-      <span className="text-muted-foreground">{label}:</span>
-      <span className="text-foreground">{value}</span>
+      <span className="shrink-0 text-muted-foreground">{label}:</span>
+      <span className="text-foreground break-all">{value}</span>
     </div>
   )
 }
