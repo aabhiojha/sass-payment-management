@@ -9,15 +9,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { tenantsApi } from "@/lib/api/tenants"
+import { useAuthStore } from "@/store/authStore"
 import { cn, initials } from "@/lib/utils"
 
 export function TenantsSidebar() {
   const pathname = usePathname()
   const [q, setQ] = useState("")
+  const accessToken = useAuthStore((s) => s.accessToken)
 
   const { data, isLoading } = useQuery({
     queryKey: ["tenants", 0, 100],
     queryFn: () => tenantsApi.list(0, 100),
+    enabled: !!accessToken,
   })
 
   const tenants = (data?.content ?? []).filter((t) =>
