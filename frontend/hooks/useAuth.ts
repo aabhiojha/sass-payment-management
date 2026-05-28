@@ -44,13 +44,13 @@ export function useAuth() {
 
   async function login(email: string, password: string) {
     const res = await authApi.login(email, password)
-    sessionStorage.setItem("refreshToken", res.refreshToken)
+    localStorage.setItem("refreshToken", res.refreshToken)
     setSessionHint()
     await hydrateUser(res)
   }
 
   async function logout() {
-    const refreshToken = sessionStorage.getItem("refreshToken")
+    const refreshToken = localStorage.getItem("refreshToken")
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken)
@@ -58,7 +58,7 @@ export function useAuth() {
         // ignore
       }
     }
-    sessionStorage.removeItem("refreshToken")
+    localStorage.removeItem("refreshToken")
     clearSessionHint()
     clear()
     router.replace("/login")

@@ -26,6 +26,19 @@ function useAuthHydrated() {
   return hydrated
 }
 
+// Rehydrate the store when another tab writes to localStorage (login/logout).
+function useCrossTabSync() {
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === "auth-user") {
+        useAuthStore.persist.rehydrate()
+      }
+    }
+    window.addEventListener("storage", handler)
+    return () => window.removeEventListener("storage", handler)
+  }, [])
+}
+
 export default function AppLayout({
   children,
 }: {
@@ -33,6 +46,7 @@ export default function AppLayout({
 }) {
   const router = useRouter()
   const hydrated = useAuthHydrated()
+  useCrossTabSync()
   const user = useAuthStore((s) => s.user)
   const accessToken = useAuthStore((s) => s.accessToken)
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -63,7 +77,7 @@ export default function AppLayout({
   useEffect(() => {
     if (!hydrated) return
     if (!user) {
-      // Auth store has nothing (e.g. fresh tab — sessionStorage is per-tab).
+      // Auth store has nothing — user is logged out or localStorage was cleared.
       // Clear any stale session_hint cookie so middleware doesn't bounce us
       // back here from /login.
       if (typeof document !== "undefined") {

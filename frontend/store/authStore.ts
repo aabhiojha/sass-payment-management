@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-user",
       storage:
         typeof window !== "undefined"
-          ? createJSONStorage(() => sessionStorage)
+          ? createJSONStorage(() => localStorage)
           : undefined,
       partialize: (s) => ({ user: s.user, accessToken: s.accessToken }),
     }
