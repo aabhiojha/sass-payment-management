@@ -14,6 +14,7 @@ import np.com.abhishekojha.coremonolith.modules.invitation.client.NotificationCl
 import np.com.abhishekojha.coremonolith.modules.invitation.dto.InviteRequest;
 import np.com.abhishekojha.coremonolith.modules.invitation.dto.InvitationResponse;
 import np.com.abhishekojha.coremonolith.modules.invitation.model.UserInvitationEntity;
+import np.com.abhishekojha.coremonolith.modules.auth.repository.UserRepository;
 import np.com.abhishekojha.coremonolith.modules.invitation.repository.InvitationRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
 import np.com.abhishekojha.coremonolith.modules.tenant.repository.TenantRepository;
@@ -43,20 +44,21 @@ public class InvitationService {
 
     private final InvitationRepository invitationRepository;
     private final TenantRepository tenantRepository;
+    private final UserRepository userRepository;
     private final NotificationClient notificationClient;
     private final TenantAccessGuard guard;
     private final AuditService auditService;
 
     public InvitationResponse inviteAdmin(Long tenantId, InviteRequest req) {
         TenantEntity tenant = activeTenant(tenantId);
-        guardNoPending(tenantId, req.email());
+        guardCanInvite(tenantId, req.email());
         return saveAndDispatch(tenant, req.email(), InvitationRole.TENANT_ADMIN);
     }
 
     public InvitationResponse inviteUser(Long tenantId, InviteRequest req) {
         guard.requireTenantAccess(tenantId);
         TenantEntity tenant = activeTenant(tenantId);
-        guardNoPending(tenantId, req.email());
+        guardCanInvite(tenantId, req.email());
         return saveAndDispatch(tenant, req.email(), InvitationRole.TENANT_USER);
     }
 
@@ -133,7 +135,10 @@ public class InvitationService {
         return tenant;
     }
 
-    private void guardNoPending(Long tenantId, String email) {
+    private void guardCanInvite(Long tenantId, String email) {
+        if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "USER_ALREADY_EXISTS");
+        }
         if (invitationRepository.existsByTenantIdAndEmailAndStatus(tenantId, email, InvitationStatus.PENDING)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "INVITATION_ALREADY_PENDING");
         }
