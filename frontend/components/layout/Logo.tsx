@@ -28,7 +28,7 @@ export function Logo({
       {showText && (
         <div className="flex flex-col leading-none">
           <span className="font-display text-base font-semibold tracking-tight">
-            Cadence
+            PayFlow
           </span>
           <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             Billing OS

@@ -16,9 +16,9 @@ const display = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: "Cadence — Billing & Reminders",
+  title: "PayFlow — Billing & Reminders",
   description:
-    "Multi-tenant billing and reminder platform for modern subscription teams.",
+    "PayFlow: billing and payment reminder platform for modern subscription teams.",
 }
 
 export default function RootLayout({
