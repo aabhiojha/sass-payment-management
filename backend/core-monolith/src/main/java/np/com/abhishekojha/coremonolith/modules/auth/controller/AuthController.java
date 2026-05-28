@@ -8,11 +8,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AcceptInviteRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AuthResponse;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.InviteTokenValidationResponse;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.LoginRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.RefreshTokenRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -40,6 +43,17 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest req) {
         return ResponseEntity.ok(authService.refresh(req.refreshToken()));
+    }
+
+    @Operation(summary = "Validate invitation token", description = "Check whether an invitation token is valid before the user sets a password. Returns invitation metadata on success.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token is valid and pending"),
+            @ApiResponse(responseCode = "400", description = "Token is expired, already accepted, or revoked"),
+            @ApiResponse(responseCode = "404", description = "Token not found")
+    })
+    @GetMapping("/invite/validate")
+    public ResponseEntity<InviteTokenValidationResponse> validateInviteToken(@RequestParam String token) {
+        return ResponseEntity.ok(authService.validateInviteToken(token));
     }
 
     @Operation(summary = "Accept invitation", description = "Set a password and activate account using an invitation token; returns auth tokens")

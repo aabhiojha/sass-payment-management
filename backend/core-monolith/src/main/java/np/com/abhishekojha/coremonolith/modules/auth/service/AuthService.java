@@ -10,6 +10,7 @@ import np.com.abhishekojha.coremonolith.common.enums.UserStatus;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AcceptInviteRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AuthResponse;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.InviteTokenValidationResponse;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.LoginRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.RegisterRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
@@ -99,6 +100,31 @@ public class AuthService {
             auditService.log(session.getUser(), AuditAction.LOGOUT, "USER", session.getUser().getId(), null, null);
             log.info("Logout userId={}", session.getUser().getId());
         });
+    }
+
+    @Transactional(readOnly = true)
+    public InviteTokenValidationResponse validateInviteToken(String rawToken) {
+        String tokenHash = sha256Hex(rawToken);
+
+        UserInvitationEntity inv = invitationRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "INVALID_TOKEN"));
+
+        return switch (inv.getStatus()) {
+            case ACCEPTED -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_ACCEPTED");
+            case REVOKED  -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_REVOKED");
+            case EXPIRED  -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_EXPIRED");
+            case PENDING  -> {
+                if (inv.getExpiresAt().isBefore(Instant.now())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVITATION_EXPIRED");
+                }
+                yield new InviteTokenValidationResponse(
+                        inv.getEmail(),
+                        inv.getRole().name(),
+                        inv.getTenant().getName(),
+                        inv.getExpiresAt()
+                );
+            }
+        };
     }
 
     public AuthResponse acceptInvite(AcceptInviteRequest req) {

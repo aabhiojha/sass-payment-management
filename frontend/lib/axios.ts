@@ -46,14 +46,14 @@ api.interceptors.response.use(
     try {
       const refreshToken =
         typeof window !== "undefined"
-          ? sessionStorage.getItem("refreshToken")
+          ? localStorage.getItem("refreshToken")
           : null
       if (!refreshToken) throw new Error("no-refresh-token")
       const { data } = await axios.post(`${baseURL}/auth/refresh`, {
         refreshToken,
       })
       useAuthStore.getState().setAccessToken(data.accessToken)
-      sessionStorage.setItem("refreshToken", data.refreshToken)
+      localStorage.setItem("refreshToken", data.refreshToken)
       waitQueue.forEach((cb) => cb(data.accessToken))
       waitQueue = []
       if (!original.headers) original.headers = {} as any
@@ -63,7 +63,7 @@ api.interceptors.response.use(
       waitQueue = []
       useAuthStore.getState().clear()
       if (typeof window !== "undefined") {
-        sessionStorage.removeItem("refreshToken")
+        localStorage.removeItem("refreshToken")
         document.cookie = "session_hint=; max-age=0; path=/"
         if (!window.location.pathname.startsWith("/login")) {
           window.location.href = "/login"

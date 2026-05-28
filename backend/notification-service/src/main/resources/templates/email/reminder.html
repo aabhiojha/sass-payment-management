@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Reminder</title>
+</head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f0f4f8;padding:32px 16px;">
+  <tr><td align="center">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="560" style="max-width:560px;">
+
+      <!-- Brand bar -->
+      <tr>
+        <td style="padding:0 0 14px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td>
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background:#1e3a5f;border-radius:6px;width:28px;height:28px;text-align:center;vertical-align:middle;">
+                      <span style="color:#fff;font-size:14px;font-weight:700;">&#9889;</span>
+                    </td>
+                    <td style="padding-left:8px;">
+                      <span th:text="${tenantName}" style="font-size:13px;font-weight:700;color:#1e3a5f;">Your Workspace</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+              <td align="right">
+                <span style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Automated notice</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Main card -->
+      <tr>
+        <td style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+
+          <!-- Dark header -->
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="background:#0f2744;padding:28px 28px 24px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:20px;">
+                  <tr>
+                    <td>
+                      <p style="margin:0 0 4px;font-size:11px;color:#7ea8d4;text-transform:uppercase;letter-spacing:.08em;">Invoice due</p>
+                      <p th:text="${productName}" style="margin:0;font-size:13px;color:#bfcfe3;">Premium Subscription Plan</p>
+                    </td>
+                    <td align="right">
+                      <span style="background:#f59e0b;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#78350f;">&#9200; Due Soon</span>
+                    </td>
+                  </tr>
+                </table>
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td>
+                      <p style="margin:0 0 2px;font-size:12px;color:#7ea8d4;">Total amount due</p>
+                      <p th:text="${amount}" style="margin:0;font-size:40px;font-weight:700;color:#fff;line-height:1;">$0.00</p>
+                    </td>
+                    <td align="right" style="vertical-align:bottom;">
+                      <p style="margin:0 0 2px;font-size:11px;color:#7ea8d4;text-align:right;">Due date</p>
+                      <p th:text="${dueDate}" style="margin:0;font-size:15px;font-weight:700;color:#f8fafc;">Jan 31, 2025</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Divider -->
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="border-top:1px solid #e2e8f0;padding:0;text-align:center;height:1px;font-size:0;">&nbsp;</td>
+            </tr>
+          </table>
+
+          <!-- Body -->
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="padding:24px 28px;">
+
+                <!-- Billed to / Invoice # -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:20px;">
+                  <tr>
+                    <td width="48%" style="background:#f8fafc;border-radius:10px;padding:14px 16px;">
+                      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;">Billed to</p>
+                      <p th:text="${customerName}" style="margin:0;font-size:14px;font-weight:700;color:#0f172a;">Customer Name</p>
+                    </td>
+                    <td width="4%"></td>
+                    <td width="48%" style="background:#f8fafc;border-radius:10px;padding:14px 16px;">
+                      <p style="margin:0 0 4px;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;">Invoice no.</p>
+                      <p th:text="${invoiceNumber}" style="margin:0;font-size:14px;font-weight:700;color:#0f172a;">#INV-000</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Line item -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+                       style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:20px;">
+                  <tr>
+                    <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td>
+                            <p th:text="${productName}" style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0f172a;">Premium Subscription</p>
+                            <p style="margin:0;font-size:12px;color:#64748b;">Annual plan</p>
+                          </td>
+                          <td align="right">
+                            <p th:text="${amount}" style="margin:0;font-size:14px;font-weight:700;color:#0f172a;">$0.00</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 16px;background:#f8fafc;text-align:right;">
+                      <span style="font-size:13px;color:#64748b;">Total &nbsp;<strong th:text="${amount}" style="color:#0f172a;">$0.00</strong></span>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- CTA button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:16px;">
+                  <tr>
+                    <td style="background:#0f2744;border-radius:10px;padding:16px 20px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td>
+                            <p style="margin:0 0 1px;font-size:14px;font-weight:700;color:#fff;">Pay now</p>
+                            <p style="margin:0;font-size:12px;color:#7ea8d4;">Secure checkout &middot; takes 30 seconds</p>
+                          </td>
+                          <td align="right">
+                            <div style="width:36px;height:36px;background:#f59e0b;border-radius:8px;text-align:center;vertical-align:middle;line-height:36px;">
+                              <span style="color:#78350f;font-size:16px;font-weight:700;">&rarr;</span>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Trust footer -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="text-align:center;padding-top:0px;">
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+
+      <!-- Sub-footer -->
+      <tr>
+        <td style="padding:12px 0 0;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#94a3b8;">
+            You received this because you have an active subscription with
+            <span th:text="${tenantName}">Your Workspace</span>.
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+
+</body>
+</html>

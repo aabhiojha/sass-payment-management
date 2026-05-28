@@ -1,5 +1,5 @@
 # Multi-Tenant Billing & Reminder Platform — TRD
-**v1.1 · Abhishek Ojha · 2026-05-09**
+**v1.2 · Abhishek Ojha · 2026-05-28**
 
 ---
 
@@ -68,6 +68,8 @@ A SaaS backend enabling companies (tenants) to manage customers, define recurrin
 | FR-008 | Password reset request always returns `200` (no email enumeration) |
 | FR-009 | Invited users complete setup via tokenised invite link |
 | FR-010 | Invite acceptance requires `acceptTerms: true` and a valid password |
+| FR-011 | A public token-validation endpoint returns invitation metadata (email, role, tenant name, expiry) if the token is valid and pending; returns specific error codes for expired, revoked, or accepted tokens |
+| FR-012 | The accept-invite page validates the token on load and shows a tailored error screen (expired / revoked / already used / not found) before the user attempts to set a password |
 
 ### 3.2 Tenant Management
 | ID | Requirement |
@@ -195,8 +197,8 @@ A SaaS backend enabling companies (tenants) to manage customers, define recurrin
 | Component | Responsibility |
 |---|---|
 | EmailController | Accepts send requests from the monolith |
-| TemplateEngine | Renders email templates (Thymeleaf/Jasper — TBD) |
-| SmtpClient | Sends email via SMTP |
+| TemplateEngine | Thymeleaf — renders HTML email templates from `src/main/resources/templates/email/` |
+| SendGridClient | Delivers email via SendGrid HTTP API |
 
 ### Reminder Batch Flow
 
@@ -422,6 +424,7 @@ CREATE INDEX idx_audit_resource       ON audit_logs(resource_type, resource_id, 
 | `POST` | `/auth/login` | 🔓 | Login |
 | `POST` | `/auth/refresh` | 🔓 | Refresh access token |
 | `POST` | `/auth/logout` | 🟢 TU | Logout |
+| `GET`  | `/auth/invite/validate` | 🔓 | Validate invitation token; returns email, role, tenant name |
 | `POST` | `/auth/accept-invite` | 🔓 | Accept invitation |
 | `GET` | `/me` | 🟢 TU | Own profile |
 | `POST` | `/tenants` | 🔴 SA | Create tenant |
@@ -491,6 +494,7 @@ CREATE INDEX idx_audit_resource       ON audit_logs(resource_type, resource_id, 
 | `POST` | `/auth/login` | 🔓 | Login |
 | `POST` | `/auth/refresh` | 🔓 | Refresh access token |
 | `POST` | `/auth/logout` | 🟢 TU | Logout |
+| `GET`  | `/auth/invite/validate` | 🔓 | Validate invitation token; returns email, role, tenant name |
 | `POST` | `/auth/accept-invite` | 🔓 | Accept invitation |
 
 ---
@@ -636,6 +640,11 @@ CREATE INDEX idx_audit_resource       ON audit_logs(resource_type, resource_id, 
 | BR-016 | Only `PENDING` invitations can be revoked |
 | BR-017 | `acceptTerms: true` is mandatory on invite acceptance |
 | BR-018 | Soft-deleting a user sets `status = DELETED`; record is retained |
+| BR-019a | Token validation: unknown token hash → `404 INVALID_TOKEN` |
+| BR-019b | Token validation: `ACCEPTED` status → `400 INVITATION_ACCEPTED` |
+| BR-019c | Token validation: `REVOKED` status → `400 INVITATION_REVOKED` |
+| BR-019d | Token validation: `EXPIRED` status or `expires_at` in the past → `400 INVITATION_EXPIRED` |
+| BR-019e | Token validation: `PENDING` and not expired → `200` with email, role, tenant name, expiry |
 
 ### Customers & Products
 | ID | Rule |
@@ -748,7 +757,10 @@ CREATE INDEX idx_audit_resource       ON audit_logs(resource_type, resource_id, 
 | 400 | `INVALID_CURRENT_PASSWORD` | Current password is wrong |
 | 400 | `SAME_PASSWORD` | New password matches existing |
 | 400 | `TERMS_NOT_ACCEPTED` | `acceptTerms` must be `true` |
-| 400 | `INVALID_TOKEN` | Token invalid or expired |
+| 400 | `INVALID_TOKEN` | Token not found |
+| 400 | `INVITATION_ACCEPTED` | Invitation token has already been used |
+| 400 | `INVITATION_REVOKED` | Invitation was revoked by an admin |
+| 400 | `INVITATION_EXPIRED` | Invitation has passed its expiry date |
 | 400 | `INVALID_STATUS_TRANSITION` | Status change not permitted |
 | 401 | `UNAUTHORIZED` | Missing or invalid auth header |
 | 401 | `TOKEN_EXPIRED` | Access token expired |
@@ -901,6 +913,14 @@ Payment gateway integration · SMS/push notifications · OAuth2/SSO/SAML · self
 - [ ] Duplicate invite to same email → rejected
 - [ ] Admin cannot disable or delete own account
 - [ ] Resending invitation invalidates previous token
+- [ ] Valid pending token → `200` with email, role, tenant name
+- [ ] Already-accepted token → `400 INVITATION_ACCEPTED`
+- [ ] Revoked token → `400 INVITATION_REVOKED`
+- [ ] Expired token → `400 INVITATION_EXPIRED`
+- [ ] Unknown token → `404 INVALID_TOKEN`
+- [ ] Accept-invite page shows spinner while validating
+- [ ] Accept-invite page shows workspace name and role when token is valid
+- [ ] Accept-invite page shows specific error screen for each invalid state without rendering the password form
 
 ### Customers & Products
 - [ ] Customer with active plan cannot be deleted

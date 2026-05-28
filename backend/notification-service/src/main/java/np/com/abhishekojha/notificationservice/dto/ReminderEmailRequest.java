@@ -15,4 +15,5 @@ public class ReminderEmailRequest {
     private String productName;
     private String amount;
     private String dueDate;
+    private String invoiceNumber;
 }
