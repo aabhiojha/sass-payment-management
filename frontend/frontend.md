@@ -1,5 +1,5 @@
 # Frontend Implementation Guide
-**Multi-Tenant Billing & Reminder Platform — v1.0**
+**PayFlow — Frontend Specification v1.0**
 
 ---
 

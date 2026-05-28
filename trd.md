@@ -1,4 +1,4 @@
-# Multi-Tenant Billing & Reminder Platform — TRD
+# PayFlow — Technical Requirements Document
 **v1.2 · Abhishek Ojha · 2026-05-28**
 
 ---
@@ -23,7 +23,7 @@
 
 ## 1. System Overview
 
-A SaaS backend enabling companies (tenants) to manage customers, define recurring payment plans, and automatically send payment reminder emails. Each tenant is fully isolated with RBAC.
+PayFlow is a SaaS backend enabling companies (tenants) to manage customers, define recurring payment plans, and automatically send payment reminder emails. Each tenant is fully isolated with RBAC.
 
 **Core capabilities:** JWT auth · tenant lifecycle · user management via invite · customer/product CRUD · recurring billing schedules · automated reminder emails · dashboard analytics · full audit log
 
