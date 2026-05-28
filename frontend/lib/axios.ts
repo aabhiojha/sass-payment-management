@@ -29,7 +29,14 @@ api.interceptors.response.use(
     const original = error.config as
       | (InternalAxiosRequestConfig & { _retry?: boolean })
       | undefined
-    if (!original || error.response?.status !== 401 || original._retry) {
+    const url = original?.url ?? ""
+    const isAuthEndpoint =
+      url.includes("/auth/login") ||
+      url.includes("/auth/refresh") ||
+      url.includes("/auth/accept-invite") ||
+      url.includes("/auth/invite/validate")
+
+    if (!original || error.response?.status !== 401 || original._retry || isAuthEndpoint) {
       return Promise.reject(error)
     }
     if (isRefreshing) {
