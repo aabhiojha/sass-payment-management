@@ -18,6 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,8 +37,12 @@ import { RoleBadge } from "@/components/shared/RoleBadge"
 import { invitationsApi } from "@/lib/api/invitations"
 import { formatDate } from "@/lib/utils"
 import { friendlyError } from "@/lib/axios"
+import { useRole } from "@/hooks/useRole"
 
-const schema = z.object({ email: z.string().email("Enter a valid email") })
+const schema = z.object({
+  email: z.string().email("Enter a valid email"),
+  role: z.enum(["TENANT_USER", "TENANT_ADMIN"]),
+})
 type Values = z.infer<typeof schema>
 
 export default function InvitationsPage({
@@ -43,6 +54,7 @@ export default function InvitationsPage({
   const qc = useQueryClient()
   const [page, setPage] = useState(0)
   const [size] = useState(20)
+  const { isSuperAdmin } = useRole()
 
   const list = useQuery({
     queryKey: ["invitations", tenantId, page, size],
@@ -51,15 +63,18 @@ export default function InvitationsPage({
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "" },
+    defaultValues: { email: "", role: "TENANT_USER" },
   })
 
   const invite = useMutation({
-    mutationFn: (data: Values) => invitationsApi.inviteUser(tenantId, data.email),
+    mutationFn: (data: Values) =>
+      data.role === "TENANT_ADMIN"
+        ? invitationsApi.inviteAdmin(tenantId, data.email)
+        : invitationsApi.inviteUser(tenantId, data.email),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invitations", tenantId] })
       toast.success("Invitation sent")
-      form.reset()
+      form.reset({ email: "", role: "TENANT_USER" })
     },
     onError: (e) => toast.error(friendlyError(e)),
   })
@@ -118,6 +133,27 @@ export default function InvitationsPage({
                 </p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select
+                value={form.watch("role")}
+                onValueChange={(v) =>
+                  form.setValue("role", v as Values["role"])
+                }
+              >
+                <SelectTrigger id="role" className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TENANT_USER">Tenant User</SelectItem>
+                  {isSuperAdmin && (
+                    <SelectItem value="TENANT_ADMIN">Tenant Admin</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button type="submit" loading={invite.isPending}>
               <Plus className="h-4 w-4" /> Send invite
             </Button>
