@@ -19,6 +19,7 @@ async function hydrateUser(res: AuthResponse) {
   setAuth(res.accessToken, {
     userId: res.userId,
     email: res.email,
+    fullName: res.fullName ?? null,
     role: res.role,
     tenantId: (res as { tenantId?: number | null }).tenantId ?? null,
   })
@@ -29,6 +30,7 @@ async function hydrateUser(res: AuthResponse) {
       setAuth(res.accessToken, {
         userId: me.id,
         email: me.email,
+        fullName: me.fullName ?? null,
         role: (me.role as AuthResponse["role"]) ?? res.role,
         tenantId: me.tenantId ?? null,
       })
