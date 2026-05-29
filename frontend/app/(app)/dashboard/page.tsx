@@ -570,10 +570,6 @@ export default function DashboardPage() {
     ? `Viewing ${selectedTenantName}'s workspace.`
     : "Here's what's happening across your billing workspace today."
 
-  const pageDescription = isSuperAdmin && selectedTenantName
-    ? `Viewing ${selectedTenantName}'s workspace.`
-    : "Here's what's happening across your billing workspace today."
-
   return (
     <div className="space-y-8">
       <PageHeader
