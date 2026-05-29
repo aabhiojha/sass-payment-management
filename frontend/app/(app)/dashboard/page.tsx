@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import {
-  AlertTriangle,
   ArrowUpRight,
   Bell,
   Building2,
@@ -43,6 +42,7 @@ import { useAuthStore } from "@/store/authStore"
 import { useTenantStore } from "@/store/tenantStore"
 import { useRole } from "@/hooks/useRole"
 import { dashboardApi } from "@/lib/api/dashboard"
+import { auditApi } from "@/lib/api/audit"
 
 /* ------------------------------------------------------------------ */
 /*  Stat card                                                          */
@@ -121,6 +121,11 @@ function AdminDashboard() {
   const admin = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: () => dashboardApi.adminSummary(),
+    enabled: !!accessToken,
+  })
+  const auditLogs = useQuery({
+    queryKey: ["admin-audit-logs-recent"],
+    queryFn: () => auditApi.list(0, 10),
     enabled: !!accessToken,
   })
 
@@ -208,6 +213,62 @@ function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>Recent audit logs</CardTitle>
+            <CardDescription>Last 10 events across all tenants</CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/audit-logs">
+              View all
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {auditLogs.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12" />
+              ))}
+            </div>
+          ) : auditLogs.data && auditLogs.data.content.length > 0 ? (
+            <div className="space-y-2">
+              {auditLogs.data.content.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                      <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {a.actorEmail}{" "}
+                        <span className="font-normal text-muted-foreground">
+                          {a.action.toLowerCase().replace(/_/g, " ")}
+                        </span>{" "}
+                        {titleCase(a.resourceType)}
+                        {a.resourceId ? ` #${a.resourceId}` : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {timeAgo(a.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No audit logs yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </>
   )
 }
@@ -240,12 +301,6 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
     queryFn: () => dashboardApi.upcomingReminders(tenantId),
     enabled: ready,
   })
-  const overdue = useQuery({
-    queryKey: ["dashboard-overdue", tenantId],
-    queryFn: () => dashboardApi.overduePlans(tenantId),
-    enabled: ready,
-  })
-
   const { isAtLeast } = useRole()
   const showActivity = isAtLeast("TENANT_ADMIN")
   const activity = useQuery({
@@ -397,92 +452,47 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
         </Card>
       </div>
 
-      {/* Upcoming + Overdue row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Upcoming reminders</CardTitle>
-              <CardDescription>Due within the next 7 days</CardDescription>
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle>Upcoming reminders</CardTitle>
+            <CardDescription>Due within the next 7 days</CardDescription>
+          </div>
+          <Calendar className="h-5 w-5 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          {upcoming.isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-14" />
+              ))}
             </div>
-            <Calendar className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {upcoming.isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-14" />
-                ))}
-              </div>
-            ) : upcoming.data && upcoming.data.length > 0 ? (
-              <div className="space-y-2">
-                {upcoming.data.map((u) => (
-                  <div
-                    key={u.customerProductId}
-                    className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {u.customerName}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {u.productName} · {formatCurrency(u.amount, u.currency)}
-                      </p>
-                    </div>
-                    <Badge variant="info">{formatDate(u.endsAt)}</Badge>
+          ) : upcoming.data && upcoming.data.length > 0 ? (
+            <div className="space-y-2">
+              {upcoming.data.map((u) => (
+                <div
+                  key={u.customerProductId}
+                  className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {u.customerName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {u.productName} · {formatCurrency(u.amount, u.currency)}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No upcoming reminders.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Overdue plans</CardTitle>
-              <CardDescription>Active plans past due date</CardDescription>
+                  <Badge variant="info">{formatDate(u.endsAt)}</Badge>
+                </div>
+              ))}
             </div>
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            {overdue.isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-14" />
-                ))}
-              </div>
-            ) : overdue.data && overdue.data.length > 0 ? (
-              <div className="space-y-2">
-                {overdue.data.map((o) => (
-                  <div
-                    key={o.customerProductId}
-                    className="flex items-center justify-between rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {o.customerName}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {o.productName} · {formatCurrency(o.amount, o.currency)}
-                      </p>
-                    </div>
-                    <Badge variant="danger">{formatDate(o.endsAt)}</Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No overdue plans.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No upcoming reminders.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent activity */}
       {showActivity && (
