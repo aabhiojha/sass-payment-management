@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { Plus, UserCircle2, Mail, Phone } from "lucide-react"
+import { Plus, UserCircle2 } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { Pagination } from "@/components/shared/Pagination"
 import { StatusBadge } from "@/components/shared/StatusBadge"
@@ -24,7 +23,7 @@ import { TableSkeleton } from "@/components/shared/TableSkeleton"
 import { EmptyState } from "@/components/shared/EmptyState"
 
 import { customersApi } from "@/lib/api/customers"
-import { formatDate, initials } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 
 export default function CustomersPage({
   params,
@@ -99,8 +98,8 @@ export default function CustomersPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -112,36 +111,13 @@ export default function CustomersPage({
                     <TableCell>
                       <Link
                         href={`/${tenantId}/customers/${c.id}`}
-                        className="flex items-center gap-3 hover:opacity-90"
+                        className="font-medium text-foreground hover:underline"
                       >
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback>{initials(c.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {c.name}
-                          </p>
-                          {c.address && (
-                            <p className="text-xs text-muted-foreground">
-                              {c.address}
-                            </p>
-                          )}
-                        </div>
+                        {c.name}
                       </Link>
                     </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                          {c.email}
-                        </div>
-                        {c.phone && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Phone className="h-3 w-3" />
-                            {c.phone}
-                          </div>
-                        )}
-                      </div>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {c.email}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={c.status} />
