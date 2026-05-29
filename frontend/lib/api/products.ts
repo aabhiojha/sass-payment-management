@@ -7,10 +7,10 @@ import type {
 } from "@/types/api"
 
 export const productsApi = {
-  list: (tenantId: number, page = 0, size = 20) =>
+  list: (tenantId: number, page = 0, size = 20, status?: string) =>
     api
       .get<RawPage<ProductResponse>>(`/tenants/${tenantId}/products`, {
-        params: { page, size },
+        params: { page, size, ...(status ? { status } : {}) },
       })
       .then((r) => normalizePage<ProductResponse>(r.data)),
 
