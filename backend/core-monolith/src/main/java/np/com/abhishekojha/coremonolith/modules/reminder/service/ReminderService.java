@@ -3,9 +3,11 @@ package np.com.abhishekojha.coremonolith.modules.reminder.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.CustomerProductStatus;
 import np.com.abhishekojha.coremonolith.common.enums.ReminderStatus;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
+import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.customerproduct.model.CustomerProductEntity;
 import np.com.abhishekojha.coremonolith.modules.customerproduct.repository.CustomerProductRepository;
 import np.com.abhishekojha.coremonolith.modules.invitation.client.NotificationClient;
@@ -24,7 +26,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -32,7 +36,9 @@ import java.util.List;
 @Slf4j
 public class ReminderService {
 
-    private static final int REMINDER_WINDOW_DAYS = 7;
+    // Days before expiry at which reminders are sent
+    private static final List<Integer> MILESTONES = List.of(30, 7, 1);
+
     private static final DateTimeFormatter DUE_DATE_FMT =
             DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneOffset.UTC);
 
@@ -41,6 +47,7 @@ public class ReminderService {
     private final TenantRepository tenantRepository;
     private final TenantAccessGuard guard;
     private final NotificationClient notificationClient;
+    private final AuditService auditService;
 
     @Transactional(readOnly = true)
     public Page<ReminderResponse> list(Long tenantId, Pageable pageable) {
@@ -58,7 +65,7 @@ public class ReminderService {
         );
     }
 
-    // Called from API endpoints — enforces tenant access
+    // API-triggered manual run — enforces tenant access
     public List<ReminderResponse> trigger(Long tenantId) {
         guard.requireTenantAccess(tenantId);
         TenantEntity tenant = tenantRepository.findByIdAndDeletedAtIsNull(tenantId)
@@ -66,51 +73,98 @@ public class ReminderService {
         return triggerForTenant(tenant);
     }
 
-    // Called from the scheduler — no security context available
+    // Called by the scheduler — no security context
     public List<ReminderResponse> triggerForTenant(TenantEntity tenant) {
         Instant now = Instant.now();
-        Instant windowEnd = now.plus(REMINDER_WINDOW_DAYS, ChronoUnit.DAYS);
-        Instant deduplicationCutoff = now.minus(1, ChronoUnit.DAYS);
+        List<ReminderResponse> results = new ArrayList<>();
 
-        List<CustomerProductEntity> duePlans = customerProductRepository
-                .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBetween(
-                        tenant.getId(), CustomerProductStatus.ACTIVE, now, windowEnd);
+        for (int milestone : MILESTONES) {
+            Instant windowStart = now.plus(milestone - 1, ChronoUnit.DAYS);
+            Instant windowEnd   = now.plus(milestone,     ChronoUnit.DAYS);
 
-        return duePlans.stream()
-                .filter(cp -> !reminderRepository.existsByCustomerProductIdAndStatusAndCreatedAtAfter(
-                        cp.getId(), ReminderStatus.SENT, deduplicationCutoff))
-                .map(cp -> processOne(tenant, cp))
-                .toList();
+            List<CustomerProductEntity> duePlans = customerProductRepository
+                    .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBetween(
+                            tenant.getId(), CustomerProductStatus.ACTIVE, windowStart, windowEnd);
+
+            for (CustomerProductEntity cp : duePlans) {
+                boolean alreadyHandled = reminderRepository
+                        .existsByCustomerProductIdAndDaysBeforeExpiryAndStatusIn(
+                                cp.getId(), milestone,
+                                List.of(ReminderStatus.SENT, ReminderStatus.SKIPPED));
+
+                if (alreadyHandled) {
+                    log.debug("Skipping milestone={}d for customerProduct={} — already handled",
+                            milestone, cp.getId());
+                    results.add(recordSkipped(tenant, cp, milestone));
+                } else {
+                    results.add(sendReminder(tenant, cp, milestone));
+                }
+            }
+        }
+
+        return results;
     }
 
-    private ReminderResponse processOne(TenantEntity tenant, CustomerProductEntity cp) {
+    // Retry FAILED reminders from the last 48 hours
+    public int retryFailed(TenantEntity tenant) {
+        Instant cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
+        List<ReminderEntity> failed = reminderRepository
+                .findAllByTenantIdAndStatusAndCreatedAtAfter(
+                        tenant.getId(), ReminderStatus.FAILED, cutoff);
+
+        int retried = 0;
+        for (ReminderEntity reminder : failed) {
+            CustomerProductEntity cp = reminder.getCustomerProduct();
+            // Skip if the plan is no longer active
+            if (cp.getStatus() != CustomerProductStatus.ACTIVE || cp.getDeletedAt() != null) {
+                continue;
+            }
+            try {
+                notificationClient.sendReminder(buildPayload(tenant, cp));
+                reminder.setStatus(ReminderStatus.SENT);
+                reminder.setSentAt(Instant.now());
+                reminder.setRetryCount(reminder.getRetryCount() + 1);
+                reminder.setErrorMessage(null);
+                retried++;
+                log.info("Retry succeeded for reminder={} customerProduct={}", reminder.getId(), cp.getId());
+            } catch (Exception e) {
+                reminder.setRetryCount(reminder.getRetryCount() + 1);
+                reminder.setErrorMessage(e.getMessage());
+                log.warn("Retry failed for reminder={}: {}", reminder.getId(), e.getMessage());
+            }
+        }
+        return retried;
+    }
+
+    // Cancel overdue ACTIVE plans (endsAt in the past) and log them
+    public int cancelOverduePlans(TenantEntity tenant) {
+        List<CustomerProductEntity> overdue = customerProductRepository
+                .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBefore(
+                        tenant.getId(), CustomerProductStatus.ACTIVE, Instant.now());
+
+        for (CustomerProductEntity cp : overdue) {
+            cp.setStatus(CustomerProductStatus.CANCELLED);
+            auditService.log(AuditAction.STATUS_CHANGE, "CUSTOMER_PRODUCT", cp.getId(),
+                    Map.of("status", "ACTIVE"),
+                    Map.of("status", "CANCELLED", "reason", "expired"));
+            log.info("Auto-cancelled overdue plan id={} endsAt={} customer={}",
+                    cp.getId(), cp.getEndsAt(), cp.getCustomer().getId());
+        }
+        return overdue.size();
+    }
+
+    private ReminderResponse sendReminder(TenantEntity tenant, CustomerProductEntity cp, int milestone) {
         ReminderEntity reminder = new ReminderEntity();
         reminder.setTenant(tenant);
         reminder.setCustomerProduct(cp);
+        reminder.setDaysBeforeExpiry(milestone);
 
         try {
-            // Resolve price: custom_price → plan price → product default price
-            String amount;
-            if (cp.getCustomPrice() != null) {
-                amount = cp.getProduct().getCurrency() + " " + cp.getCustomPrice().toPlainString();
-            } else if (cp.getProductPlan() != null) {
-                amount = cp.getProductPlan().getCurrency() + " " + cp.getProductPlan().getPrice().toPlainString();
-            } else {
-                amount = cp.getProduct().getCurrency() + " " + cp.getProduct().getPrice().toPlainString();
-            }
-
-            ReminderNotificationPayload payload = new ReminderNotificationPayload(
-                    tenant.getId(),
-                    tenant.getName(),
-                    cp.getCustomer().getName(),
-                    cp.getCustomer().getEmail(),
-                    cp.getProduct().getName(),
-                    amount,
-                    DUE_DATE_FMT.format(cp.getEndsAt())
-            );
-            notificationClient.sendReminder(payload);
+            notificationClient.sendReminder(buildPayload(tenant, cp));
             reminder.setStatus(ReminderStatus.SENT);
             reminder.setSentAt(Instant.now());
+            log.info("Sent {}d reminder for customerProduct={} customer={}",
+                    milestone, cp.getId(), cp.getCustomer().getId());
         } catch (Exception e) {
             log.warn("Reminder dispatch failed for customerProduct={}: {}", cp.getId(), e.getMessage());
             reminder.setStatus(ReminderStatus.FAILED);
@@ -119,5 +173,36 @@ public class ReminderService {
 
         reminderRepository.save(reminder);
         return ReminderResponse.from(reminder);
+    }
+
+    private ReminderResponse recordSkipped(TenantEntity tenant, CustomerProductEntity cp, int milestone) {
+        ReminderEntity reminder = new ReminderEntity();
+        reminder.setTenant(tenant);
+        reminder.setCustomerProduct(cp);
+        reminder.setDaysBeforeExpiry(milestone);
+        reminder.setStatus(ReminderStatus.SKIPPED);
+        reminderRepository.save(reminder);
+        return ReminderResponse.from(reminder);
+    }
+
+    private ReminderNotificationPayload buildPayload(TenantEntity tenant, CustomerProductEntity cp) {
+        String amount;
+        if (cp.getCustomPrice() != null) {
+            amount = cp.getProduct().getCurrency() + " " + cp.getCustomPrice().toPlainString();
+        } else if (cp.getProductPlan() != null) {
+            amount = cp.getProductPlan().getCurrency() + " " + cp.getProductPlan().getPrice().toPlainString();
+        } else {
+            amount = cp.getProduct().getCurrency() + " " + cp.getProduct().getPrice().toPlainString();
+        }
+
+        return new ReminderNotificationPayload(
+                tenant.getId(),
+                tenant.getName(),
+                cp.getCustomer().getName(),
+                cp.getCustomer().getEmail(),
+                cp.getProduct().getName(),
+                amount,
+                DUE_DATE_FMT.format(cp.getEndsAt())
+        );
     }
 }
