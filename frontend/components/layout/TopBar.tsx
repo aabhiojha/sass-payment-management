@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Bell, ChevronDown, LogOut, User as UserIcon } from "lucide-react"
-import { SearchInput } from "@/components/shared/SearchInput"
 import { initials } from "@/lib/utils"
 import { RoleBadge } from "@/components/shared/RoleBadge"
 import Link from "next/link"
@@ -25,10 +24,6 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
-      <div className="hidden flex-1 md:block">
-        <SearchInput placeholder="Search customers, products, plans…" />
-      </div>
-
       <div className="ml-auto flex items-center gap-2">
         <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell className="h-4 w-4" />

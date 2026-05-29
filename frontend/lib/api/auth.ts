@@ -29,6 +29,9 @@ export const authApi = {
 
   me: () => api.get<UserResponse>("/me").then((r) => r.data),
 
+  updateProfile: (fullName: string) =>
+    api.patch<UserResponse>("/me", { fullName }).then((r) => r.data),
+
   validateInviteToken: (token: string) =>
     api
       .get<InviteTokenValidation>("/auth/invite/validate", { params: { token } })
