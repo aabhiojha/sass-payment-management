@@ -95,7 +95,7 @@ export default function UsersPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
-  const rows = data?.content ?? []
+  const rows = (data?.content ?? []).filter((u) => u.status === "ACTIVE")
 
   return (
     <div className="space-y-6">

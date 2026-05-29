@@ -37,7 +37,7 @@ public class TenantUserController {
     @Operation(summary = "List users in a tenant")
     @ApiResponse(responseCode = "200", description = "OK")
     @GetMapping
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'TENANT_USER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'TENANT_USER', 'SUPER_ADMIN')")
     public ResponseEntity<Page<UserResponse>> listUsers(
             @PathVariable Long tenantId,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
@@ -50,7 +50,7 @@ public class TenantUserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{userId}")
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'TENANT_USER')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'TENANT_USER', 'SUPER_ADMIN')")
     public ResponseEntity<UserResponse> getUser(
             @PathVariable Long tenantId,
             @PathVariable Long userId) {
@@ -64,7 +64,7 @@ public class TenantUserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PatchMapping("/{userId}")
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<UserResponse> updateRole(
             @PathVariable Long tenantId,
             @PathVariable Long userId,
@@ -78,7 +78,7 @@ public class TenantUserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PostMapping("/{userId}/disable")
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<UserResponse> disableUser(
             @PathVariable Long tenantId,
             @PathVariable Long userId) {
@@ -91,7 +91,7 @@ public class TenantUserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Long tenantId,
             @PathVariable Long userId) {
