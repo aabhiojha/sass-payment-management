@@ -33,6 +33,7 @@ import type { ApiError } from "@/types/api"
 
 const schema = z
   .object({
+    fullName: z.string().min(1, "Full name is required").max(100),
     password: z.string().min(8, "Use at least 8 characters"),
     confirm: z.string(),
   })
@@ -69,7 +70,7 @@ function AcceptInviteForm() {
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { password: "", confirm: "" },
+    defaultValues: { fullName: "", password: "", confirm: "" },
   })
 
   useEffect(() => {
@@ -88,7 +89,7 @@ function AcceptInviteForm() {
   async function onSubmit(values: Values) {
     setSubmitting(true)
     try {
-      await authApi.acceptInvite(token, values.password)
+      await authApi.acceptInvite(token, values.password, values.fullName)
       toast.success("Account activated. Please sign in to continue.")
       router.replace("/login")
     } catch (err) {
@@ -164,6 +165,26 @@ function AcceptInviteForm() {
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Full name</Label>
+          <div className="relative">
+            <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="fullName"
+              type="text"
+              autoComplete="name"
+              placeholder="Your full name"
+              className="pl-9"
+              {...form.register("fullName")}
+            />
+          </div>
+          {form.formState.errors.fullName && (
+            <p className="text-xs text-destructive">
+              {form.formState.errors.fullName.message}
+            </p>
+          )}
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="password">New password</Label>
           <div className="relative">

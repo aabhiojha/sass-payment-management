@@ -494,7 +494,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
             </div>
             {tenantId && (
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/audit-logs`}>
+                <Link href={`/${tenantId}/audit-logs`}>
                   View all
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
@@ -563,7 +563,7 @@ export default function DashboardPage() {
     if (h < 18) return "Good afternoon"
     return "Good evening"
   })()
-  const displayName = user?.email?.split("@")[0] ?? "there"
+  const displayName = user?.fullName ?? user?.email?.split("@")[0] ?? "there"
 
   return (
     <div className="space-y-8">
