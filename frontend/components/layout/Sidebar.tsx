@@ -152,18 +152,15 @@ export function Sidebar() {
           ))}
         </div>
 
-        {/* Superadmin global admin section */}
+        {/* Superadmin global admin section — superOnly items only (e.g. Audit log) */}
         {isSuperAdmin && (
           <div className="space-y-1">
             <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
               Administration
             </p>
-            {nav.admin.map((i) => {
-              if (i.superOnly && !isSuperAdmin) return null
-              return (
-                <NavLink key={i.href} item={i} active={isActive(i.href)} />
-              )
-            })}
+            {nav.admin.filter((i) => i.superOnly).map((i) => (
+              <NavLink key={i.href} item={i} active={isActive(i.href)} />
+            ))}
           </div>
         )}
 
