@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.ProductStatus;
+import np.com.abhishekojha.coremonolith.common.enums.UserRole;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
+import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.product.dto.CreateProductRequest;
 import np.com.abhishekojha.coremonolith.modules.product.dto.ProductResponse;
@@ -56,9 +58,13 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> list(Long tenantId, ProductStatus status, Pageable pageable) {
-        guard.requireTenantAccess(tenantId);
+        UserEntity caller = guard.requireTenantAccess(tenantId);
         if (status != null) {
             return productRepository.findAllByTenantIdAndStatus(tenantId, status, pageable)
+                    .map(ProductResponse::from);
+        }
+        if (caller.getRole() == UserRole.SUPER_ADMIN) {
+            return productRepository.findAllByTenantId(tenantId, pageable)
                     .map(ProductResponse::from);
         }
         return productRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable)
