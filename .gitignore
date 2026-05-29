@@ -35,3 +35,7 @@ build/
 
 ### dev properties ###
 application-dev.yaml
+
+# Environment secrets
+.env
+.env.local
