@@ -585,14 +585,7 @@ export default function DashboardPage() {
                   Go to workspace
                 </Link>
               </Button>
-            ) : (
-              <Button asChild variant="outline">
-                <Link href="/tenants">
-                  <Building2 className="h-4 w-4" />
-                  Tenants
-                </Link>
-              </Button>
-            )
+            ) : null
           ) : tenantId ? (
             <Button asChild>
               <Link href={`/${tenantId}/customers`}>
