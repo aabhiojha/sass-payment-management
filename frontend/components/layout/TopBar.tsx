@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth"
 import { useRole } from "@/hooks/useRole"
+import { useTenantStore } from "@/store/tenantStore"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -12,27 +13,129 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Bell, ChevronDown, LogOut, User as UserIcon } from "lucide-react"
+import { StatusBadge } from "@/components/shared/StatusBadge"
+import { Bell, Building2, ChevronDown, LogOut, User as UserIcon, X } from "lucide-react"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { initials } from "@/lib/utils"
 import { RoleBadge } from "@/components/shared/RoleBadge"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
+import { tenantsApi } from "@/lib/api/tenants"
+import type { TenantResponse } from "@/types/api"
+
+function TenantPicker() {
+  const tenantId = useTenantStore((s) => s.tenantId)
+  const tenantName = useTenantStore((s) => s.tenantName)
+  const setTenant = useTenantStore((s) => s.set)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["tenants-picker"],
+    queryFn: () => tenantsApi.list(0, 100),
+    staleTime: 60_000,
+  })
+
+  const tenants: TenantResponse[] = data?.content ?? []
+  const selected = tenants.find((t) => t.id === tenantId)
+  const displayName = selected?.name ?? tenantName
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="flex h-9 min-w-[200px] max-w-[260px] items-center justify-between gap-2 px-3"
+            disabled={isLoading}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {displayName ? (
+                <>
+                  <Avatar className="h-5 w-5 shrink-0">
+                    <AvatarFallback className="text-[9px]">
+                      {initials(displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate text-sm font-medium">{displayName}</span>
+                </>
+              ) : (
+                <>
+                  <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {isLoading ? "Loading…" : "Select tenant"}
+                  </span>
+                </>
+              )}
+            </div>
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[280px] max-h-[360px] overflow-y-auto">
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {tenants.length} tenant{tenants.length !== 1 ? "s" : ""}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {tenants.map((t) => (
+            <DropdownMenuItem
+              key={t.id}
+              onSelect={() => setTenant(t.id, t.name)}
+              className="flex items-center gap-3 py-2"
+            >
+              <Avatar className="h-7 w-7 shrink-0">
+                <AvatarFallback className="text-xs">{initials(t.name)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{t.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{t.slug}</p>
+              </div>
+              <StatusBadge status={t.status} />
+            </DropdownMenuItem>
+          ))}
+          {tenants.length === 0 && !isLoading && (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              No tenants found.
+            </div>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {tenantId && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          onClick={() => setTenant(null)}
+          aria-label="Clear tenant selection"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  )
+}
 
 export function TopBar() {
   const { user, logout } = useAuth()
-  const { role } = useRole()
+  const { role, isSuperAdmin } = useRole()
   const name = user?.email?.split("@")[0] ?? "User"
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
-      <div className="hidden flex-1 md:block">
-        <SearchInput placeholder="Search customers, products, plans…" />
-      </div>
+      {isSuperAdmin ? (
+        <div className="hidden flex-1 md:block">
+          <TenantPicker />
+        </div>
+      ) : (
+        <div className="hidden flex-1 md:block">
+          <SearchInput placeholder="Search customers, products, plans…" />
+        </div>
+      )}
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
+        {!isSuperAdmin && (
+          <Button variant="ghost" size="icon" aria-label="Notifications">
+            <Bell className="h-4 w-4" />
+          </Button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

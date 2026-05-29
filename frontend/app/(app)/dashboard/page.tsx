@@ -11,14 +11,14 @@ import {
   ClipboardList,
   DollarSign,
   Package,
+  PauseCircle,
   ScrollText,
   Send,
+  SkipForward,
   UserCircle2,
   Users,
   XCircle,
-  SkipForward,
   AlertCircle,
-  PauseCircle,
 } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/PageHeader"
@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { StatusBadge } from "@/components/shared/StatusBadge"
 import { Badge } from "@/components/ui/badge"
 import {
   formatCurrency,
@@ -41,6 +40,7 @@ import {
 } from "@/lib/utils"
 
 import { useAuthStore } from "@/store/authStore"
+import { useTenantStore } from "@/store/tenantStore"
 import { useRole } from "@/hooks/useRole"
 import { dashboardApi } from "@/lib/api/dashboard"
 
@@ -484,7 +484,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
         </Card>
       </div>
 
-      {/* Recent activity (admin only) */}
+      {/* Recent activity */}
       {showActivity && (
         <Card>
           <CardHeader className="flex-row items-center justify-between">
@@ -492,14 +492,12 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
               <CardTitle>Recent activity</CardTitle>
               <CardDescription>Last 10 audit log entries</CardDescription>
             </div>
-            {tenantId && (
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/audit-logs`}>
-                  View all
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            )}
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={`/audit-logs`}>
+                View all
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
             {activity.isLoading ? (
@@ -557,6 +555,9 @@ export default function DashboardPage() {
   const { isSuperAdmin } = useRole()
   const tenantId = user?.tenantId ?? null
 
+  const selectedTenantId = useTenantStore((s) => s.tenantId)
+  const selectedTenantName = useTenantStore((s) => s.tenantName)
+
   const greeting = (() => {
     const h = new Date().getHours()
     if (h < 12) return "Good morning"
@@ -565,20 +566,33 @@ export default function DashboardPage() {
   })()
   const displayName = user?.email?.split("@")[0] ?? "there"
 
+  const pageDescription = isSuperAdmin && selectedTenantName
+    ? `Viewing ${selectedTenantName}'s workspace.`
+    : "Here's what's happening across your billing workspace today."
+
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow={greeting}
         title={`Welcome back, ${displayName}.`}
-        description="Here's what's happening across your billing workspace today."
+        description={pageDescription}
         actions={
           isSuperAdmin ? (
-            <Button asChild>
-              <Link href="/tenants">
-                <Building2 className="h-4 w-4" />
-                Tenants
-              </Link>
-            </Button>
+            selectedTenantId ? (
+              <Button asChild>
+                <Link href={`/${selectedTenantId}/customers`}>
+                  <UserCircle2 className="h-4 w-4" />
+                  Go to workspace
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/tenants">
+                  <Building2 className="h-4 w-4" />
+                  Tenants
+                </Link>
+              </Button>
+            )
           ) : tenantId ? (
             <Button asChild>
               <Link href={`/${tenantId}/customers`}>
@@ -591,7 +605,11 @@ export default function DashboardPage() {
       />
 
       {isSuperAdmin ? (
-        <AdminDashboard />
+        selectedTenantId ? (
+          <TenantDashboard tenantId={selectedTenantId} />
+        ) : (
+          <AdminDashboard />
+        )
       ) : tenantId ? (
         <TenantDashboard tenantId={tenantId} />
       ) : (
