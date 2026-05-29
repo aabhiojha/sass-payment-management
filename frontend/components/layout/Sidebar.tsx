@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
-  Building2,
   Users,
   Mailbox,
   UserCircle2,
@@ -86,12 +85,6 @@ function buildNav(tenantId: number | null): {
             },
           ]
         : []),
-      {
-        href: "/tenants",
-        label: "Tenants",
-        icon: Building2,
-        superOnly: true,
-      },
       {
         href: "/audit-logs",
         label: "Audit log",
