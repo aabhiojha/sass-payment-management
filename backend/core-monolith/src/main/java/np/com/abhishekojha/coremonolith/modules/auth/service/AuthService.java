@@ -149,6 +149,7 @@ public class AuthService {
 
         UserEntity user = new UserEntity();
         user.setEmail(inv.getEmail());
+        user.setFullName(req.fullName());
         user.setPasswordHash(passwordEncoder.encode(req.password()));
         user.setRole(toUserRole(inv.getRole()));
         user.setTenant(inv.getTenant());
@@ -187,7 +188,7 @@ public class AuthService {
 
         String accessToken = jwtService.generateAccessToken(user);
 
-        return new AuthResponse(accessToken, rawRefreshToken, user.getId(), user.getEmail(), user.getRole().name());
+        return new AuthResponse(accessToken, rawRefreshToken, user.getId(), user.getEmail(), user.getRole().name(), user.getFullName());
     }
 
     private String sha256Hex(String input) {
