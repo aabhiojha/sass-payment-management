@@ -118,22 +118,15 @@ export default function ProductsPage({
                     <TableCell>
                       <Link
                         href={`/${tenantId}/products/${p.id}`}
-                        className="flex items-center gap-3 hover:opacity-90"
+                        className="font-medium text-foreground hover:underline"
                       >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[hsl(280_85%_60%)] text-primary-foreground">
-                          <Package className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground">
-                            {p.name}
-                          </p>
-                          {p.description && (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {p.description}
-                            </p>
-                          )}
-                        </div>
+                        {p.name}
                       </Link>
+                      {p.description && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {p.description}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">

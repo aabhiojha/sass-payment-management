@@ -35,7 +35,6 @@ import {
   formatCurrency,
   formatDate,
   timeAgo,
-  titleCase,
 } from "@/lib/utils"
 
 import { useAuthStore } from "@/store/authStore"
@@ -43,6 +42,7 @@ import { useTenantStore } from "@/store/tenantStore"
 import { useRole } from "@/hooks/useRole"
 import { dashboardApi } from "@/lib/api/dashboard"
 import { auditApi } from "@/lib/api/audit"
+import { describeEvent } from "@/lib/audit-helpers"
 
 /* ------------------------------------------------------------------ */
 /*  Stat card                                                          */
@@ -247,12 +247,7 @@ function AdminDashboard() {
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
-                        {a.actorEmail}{" "}
-                        <span className="font-normal text-muted-foreground">
-                          {a.action.toLowerCase().replace(/_/g, " ")}
-                        </span>{" "}
-                        {titleCase(a.resourceType)}
-                        {a.resourceId ? ` #${a.resourceId}` : ""}
+                        {describeEvent(a)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {timeAgo(a.createdAt)}
@@ -529,12 +524,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">
-                          {a.actorEmail}{" "}
-                          <span className="font-normal text-muted-foreground">
-                            {a.action.toLowerCase().replace("_", " ")}
-                          </span>{" "}
-                          {titleCase(a.resourceType)}
-                          {a.resourceId ? ` #${a.resourceId}` : ""}
+                          {describeEvent(a)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {timeAgo(a.createdAt)}
