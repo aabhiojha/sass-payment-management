@@ -13,11 +13,15 @@ import {
   Bell,
   ScrollText,
   Settings,
+  X,
 } from "lucide-react"
 import { Logo } from "./Logo"
 import { useAuthStore } from "@/store/authStore"
+import { useTenantStore } from "@/store/tenantStore"
 import { useRole } from "@/hooks/useRole"
-import { cn } from "@/lib/utils"
+import { cn, initials } from "@/lib/utils"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation"
 
 interface NavItem {
   href: string
@@ -32,7 +36,6 @@ function buildNav(tenantId: number | null): {
   workspace: NavItem[]
   admin: NavItem[]
 } {
-  const t = tenantId ?? 0
   const tenantBase = tenantId ? `/${tenantId}` : ""
   return {
     primary: [
@@ -130,16 +133,28 @@ function NavLink({
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const user = useAuthStore((s) => s.user)
   const { isAtLeast, isSuperAdmin } = useRole()
-  const tenantId = user?.tenantId ?? null
 
+  const storeTenantId = useTenantStore((s) => s.tenantId)
+  const storeTenantName = useTenantStore((s) => s.tenantName)
+  const clearTenant = useTenantStore((s) => s.set)
+
+  // For superadmin: use the store-selected tenant for workspace nav.
+  // For regular users: use their own tenantId from auth.
+  const tenantId = isSuperAdmin ? storeTenantId : (user?.tenantId ?? null)
   const nav = buildNav(tenantId)
 
   const isActive = (href: string) =>
     href === "/dashboard"
       ? pathname === "/dashboard"
       : pathname.startsWith(href)
+
+  const handleClearTenant = () => {
+    clearTenant(null)
+    router.push("/dashboard")
+  }
 
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-card/40 backdrop-blur md:flex">
@@ -154,30 +169,88 @@ export function Sidebar() {
           ))}
         </div>
 
-        {nav.workspace.length > 0 && (
-          <div className="space-y-1">
-            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-              Workspace
-            </p>
-            {nav.workspace.map((i) => (
-              <NavLink key={i.href} item={i} active={isActive(i.href)} />
-            ))}
-          </div>
-        )}
-
-        {nav.admin.length > 0 && (
+        {/* Superadmin global admin section */}
+        {isSuperAdmin && (
           <div className="space-y-1">
             <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
               Administration
             </p>
             {nav.admin.map((i) => {
               if (i.superOnly && !isSuperAdmin) return null
-              if (i.minRole && !isAtLeast(i.minRole)) return null
               return (
                 <NavLink key={i.href} item={i} active={isActive(i.href)} />
               )
             })}
           </div>
+        )}
+
+        {/* Superadmin: tenant workspace section when a tenant is selected */}
+        {isSuperAdmin && tenantId && (
+          <>
+            <div className="mx-3 border-t border-border" />
+            <div className="space-y-1">
+              <div className="flex items-center justify-between px-3 pb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar className="h-5 w-5 shrink-0">
+                    <AvatarFallback className="text-[9px]">
+                      {initials(storeTenantName ?? String(tenantId))}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                    {storeTenantName ?? `Tenant #${tenantId}`}
+                  </p>
+                </div>
+                <button
+                  onClick={handleClearTenant}
+                  className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground/60 hover:bg-secondary hover:text-muted-foreground transition-colors"
+                  aria-label="Stop viewing tenant"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+              {nav.workspace.map((i) => (
+                <NavLink key={i.href} item={i} active={isActive(i.href)} />
+              ))}
+              {/* Team + Invitations also available for superadmin */}
+              {[
+                { href: `/${tenantId}/users`, label: "Team", icon: Users },
+                { href: `/${tenantId}/invitations`, label: "Invitations", icon: Mailbox },
+              ].map((i) => (
+                <NavLink key={i.href} item={i} active={isActive(i.href)} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Regular tenant user workspace + admin nav */}
+        {!isSuperAdmin && (
+          <>
+            {nav.workspace.length > 0 && (
+              <div className="space-y-1">
+                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                  Workspace
+                </p>
+                {nav.workspace.map((i) => (
+                  <NavLink key={i.href} item={i} active={isActive(i.href)} />
+                ))}
+              </div>
+            )}
+
+            {nav.admin.length > 0 && (
+              <div className="space-y-1">
+                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                  Administration
+                </p>
+                {nav.admin.map((i) => {
+                  if (i.superOnly && !isSuperAdmin) return null
+                  if (i.minRole && !isAtLeast(i.minRole)) return null
+                  return (
+                    <NavLink key={i.href} item={i} active={isActive(i.href)} />
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
       </nav>
 
