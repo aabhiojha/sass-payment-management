@@ -129,7 +129,6 @@ export function TopBar() {
           <SearchInput placeholder="Search customers, products, plans…" />
         </div>
       )}
-
       <div className="ml-auto flex items-center gap-2">
         {!isSuperAdmin && (
           <Button variant="ghost" size="icon" aria-label="Notifications">

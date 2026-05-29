@@ -19,22 +19,22 @@ async function hydrateUser(res: AuthResponse) {
   setAuth(res.accessToken, {
     userId: res.userId,
     email: res.email,
+    fullName: res.fullName ?? null,
     role: res.role,
     tenantId: (res as { tenantId?: number | null }).tenantId ?? null,
   })
-  // Login response doesn't include tenantId — call /me to resolve it.
-  if (res.role !== "SUPER_ADMIN") {
-    try {
-      const me = await authApi.me()
-      setAuth(res.accessToken, {
-        userId: me.id,
-        email: me.email,
-        role: (me.role as AuthResponse["role"]) ?? res.role,
-        tenantId: me.tenantId ?? null,
-      })
-    } catch {
-      // /me failed — keep partial auth state; downstream guards handle it.
-    }
+  // Always call /me to resolve tenantId and latest fullName from the DB.
+  try {
+    const me = await authApi.me()
+    setAuth(res.accessToken, {
+      userId: me.id,
+      email: me.email,
+      fullName: me.fullName ?? null,
+      role: (me.role as AuthResponse["role"]) ?? res.role,
+      tenantId: me.tenantId ?? null,
+    })
+  } catch {
+    // /me failed — keep partial auth state; downstream guards handle it.
   }
 }
 

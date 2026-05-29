@@ -10,5 +10,8 @@ public record AcceptInviteRequest(
 
         @NotBlank
         @Size(min = 8, message = "Password must be at least 8 characters")
-        String password
+        String password,
+
+        @Size(max = 100)
+        String fullName
 ) {}

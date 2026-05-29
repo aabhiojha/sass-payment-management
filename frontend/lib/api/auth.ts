@@ -22,12 +22,15 @@ export const authApi = {
   logout: (refreshToken: string) =>
     api.post("/auth/logout", { refreshToken }).then((r) => r.data),
 
-  acceptInvite: (token: string, password: string) =>
+  acceptInvite: (token: string, password: string, fullName?: string) =>
     api
-      .post<AuthResponse>("/auth/accept-invite", { token, password })
+      .post<AuthResponse>("/auth/accept-invite", { token, password, fullName })
       .then((r) => r.data),
 
   me: () => api.get<UserResponse>("/me").then((r) => r.data),
+
+  updateProfile: (fullName: string) =>
+    api.patch<UserResponse>("/me", { fullName }).then((r) => r.data),
 
   validateInviteToken: (token: string) =>
     api

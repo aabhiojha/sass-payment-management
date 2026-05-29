@@ -6,6 +6,7 @@ export interface AuthResponse {
   userId: number
   email: string
   role: Role
+  fullName?: string | null
   tenantId?: number | null
 }
 
@@ -13,6 +14,7 @@ export interface UserResponse {
   id: number
   tenantId: number | null
   email: string
+  fullName: string | null
   role: Role
   status: "ACTIVE" | "DISABLED" | "PENDING"
   createdAt: string

@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "SaaS Payment Management API",
+                title = "PayFlow API",
                 version = "v1",
                 description = "Core monolith API for tenant management, authentication, and invitations"
         ),

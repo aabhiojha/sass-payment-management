@@ -7,6 +7,7 @@ import type { Role } from "@/types/api"
 export interface AuthUser {
   userId: number
   email: string
+  fullName: string | null
   role: Role
   tenantId: number | null
 }

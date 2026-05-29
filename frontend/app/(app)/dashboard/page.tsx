@@ -564,7 +564,11 @@ export default function DashboardPage() {
     if (h < 18) return "Good afternoon"
     return "Good evening"
   })()
-  const displayName = user?.email?.split("@")[0] ?? "there"
+  const displayName = user?.fullName ?? user?.email?.split("@")[0] ?? "there"
+
+  const pageDescription = isSuperAdmin && selectedTenantName
+    ? `Viewing ${selectedTenantName}'s workspace.`
+    : "Here's what's happening across your billing workspace today."
 
   const pageDescription = isSuperAdmin && selectedTenantName
     ? `Viewing ${selectedTenantName}'s workspace.`
