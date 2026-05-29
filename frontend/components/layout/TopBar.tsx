@@ -20,6 +20,7 @@ import { initials } from "@/lib/utils"
 import { RoleBadge } from "@/components/shared/RoleBadge"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
+import { useRouter, usePathname } from "next/navigation"
 import { tenantsApi } from "@/lib/api/tenants"
 import type { TenantResponse } from "@/types/api"
 
@@ -27,6 +28,23 @@ function TenantPicker() {
   const tenantId = useTenantStore((s) => s.tenantId)
   const tenantName = useTenantStore((s) => s.tenantName)
   const setTenant = useTenantStore((s) => s.set)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleSelect = (t: TenantResponse) => {
+    setTenant(t.id, t.name)
+    // If on a tenant-scoped page, navigate to same section for new tenant
+    const sectionMatch = pathname.match(/^\/\d+\/([^/]+)/)
+    if (sectionMatch) {
+      router.push(`/${t.id}/${sectionMatch[1]}`)
+    }
+  }
+
+  const handleClear = () => {
+    setTenant(null)
+    // Always go back to global dashboard when clearing
+    router.push("/dashboard")
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["tenants-picker"],
@@ -77,7 +95,7 @@ function TenantPicker() {
           {tenants.map((t) => (
             <DropdownMenuItem
               key={t.id}
-              onSelect={() => setTenant(t.id, t.name)}
+              onSelect={() => handleSelect(t)}
               className="flex items-center gap-3 py-2"
             >
               <Avatar className="h-7 w-7 shrink-0">
@@ -103,7 +121,7 @@ function TenantPicker() {
           variant="ghost"
           size="icon"
           className="h-9 w-9 shrink-0"
-          onClick={() => setTenant(null)}
+          onClick={handleClear}
           aria-label="Clear tenant selection"
         >
           <X className="h-4 w-4" />

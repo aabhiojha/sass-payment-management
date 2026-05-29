@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select"
 
 import { plansApi } from "@/lib/api/plans"
-import { formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate } from "@/lib/utils"
 
 export default function PlansPage({
   params,
@@ -72,7 +72,7 @@ export default function PlansPage({
 
       <Card>
         {isLoading ? (
-          <TableSkeleton rows={6} cols={5} />
+          <TableSkeleton rows={6} cols={6} />
         ) : rows.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
@@ -86,9 +86,10 @@ export default function PlansPage({
                 <TableRow>
                   <TableHead>Customer</TableHead>
                   <TableHead>Product</TableHead>
-                  <TableHead>Period</TableHead>
+                  <TableHead>Tier</TableHead>
+                  <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Created</TableHead>
+                  <TableHead className="text-right">Started</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -111,13 +112,16 @@ export default function PlansPage({
                       </Link>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(p.startsAt)} → {formatDate(p.endsAt)}
+                      {p.productPlanName ?? <span className="italic">Default</span>}
+                    </TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {formatCurrency(p.amount, p.currency)}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={p.status} />
                     </TableCell>
                     <TableCell className="text-right text-sm text-muted-foreground">
-                      {formatDate(p.createdAt)}
+                      {formatDate(p.startsAt)}
                     </TableCell>
                   </TableRow>
                 ))}

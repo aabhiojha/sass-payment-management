@@ -4,11 +4,13 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
+import np.com.abhishekojha.coremonolith.common.enums.CustomerProductStatus;
 import np.com.abhishekojha.coremonolith.common.enums.ProductStatus;
 import np.com.abhishekojha.coremonolith.common.enums.UserRole;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
+import np.com.abhishekojha.coremonolith.modules.customerproduct.repository.CustomerProductRepository;
 import np.com.abhishekojha.coremonolith.modules.product.dto.CreateProductRequest;
 import np.com.abhishekojha.coremonolith.modules.product.dto.ProductResponse;
 import np.com.abhishekojha.coremonolith.modules.product.dto.UpdateProductRequest;
@@ -31,6 +33,7 @@ import java.util.Map;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CustomerProductRepository customerProductRepository;
     private final TenantRepository tenantRepository;
     private final TenantAccessGuard guard;
     private final AuditService auditService;
@@ -87,7 +90,16 @@ public class ProductService {
         if (req.price() != null) product.setPrice(req.price());
         if (req.currency() != null) product.setCurrency(req.currency());
         if (req.billingCadence() != null) product.setBillingCadence(req.billingCadence());
-        if (req.status() != null) product.setStatus(req.status());
+        if (req.status() != null) {
+            ProductStatus prev = product.getStatus();
+            product.setStatus(req.status());
+            // Pause all ACTIVE customer plans when product is deactivated
+            if (prev == ProductStatus.ACTIVE && req.status() == ProductStatus.INACTIVE) {
+                customerProductRepository
+                        .findAllByProductIdAndStatusAndDeletedAtIsNull(productId, CustomerProductStatus.ACTIVE)
+                        .forEach(cp -> cp.setStatus(CustomerProductStatus.PAUSED));
+            }
+        }
 
         auditService.log(AuditAction.UPDATE, "PRODUCT", productId, oldState, ProductResponse.from(product));
         return ProductResponse.from(product);
@@ -99,6 +111,11 @@ public class ProductService {
         product.setStatus(ProductStatus.DELETED);
         product.setDeletedAt(Instant.now());
         product.setDeletedBy(guard.currentUser());
+
+        // Cancel all non-cancelled customer plans for this product
+        customerProductRepository
+                .findAllByProductIdAndStatusNotAndDeletedAtIsNull(productId, CustomerProductStatus.CANCELLED)
+                .forEach(cp -> cp.setStatus(CustomerProductStatus.CANCELLED));
 
         auditService.log(AuditAction.DELETE, "PRODUCT", productId,
                 Map.of("name", product.getName(), "status", product.getStatus().name()), null);

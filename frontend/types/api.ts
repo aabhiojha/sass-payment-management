@@ -61,6 +61,18 @@ export interface ProductResponse {
   updatedAt: string
 }
 
+export interface ProductPlanResponse {
+  id: number
+  tenantId: number
+  productId: number
+  name: string
+  price: number
+  currency: string
+  billingCadence: BillingCadence
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CustomerProductResponse {
   id: number
   tenantId: number
@@ -72,6 +84,10 @@ export interface CustomerProductResponse {
   startsAt: string
   endsAt: string | null
   notes: string | null
+  productPlanId: number | null
+  productPlanName: string | null
+  amount: number
+  currency: string
   createdAt: string
   updatedAt: string
 }
@@ -179,9 +195,18 @@ export interface CreateProductRequest {
 
 export interface AssignProductRequest {
   productId: number
+  planId?: number | null
+  customPrice?: number | null
   startsAt?: string
   endsAt?: string
   notes?: string
+}
+
+export interface CreateProductPlanRequest {
+  name: string
+  price: number
+  currency: string
+  billingCadence: BillingCadence
 }
 
 // Dashboard types

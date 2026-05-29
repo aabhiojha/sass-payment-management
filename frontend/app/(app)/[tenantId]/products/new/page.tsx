@@ -25,14 +25,13 @@ import {
 import { productsApi } from "@/lib/api/products"
 import { friendlyError } from "@/lib/axios"
 
+const CURRENCIES = ["USD", "NPR"] as const
+
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().optional(),
   price: z.coerce.number().positive("Price must be greater than 0"),
-  currency: z
-    .string()
-    .length(3, "Use a 3-letter currency code")
-    .toUpperCase(),
+  currency: z.enum(CURRENCIES),
   billingCadence: z.enum(["WEEKLY", "MONTHLY", "QUARTERLY", "ANNUALLY"]),
 })
 type Values = z.infer<typeof schema>
@@ -124,13 +123,18 @@ export default function NewProductPage({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Input
-                  id="currency"
-                  maxLength={3}
-                  placeholder="USD"
-                  className="uppercase"
-                  {...form.register("currency")}
-                />
+                <Select
+                  defaultValue="USD"
+                  onValueChange={(v) => form.setValue("currency", v as typeof CURRENCIES[number])}
+                >
+                  <SelectTrigger id="currency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="NPR">NPR</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">

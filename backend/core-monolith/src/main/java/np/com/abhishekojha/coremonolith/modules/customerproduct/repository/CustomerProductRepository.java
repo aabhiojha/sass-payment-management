@@ -42,4 +42,10 @@ public interface CustomerProductRepository extends JpaRepository<CustomerProduct
 
     List<CustomerProductEntity> findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBefore(
             Long tenantId, CustomerProductStatus status, Instant before);
+
+    List<CustomerProductEntity> findAllByProductIdAndStatusAndDeletedAtIsNull(
+            Long productId, CustomerProductStatus status);
+
+    List<CustomerProductEntity> findAllByProductIdAndStatusNotAndDeletedAtIsNull(
+            Long productId, CustomerProductStatus excludedStatus);
 }

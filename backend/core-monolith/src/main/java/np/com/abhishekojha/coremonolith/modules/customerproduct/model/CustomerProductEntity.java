@@ -19,10 +19,12 @@ import np.com.abhishekojha.coremonolith.modules.audit.model.BaseAuditEntity;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
 import np.com.abhishekojha.coremonolith.modules.customer.model.CustomerEntity;
 import np.com.abhishekojha.coremonolith.modules.product.model.ProductEntity;
+import np.com.abhishekojha.coremonolith.modules.product.model.ProductPlanEntity;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
@@ -61,6 +63,13 @@ public class CustomerProductEntity extends BaseAuditEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_plan_id")
+    private ProductPlanEntity productPlan;
+
+    @Column(name = "custom_price", precision = 19, scale = 4)
+    private BigDecimal customPrice;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;

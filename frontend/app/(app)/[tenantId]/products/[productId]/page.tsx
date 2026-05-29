@@ -5,16 +5,21 @@ import { useRouter } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import {
   ArrowLeft,
   Ban,
   Calendar,
   CircleDollarSign,
   Clock,
+  Layers,
   MoreHorizontal,
   Package,
   PauseCircle,
   Play,
+  Plus,
   Power,
   Repeat,
   Trash2,
@@ -24,7 +29,8 @@ import {
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Table,
   TableBody,
@@ -47,6 +53,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -55,9 +68,11 @@ import { TableSkeleton } from "@/components/shared/TableSkeleton"
 
 import { productsApi } from "@/lib/api/products"
 import { plansApi } from "@/lib/api/plans"
+import { productPlansApi } from "@/lib/api/product-plans"
 import { friendlyError } from "@/lib/axios"
-import { cn, formatCurrency, formatDate, initials, titleCase } from "@/lib/utils"
+import { cn, formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { useRole } from "@/hooks/useRole"
+import type { BillingCadence } from "@/types/api"
 
 const CADENCE_LABEL: Record<string, string> = {
   WEEKLY: "Weekly",
@@ -81,6 +96,16 @@ const PLAN_FILTERS: { label: string; value: "ALL" | PlanStatus }[] = [
   { label: "Cancelled", value: "CANCELLED" },
 ]
 
+const CURRENCIES = ["USD", "NPR"] as const
+
+const pricingTierSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  price: z.coerce.number().min(0, "Price must be non-negative"),
+  currency: z.enum(CURRENCIES),
+  billingCadence: z.enum(["WEEKLY", "MONTHLY", "QUARTERLY", "ANNUALLY"]),
+})
+type PricingTierValues = z.infer<typeof pricingTierSchema>
+
 export default function ProductDetailPage({
   params,
 }: {
@@ -94,6 +119,9 @@ export default function ProductDetailPage({
   const canDelete = isAtLeast("TENANT_ADMIN")
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [filter, setFilter] = useState<"ALL" | PlanStatus>("ALL")
+  const [activeTab, setActiveTab] = useState<"customers" | "tiers">("customers")
+  const [addTierOpen, setAddTierOpen] = useState(false)
+  const [confirmDeleteTier, setConfirmDeleteTier] = useState<number | null>(null)
 
   const product = useQuery({
     queryKey: ["products", tenantId, productId],
@@ -103,6 +131,11 @@ export default function ProductDetailPage({
   const assignments = useQuery({
     queryKey: ["products", tenantId, productId, "customers"],
     queryFn: () => plansApi.listForProduct(tenantId, productId, 0, 100),
+  })
+
+  const pricingTiers = useQuery({
+    queryKey: ["product-plans", tenantId, productId],
+    queryFn: () => productPlansApi.list(tenantId, productId),
   })
 
   const toggle = useMutation({
@@ -147,6 +180,44 @@ export default function ProductDetailPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
+  const tierForm = useForm<PricingTierValues>({
+    resolver: zodResolver(pricingTierSchema),
+    defaultValues: {
+      name: "",
+      price: undefined,
+      currency: (CURRENCIES.includes(product.data?.currency as typeof CURRENCIES[number]) ? product.data?.currency : "USD") as typeof CURRENCIES[number],
+      billingCadence: product.data?.billingCadence ?? "MONTHLY",
+    },
+  })
+
+  const createTier = useMutation({
+    mutationFn: (data: PricingTierValues) =>
+      productPlansApi.create(tenantId, productId, {
+        name: data.name,
+        price: data.price,
+        currency: data.currency,
+        billingCadence: data.billingCadence as BillingCadence,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["product-plans", tenantId, productId] })
+      toast.success("Pricing tier created")
+      setAddTierOpen(false)
+      tierForm.reset()
+    },
+    onError: (e) => toast.error(friendlyError(e)),
+  })
+
+  const deleteTier = useMutation({
+    mutationFn: (planId: number) =>
+      productPlansApi.delete(tenantId, productId, planId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["product-plans", tenantId, productId] })
+      toast.success("Pricing tier deleted")
+      setConfirmDeleteTier(null)
+    },
+    onError: (e) => toast.error(friendlyError(e)),
+  })
+
   const p = product.data
   const planRows = assignments.data?.content ?? []
   const filteredPlans = useMemo(
@@ -162,20 +233,19 @@ export default function ProductDetailPage({
       PlanStatus,
       number
     >
-    let mrrCents = 0 // recurring per-period revenue from active plans
     for (const plan of planRows) {
       counts[plan.status as PlanStatus] =
         (counts[plan.status as PlanStatus] ?? 0) + 1
     }
-    if (p) {
-      mrrCents = counts.ACTIVE * Number(p.price)
-    }
+    const activePlans = planRows.filter((pl) => pl.status === "ACTIVE")
+    const recurring = activePlans.reduce((sum, pl) => sum + Number(pl.amount ?? 0), 0)
     return {
       total: planRows.length,
       active: counts.ACTIVE ?? 0,
       paused: counts.PAUSED ?? 0,
       cancelled: counts.CANCELLED ?? 0,
-      recurring: mrrCents,
+      recurring,
+      currency: p?.currency ?? "USD",
     }
   }, [planRows, p])
 
@@ -262,7 +332,7 @@ export default function ProductDetailPage({
                 </div>
                 <div className="rounded-2xl border border-border bg-card/60 px-6 py-5 text-right shadow-sm lg:min-w-[220px]">
                   <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                    Price
+                    Base price
                   </p>
                   <p className="mt-1 font-display text-3xl font-semibold tracking-tight">
                     {formatCurrency(p.price, p.currency)}
@@ -304,174 +374,380 @@ export default function ProductDetailPage({
               label={`Recurring (${
                 CADENCE_NOUN[p.billingCadence] ?? "cycle"
               })`}
-              value={formatCurrency(stats.recurring, p.currency)}
-              hint="From active plans"
+              value={formatCurrency(stats.recurring, stats.currency)}
+              hint="From active subscriptions"
             />
           </div>
 
-          {/* Assigned customers */}
-          <Card>
-            <CardHeader className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-base">Assigned customers</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Everyone currently subscribed to this product and the plan
-                  they hold.
-                </p>
-              </div>
-              <Select
-                value={filter}
-                onValueChange={(v) => setFilter(v as typeof filter)}
-              >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PLAN_FILTERS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            {assignments.isLoading ? (
-              <TableSkeleton rows={4} cols={5} />
-            ) : filteredPlans.length === 0 ? (
-              <EmptyState
-                icon={Users}
-                title={
-                  planRows.length === 0
-                    ? "No customers yet"
-                    : "No plans match this filter"
-                }
-                description={
-                  planRows.length === 0
-                    ? "Once you assign this product to a customer, their plan will show up here."
-                    : "Try selecting a different status above."
-                }
-              />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Plan period</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPlans.map((plan) => (
-                    <TableRow key={plan.id}>
-                      <TableCell>
-                        <Link
-                          href={`/${tenantId}/customers/${plan.customerId}`}
-                          className="flex items-center gap-3 hover:opacity-90"
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-[10px]">
-                              {initials(plan.customerName)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-foreground">
-                              {plan.customerName}
+          {/* Tabs: Customers | Pricing tiers */}
+          <div className="flex gap-1 border-b border-border">
+            <button
+              onClick={() => setActiveTab("customers")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                activeTab === "customers"
+                  ? "border-b-2 border-primary text-foreground -mb-px"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Users className="h-4 w-4" />
+              Assigned customers
+              {planRows.length > 0 && (
+                <span className="ml-1 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium">
+                  {planRows.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("tiers")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                activeTab === "tiers"
+                  ? "border-b-2 border-primary text-foreground -mb-px"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Layers className="h-4 w-4" />
+              Pricing tiers
+              {(pricingTiers.data?.length ?? 0) > 0 && (
+                <span className="ml-1 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium">
+                  {pricingTiers.data?.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Assigned customers tab */}
+          {activeTab === "customers" && (
+            <Card>
+              <CardHeader className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-base">Assigned customers</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Everyone currently subscribed to this product.
+                  </p>
+                </div>
+                <Select
+                  value={filter}
+                  onValueChange={(v) => setFilter(v as typeof filter)}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLAN_FILTERS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardHeader>
+              {assignments.isLoading ? (
+                <TableSkeleton rows={4} cols={5} />
+              ) : filteredPlans.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title={
+                    planRows.length === 0
+                      ? "No customers yet"
+                      : "No plans match this filter"
+                  }
+                  description={
+                    planRows.length === 0
+                      ? "Once you assign this product to a customer, their plan will show up here."
+                      : "Try selecting a different status above."
+                  }
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Tier / Price</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPlans.map((plan) => (
+                      <TableRow key={plan.id}>
+                        <TableCell>
+                          <Link
+                            href={`/${tenantId}/customers/${plan.customerId}`}
+                            className="font-medium text-foreground hover:underline"
+                          >
+                            {plan.customerName}
+                          </Link>
+                          {plan.notes && (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {plan.notes}
                             </p>
-                            {plan.notes && (
-                              <p className="truncate text-xs text-muted-foreground">
-                                {plan.notes}
-                              </p>
-                            )}
-                          </div>
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        <div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <p className="font-medium">
+                            {formatCurrency(plan.amount, plan.currency)}
+                          </p>
+                          {plan.productPlanName && (
+                            <p className="text-xs text-muted-foreground">
+                              {plan.productPlanName}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
                           {formatDate(plan.startsAt)} →{" "}
                           {plan.endsAt ? formatDate(plan.endsAt) : "Open-ended"}
-                        </div>
-                        <p className="text-xs">
-                          {formatCurrency(p.price, p.currency)} /{" "}
-                          {CADENCE_NOUN[p.billingCadence] ?? "cycle"}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={plan.status} />
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(plan.createdAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/${tenantId}/customers/${plan.customerId}`}
-                              >
-                                <Users className="h-4 w-4" /> View customer
-                              </Link>
-                            </DropdownMenuItem>
-                            {plan.status === "ACTIVE" && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  planStatusMut.mutate({
-                                    customerId: plan.customerId,
-                                    cpId: plan.id,
-                                    status: "PAUSED",
-                                  })
-                                }
-                              >
-                                <PauseCircle className="h-4 w-4" /> Pause plan
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={plan.status} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href={`/${tenantId}/customers/${plan.customerId}`}
+                                >
+                                  <Users className="h-4 w-4" /> View customer
+                                </Link>
                               </DropdownMenuItem>
-                            )}
-                            {plan.status === "PAUSED" && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  planStatusMut.mutate({
-                                    customerId: plan.customerId,
-                                    cpId: plan.id,
-                                    status: "ACTIVE",
-                                  })
-                                }
-                              >
-                                <Play className="h-4 w-4" /> Resume plan
-                              </DropdownMenuItem>
-                            )}
-                            {plan.status !== "CANCELLED" && (
-                              <>
-                                <DropdownMenuSeparator />
+                              {plan.status === "ACTIVE" && (
                                 <DropdownMenuItem
-                                  destructive
                                   onClick={() =>
                                     planStatusMut.mutate({
                                       customerId: plan.customerId,
                                       cpId: plan.id,
-                                      status: "CANCELLED",
+                                      status: "PAUSED",
                                     })
                                   }
                                 >
-                                  <Ban className="h-4 w-4" /> Cancel plan
+                                  <PauseCircle className="h-4 w-4" /> Pause plan
                                 </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                              )}
+                              {plan.status === "PAUSED" && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    planStatusMut.mutate({
+                                      customerId: plan.customerId,
+                                      cpId: plan.id,
+                                      status: "ACTIVE",
+                                    })
+                                  }
+                                >
+                                  <Play className="h-4 w-4" /> Resume plan
+                                </DropdownMenuItem>
+                              )}
+                              {plan.status !== "CANCELLED" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    destructive
+                                    onClick={() =>
+                                      planStatusMut.mutate({
+                                        customerId: plan.customerId,
+                                        cpId: plan.id,
+                                        status: "CANCELLED",
+                                      })
+                                    }
+                                  >
+                                    <Ban className="h-4 w-4" /> Cancel plan
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
+          )}
+
+          {/* Pricing tiers tab */}
+          {activeTab === "tiers" && (
+            <Card>
+              <CardHeader className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-base">Pricing tiers</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Named tiers customers can be assigned to. Base price is used when no tier is set.
+                  </p>
+                </div>
+                {canDelete && (
+                  <Button size="sm" onClick={() => setAddTierOpen(true)}>
+                    <Plus className="h-4 w-4" /> Add tier
+                  </Button>
+                )}
+              </CardHeader>
+              {pricingTiers.isLoading ? (
+                <TableSkeleton rows={3} cols={4} />
+              ) : (pricingTiers.data?.length ?? 0) === 0 ? (
+                <EmptyState
+                  icon={Layers}
+                  title="No pricing tiers"
+                  description="Add tiers to offer different prices (e.g. Starter, Pro, Enterprise)."
+                  action={
+                    canDelete ? (
+                      <Button size="sm" onClick={() => setAddTierOpen(true)}>
+                        <Plus className="h-4 w-4" /> Add tier
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Cadence</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {pricingTiers.data?.map((tier) => (
+                      <TableRow key={tier.id}>
+                        <TableCell className="font-medium">{tier.name}</TableCell>
+                        <TableCell>
+                          {formatCurrency(tier.price, tier.currency)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {CADENCE_LABEL[tier.billingCadence] ?? titleCase(tier.billingCadence)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setConfirmDeleteTier(tier.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </Card>
+          )}
         </>
       )}
+
+      {/* Add pricing tier dialog */}
+      <Dialog open={addTierOpen} onOpenChange={setAddTierOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Add pricing tier</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={tierForm.handleSubmit((v) => createTier.mutate(v as PricingTierValues))}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="tierName">Name</Label>
+              <Input
+                id="tierName"
+                placeholder="e.g. Starter, Pro, Enterprise"
+                {...tierForm.register("name")}
+              />
+              {tierForm.formState.errors.name && (
+                <p className="text-xs text-destructive">
+                  {tierForm.formState.errors.name.message}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="tierPrice">Price</Label>
+                <Input
+                  id="tierPrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  {...tierForm.register("price")}
+                />
+                {tierForm.formState.errors.price && (
+                  <p className="text-xs text-destructive">
+                    {tierForm.formState.errors.price.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tierCurrency">Currency</Label>
+                <Select
+                  defaultValue={p?.currency ?? "USD"}
+                  onValueChange={(v) =>
+                    tierForm.setValue("currency", v as typeof CURRENCIES[number])
+                  }
+                >
+                  <SelectTrigger id="tierCurrency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="NPR">NPR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tierCadence">Billing cadence</Label>
+              <Select
+                defaultValue={p?.billingCadence ?? "MONTHLY"}
+                onValueChange={(v) =>
+                  tierForm.setValue("billingCadence", v as PricingTierValues["billingCadence"])
+                }
+              >
+                <SelectTrigger id="tierCadence">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                  <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                  <SelectItem value="ANNUALLY">Annually</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setAddTierOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" loading={createTier.isPending}>
+                Create tier
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirmDeleteTier !== null}
+        onOpenChange={(open) => !open && setConfirmDeleteTier(null)}
+        title="Delete pricing tier?"
+        description="This only removes the tier definition. Existing customer assignments won't be affected, but their price will fall back to the product's base price."
+        confirmText="Delete tier"
+        destructive
+        loading={deleteTier.isPending}
+        onConfirm={() => confirmDeleteTier && deleteTier.mutate(confirmDeleteTier)}
+      />
 
       <ConfirmDialog
         open={confirmDelete}
@@ -537,7 +813,6 @@ function Stat({
 function ProductDetailSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Hero card skeleton */}
       <Card className="relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/40 via-[hsl(265_85%_65%)]/40 to-[hsl(290_85%_60%)]/40" />
         <CardContent className="p-6 sm:p-8">
@@ -550,7 +825,6 @@ function ProductDetailSkeleton() {
                   <Skeleton className="h-5 w-16 rounded-full" />
                 </div>
                 <Skeleton className="h-4 w-72" />
-                <Skeleton className="h-4 w-56" />
                 <div className="flex gap-4 pt-1">
                   <Skeleton className="h-3 w-24" />
                   <Skeleton className="h-3 w-28" />
@@ -565,8 +839,6 @@ function ProductDetailSkeleton() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Stat tiles skeleton */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="p-5">
@@ -575,21 +847,14 @@ function ProductDetailSkeleton() {
               <div className="min-w-0 flex-1 space-y-2">
                 <Skeleton className="h-3 w-20" />
                 <Skeleton className="h-6 w-16" />
-                <Skeleton className="h-3 w-24" />
               </div>
             </div>
           </Card>
         ))}
       </div>
-
-      {/* Assigned-customers table skeleton */}
       <Card>
-        <CardHeader className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-44" />
-            <Skeleton className="h-3 w-72" />
-          </div>
-          <Skeleton className="h-9 w-[150px]" />
+        <CardHeader className="border-b border-border pb-4">
+          <Skeleton className="h-5 w-44" />
         </CardHeader>
         <TableSkeleton rows={4} cols={5} />
       </Card>

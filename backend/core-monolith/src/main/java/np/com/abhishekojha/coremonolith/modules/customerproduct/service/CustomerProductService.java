@@ -16,6 +16,8 @@ import np.com.abhishekojha.coremonolith.modules.customerproduct.dto.UpdateCustom
 import np.com.abhishekojha.coremonolith.modules.customerproduct.model.CustomerProductEntity;
 import np.com.abhishekojha.coremonolith.modules.customerproduct.repository.CustomerProductRepository;
 import np.com.abhishekojha.coremonolith.modules.product.model.ProductEntity;
+import np.com.abhishekojha.coremonolith.modules.product.model.ProductPlanEntity;
+import np.com.abhishekojha.coremonolith.modules.product.repository.ProductPlanRepository;
 import np.com.abhishekojha.coremonolith.modules.product.repository.ProductRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
 import np.com.abhishekojha.coremonolith.modules.tenant.repository.TenantRepository;
@@ -38,6 +40,7 @@ public class CustomerProductService {
     private final CustomerProductRepository customerProductRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final ProductPlanRepository productPlanRepository;
     private final TenantRepository tenantRepository;
     private final TenantAccessGuard guard;
     private final AuditService auditService;
@@ -55,6 +58,15 @@ public class CustomerProductService {
         cp.setTenant(tenant);
         cp.setCustomer(customer);
         cp.setProduct(product);
+
+        if (req.planId() != null) {
+            ProductPlanEntity plan = productPlanRepository
+                    .findByIdAndProductIdAndTenantId(req.planId(), req.productId(), tenantId)
+                    .orElseThrow(() -> new EntityNotFoundException("Product plan not found: " + req.planId()));
+            cp.setProductPlan(plan);
+        }
+        if (req.customPrice() != null) cp.setCustomPrice(req.customPrice());
+
         if (req.startsAt() != null) cp.setStartsAt(req.startsAt());
         if (req.endsAt() != null) {
             if (req.endsAt().isBefore(cp.getStartsAt())) {
