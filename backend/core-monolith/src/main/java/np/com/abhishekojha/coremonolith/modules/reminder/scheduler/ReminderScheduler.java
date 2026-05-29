@@ -23,7 +23,7 @@ public class ReminderScheduler {
         tenantRepository.findAllByStatusAndDeletedAtIsNull(TenantStatus.ACTIVE)
                 .forEach(tenant -> {
                     try {
-                        int count = reminderService.trigger(tenant.getId()).size();
+                        int count = reminderService.triggerForTenant(tenant).size();
                         if (count > 0) {
                             log.info("Sent {} reminder(s) for tenant={}", count, tenant.getId());
                         }

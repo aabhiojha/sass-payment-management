@@ -19,4 +19,7 @@ public interface ReminderRepository extends JpaRepository<ReminderEntity, Long> 
             Long tenantId, ReminderStatus status, Instant from, Instant to);
 
     long countByStatus(ReminderStatus status);
+
+    boolean existsByCustomerProductIdAndStatusAndCreatedAtAfter(
+            Long customerProductId, ReminderStatus status, Instant after);
 }
