@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 import { auditApi, type AuditFilter } from "@/lib/api/audit"
+import { describeEvent, describeChange, RESOURCE_LABELS } from "@/lib/audit-helpers"
 import { cn, formatDateTime, titleCase } from "@/lib/utils"
 import { useRole } from "@/hooks/useRole"
 import { useAuthStore } from "@/store/authStore"
@@ -339,49 +340,32 @@ export default function AuditLogsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>When</TableHead>
-                    <TableHead>Actor</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Resource</TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead className="w-36">When</TableHead>
+                    <TableHead>Event</TableHead>
+                    <TableHead>Change</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((a) => {
                     const Icon = ACTION_ICON[a.action] ?? FileEdit
                     const variant = ACTION_VARIANT[a.action] ?? "muted"
+                    const change = describeChange(a)
                     return (
                       <TableRow key={a.id}>
-                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground align-top pt-3.5">
                           {formatDateTime(a.createdAt)}
                         </TableCell>
-                        <TableCell className="text-sm">{a.actorEmail}</TableCell>
-                        <TableCell>
-                          <Badge variant={variant}>
-                            <Icon className="h-3 w-3" />
-                            {titleCase(a.action)}
-                          </Badge>
+                        <TableCell className="align-top pt-3">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={variant}>
+                              <Icon className="h-3 w-3" />
+                              {titleCase(a.action)}
+                            </Badge>
+                            <span className="text-sm">{describeEvent(a)}</span>
+                          </div>
                         </TableCell>
-                        <TableCell className="text-sm">
-                          {titleCase(a.resourceType)}{" "}
-                          {a.resourceId != null && (
-                            <span className="text-xs text-muted-foreground">#{a.resourceId}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-md">
-                          {a.newValue || a.oldValue ? (
-                            <details className="group text-xs">
-                              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                                View change
-                              </summary>
-                              <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-secondary/40 p-2 text-[11px] leading-relaxed text-foreground scrollbar-thin">
-                                {a.oldValue && `- ${a.oldValue}\n`}
-                                {a.newValue && `+ ${a.newValue}`}
-                              </pre>
-                            </details>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                        <TableCell className="text-xs text-muted-foreground align-top pt-3.5 max-w-xs">
+                          {change ?? <span className="text-muted-foreground/40">—</span>}
                         </TableCell>
                       </TableRow>
                     )
@@ -395,8 +379,9 @@ export default function AuditLogsPage() {
               {rows.map((a) => {
                 const Icon = ACTION_ICON[a.action] ?? FileEdit
                 const variant = ACTION_VARIANT[a.action] ?? "muted"
+                const change = describeChange(a)
                 return (
-                  <div key={a.id} className="rounded-lg border border-border p-3 space-y-2">
+                  <div key={a.id} className="rounded-lg border border-border p-3 space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant={variant}>
                         <Icon className="h-3 w-3" />
@@ -406,23 +391,9 @@ export default function AuditLogsPage() {
                         {formatDateTime(a.createdAt)}
                       </span>
                     </div>
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">Actor: </span>
-                      <span className="font-medium break-all">{a.actorEmail}</span>
-                    </div>
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">Resource: </span>
-                      {titleCase(a.resourceType)}
-                      {a.resourceId != null && <span className="text-muted-foreground"> #{a.resourceId}</span>}
-                    </div>
-                    {(a.newValue || a.oldValue) && (
-                      <details className="text-xs">
-                        <summary className="cursor-pointer text-muted-foreground hover:text-foreground">View change</summary>
-                        <pre className="mt-1 overflow-x-auto rounded-md border border-border bg-secondary/40 p-2 text-[10px] leading-relaxed text-foreground scrollbar-thin">
-                          {a.oldValue && `- ${a.oldValue}\n`}
-                          {a.newValue && `+ ${a.newValue}`}
-                        </pre>
-                      </details>
+                    <p className="text-sm">{describeEvent(a)}</p>
+                    {change && (
+                      <p className="text-xs text-muted-foreground">{change}</p>
                     )}
                   </div>
                 )

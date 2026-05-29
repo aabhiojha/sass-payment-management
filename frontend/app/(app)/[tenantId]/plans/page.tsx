@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Pagination } from "@/components/shared/Pagination"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { TableSkeleton } from "@/components/shared/TableSkeleton"
@@ -29,7 +28,7 @@ import {
 } from "@/components/ui/select"
 
 import { plansApi } from "@/lib/api/plans"
-import { formatDate, initials } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 
 export default function PlansPage({
   params,
@@ -98,14 +97,9 @@ export default function PlansPage({
                     <TableCell>
                       <Link
                         href={`/${tenantId}/customers/${p.customerId}`}
-                        className="flex items-center gap-3"
+                        className="font-medium text-foreground hover:underline"
                       >
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-[10px]">
-                            {initials(p.customerName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{p.customerName}</span>
+                        {p.customerName}
                       </Link>
                     </TableCell>
                     <TableCell>
