@@ -73,6 +73,16 @@ function buildNav(tenantId: number | null): {
             },
           ]
         : []),
+      ...(tenantId
+        ? [
+            {
+              href: `${tenantBase}/audit-logs`,
+              label: "Audit log",
+              icon: ScrollText,
+              minRole: "TENANT_ADMIN" as const,
+            },
+          ]
+        : []),
       {
         href: "/tenants",
         label: "Tenants",
