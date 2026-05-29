@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
+import np.com.abhishekojha.coremonolith.common.enums.CustomerProductStatus;
 import np.com.abhishekojha.coremonolith.common.enums.CustomerStatus;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
@@ -12,6 +13,7 @@ import np.com.abhishekojha.coremonolith.modules.customer.dto.CustomerResponse;
 import np.com.abhishekojha.coremonolith.modules.customer.dto.UpdateCustomerRequest;
 import np.com.abhishekojha.coremonolith.modules.customer.model.CustomerEntity;
 import np.com.abhishekojha.coremonolith.modules.customer.repository.CustomerRepository;
+import np.com.abhishekojha.coremonolith.modules.customerproduct.repository.CustomerProductRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
 import np.com.abhishekojha.coremonolith.modules.tenant.repository.TenantRepository;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ import java.util.Map;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CustomerProductRepository customerProductRepository;
     private final TenantRepository tenantRepository;
     private final TenantAccessGuard guard;
     private final AuditService auditService;
@@ -98,6 +101,11 @@ public class CustomerService {
         customer.setStatus(CustomerStatus.DELETED);
         customer.setDeletedAt(Instant.now());
         customer.setDeletedBy(guard.currentUser());
+
+        // Cancel all non-cancelled plans for this customer
+        customerProductRepository
+                .findAllByCustomerIdAndStatusNotAndDeletedAtIsNull(customerId, CustomerProductStatus.CANCELLED)
+                .forEach(cp -> cp.setStatus(CustomerProductStatus.CANCELLED));
 
         auditService.log(AuditAction.DELETE, "CUSTOMER", customerId,
                 Map.of("name", customer.getName(), "email", customer.getEmail()), null);
