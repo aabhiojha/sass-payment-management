@@ -55,9 +55,12 @@ export default function PlansPage({
       <PageHeader
         title="Plans"
         description="Every active, paused, and cancelled subscription across your tenant."
-        actions={
+      />
+
+      <Card>
+        <div className="flex items-center justify-between border-b border-border p-4">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[130px] h-8 text-xs">
               <SelectValue placeholder="Filter…" />
             </SelectTrigger>
             <SelectContent>
@@ -67,10 +70,10 @@ export default function PlansPage({
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-        }
-      />
-
-      <Card>
+          <p className="text-xs text-muted-foreground">
+            {rows.length} {filter === "ALL" ? "total" : filter.toLowerCase()}
+          </p>
+        </div>
         {isLoading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : rows.length === 0 ? (
@@ -81,52 +84,83 @@ export default function PlansPage({
           />
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Started</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <Link
-                        href={`/${tenantId}/customers/${p.customerId}`}
-                        className="font-medium text-foreground hover:underline"
-                      >
-                        {p.customerName}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/${tenantId}/products/${p.productId}`}
-                        className="hover:underline"
-                      >
-                        {p.productName}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {p.productPlanName ?? <span className="italic">Default</span>}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {formatCurrency(p.amount, p.currency)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={p.status} />
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {formatDate(p.startsAt)}
-                    </TableCell>
+            {/* Desktop table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Tier</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Started</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        <Link
+                          href={`/${tenantId}/customers/${p.customerId}`}
+                          className="font-medium text-foreground hover:underline"
+                        >
+                          {p.customerName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/${tenantId}/products/${p.productId}`}
+                          className="hover:underline"
+                        >
+                          {p.productName}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {p.productPlanName ?? <span className="italic">Default</span>}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium">
+                        {formatCurrency(p.amount, p.currency)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={p.status} />
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {formatDate(p.startsAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile card list */}
+            <div className="divide-y divide-border sm:hidden">
+              {rows.map((p) => (
+                <div key={p.id} className="p-4 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      href={`/${tenantId}/customers/${p.customerId}`}
+                      className="font-medium text-sm text-foreground hover:underline"
+                    >
+                      {p.customerName}
+                    </Link>
+                    <StatusBadge status={p.status} />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      href={`/${tenantId}/products/${p.productId}`}
+                      className="text-xs text-muted-foreground hover:underline"
+                    >
+                      {p.productName}
+                      {p.productPlanName && ` · ${p.productPlanName}`}
+                    </Link>
+                    <p className="text-sm font-medium shrink-0">{formatCurrency(p.amount, p.currency)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div className="border-t border-border">
               <Pagination
                 page={page}
