@@ -19,6 +19,8 @@ public interface CustomerProductRepository extends JpaRepository<CustomerProduct
 
     Page<CustomerProductEntity> findAllByTenantIdAndDeletedAtIsNull(Long tenantId, Pageable pageable);
 
+    Page<CustomerProductEntity> findAllByTenantIdAndStatusAndDeletedAtIsNull(Long tenantId, CustomerProductStatus status, Pageable pageable);
+
     Page<CustomerProductEntity> findAllByTenantIdAndProductIdAndDeletedAtIsNull(Long tenantId, Long productId, Pageable pageable);
 
     Optional<CustomerProductEntity> findByIdAndTenantIdAndCustomerIdAndDeletedAtIsNull(Long id, Long tenantId, Long customerId);

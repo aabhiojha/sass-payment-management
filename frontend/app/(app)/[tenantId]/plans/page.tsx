@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { ClipboardList } from "lucide-react"
@@ -41,14 +41,11 @@ export default function PlansPage({
   const [filter, setFilter] = useState<string>("ALL")
 
   const { data, isLoading } = useQuery({
-    queryKey: ["plans", tenantId, page, size],
-    queryFn: () => plansApi.listAll(tenantId, page, size),
+    queryKey: ["plans", tenantId, page, size, filter],
+    queryFn: () => plansApi.listAll(tenantId, page, size, filter),
   })
 
-  const rows = useMemo(() => {
-    const all = data?.content ?? []
-    return filter === "ALL" ? all : all.filter((p) => p.status === filter)
-  }, [data, filter])
+  const rows = data?.content ?? []
 
   return (
     <div className="space-y-6">
@@ -71,7 +68,7 @@ export default function PlansPage({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            {rows.length} {filter === "ALL" ? "total" : filter.toLowerCase()}
+            {data?.totalElements ?? 0} {filter === "ALL" ? "total" : filter.toLowerCase()}
           </p>
         </div>
         {isLoading ? (
