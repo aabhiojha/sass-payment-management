@@ -21,19 +21,11 @@ public interface CustomerProductRepository extends JpaRepository<CustomerProduct
 
     Page<CustomerProductEntity> findAllByTenantIdAndStatusAndDeletedAtIsNull(Long tenantId, CustomerProductStatus status, Pageable pageable);
 
-    @Query("""
-            SELECT cp FROM CustomerProductEntity cp
-            WHERE cp.tenant.id = :tenantId AND cp.deletedAt IS NULL
-            AND (:status IS NULL OR cp.status = :status)
-            AND (:search IS NULL
-                 OR LOWER(cp.customer.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                 OR LOWER(cp.product.name) LIKE LOWER(CONCAT('%', :search, '%')))
-            """)
-    Page<CustomerProductEntity> searchByTenant(
-            @Param("tenantId") Long tenantId,
-            @Param("status") CustomerProductStatus status,
-            @Param("search") String search,
-            Pageable pageable);
+    @Query("SELECT cp FROM CustomerProductEntity cp WHERE cp.tenant.id = :tenantId AND cp.deletedAt IS NULL AND (LOWER(cp.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(cp.product.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<CustomerProductEntity> searchByTenant(@Param("tenantId") Long tenantId, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT cp FROM CustomerProductEntity cp WHERE cp.tenant.id = :tenantId AND cp.deletedAt IS NULL AND cp.status = :status AND (LOWER(cp.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(cp.product.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<CustomerProductEntity> searchByTenantAndStatus(@Param("tenantId") Long tenantId, @Param("status") CustomerProductStatus status, @Param("search") String search, Pageable pageable);
 
     Page<CustomerProductEntity> findAllByTenantIdAndProductIdAndDeletedAtIsNull(Long tenantId, Long productId, Pageable pageable);
 

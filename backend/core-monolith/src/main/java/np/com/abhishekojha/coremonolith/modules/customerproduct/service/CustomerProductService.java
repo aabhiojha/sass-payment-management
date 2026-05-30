@@ -138,12 +138,12 @@ public class CustomerProductService {
     public Page<CustomerProductResponse> listByTenant(Long tenantId, CustomerProductStatus status, String search, Pageable pageable) {
         guard.requireTenantAccess(tenantId);
         String q = (search != null && !search.isBlank()) ? search.trim() : null;
-        if (status != null || q != null) {
-            return customerProductRepository.searchByTenant(tenantId, status, q, pageable)
-                    .map(CustomerProductResponse::from);
+        if (q != null) {
+            if (status != null) return customerProductRepository.searchByTenantAndStatus(tenantId, status, q, pageable).map(CustomerProductResponse::from);
+            return customerProductRepository.searchByTenant(tenantId, q, pageable).map(CustomerProductResponse::from);
         }
-        return customerProductRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable)
-                .map(CustomerProductResponse::from);
+        if (status != null) return customerProductRepository.findAllByTenantIdAndStatusAndDeletedAtIsNull(tenantId, status, pageable).map(CustomerProductResponse::from);
+        return customerProductRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable).map(CustomerProductResponse::from);
     }
 
     @Transactional(readOnly = true)
