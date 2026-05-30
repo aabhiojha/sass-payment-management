@@ -580,20 +580,11 @@ export default function DashboardPage() {
         title={`Welcome back, ${displayName}.`}
         description={pageDescription}
         actions={
-          isSuperAdmin ? (
-            selectedTenantId ? (
-              <Button asChild>
-                <Link href={`/${selectedTenantId}/customers`}>
-                  <UserCircle2 className="h-4 w-4" />
-                  Go to workspace
-                </Link>
-              </Button>
-            ) : null
-          ) : tenantId ? (
+          isSuperAdmin && selectedTenantId ? (
             <Button asChild>
-              <Link href={`/${tenantId}/customers`}>
+              <Link href={`/${selectedTenantId}/customers`}>
                 <UserCircle2 className="h-4 w-4" />
-                New customer
+                Go to workspace
               </Link>
             </Button>
           ) : null
