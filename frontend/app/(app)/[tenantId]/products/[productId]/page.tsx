@@ -715,7 +715,7 @@ export default function ProductDetailPage({
                 {...editForm.register("description")}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="editPrice">Price</Label>
                 <Input
@@ -797,7 +797,7 @@ export default function ProductDetailPage({
                 </p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="tierPrice">Price</Label>
                 <Input

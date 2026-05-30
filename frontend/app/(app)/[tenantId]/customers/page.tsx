@@ -67,27 +67,11 @@ export default function CustomersPage({
         title="Customers"
         description="Manage the people and organisations being billed in this workspace."
         actions={
-          <div className="flex items-center gap-2">
-            <Select
-              value={statusFilter}
-              onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="DELETED">Deleted</SelectItem>
-                <SelectItem value="ALL">All statuses</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button asChild>
-              <Link href={`/${tenantId}/customers/new`}>
-                <Plus className="h-4 w-4" />
-                New customer
-              </Link>
-            </Button>
-          </div>
+          <Button asChild>
+            <Link href={`/${tenantId}/customers/new`}>
+              <Plus className="h-4 w-4" /> New customer
+            </Link>
+          </Button>
         }
       />
 
@@ -98,9 +82,24 @@ export default function CustomersPage({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by name or email…"
           />
-          <p className="text-xs text-muted-foreground">
-            {data?.totalElements ?? 0} total
-          </p>
+          <div className="flex items-center gap-3 shrink-0">
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
+            >
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="DELETED">Deleted</SelectItem>
+                <SelectItem value="ALL">All statuses</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">
+              {data?.totalElements ?? 0} total
+            </p>
+          </div>
         </div>
 
         {isLoading ? (
@@ -120,47 +119,66 @@ export default function CustomersPage({
           />
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell>
-                      <Link
-                        href={`/${tenantId}/customers/${c.id}`}
-                        className="font-medium text-foreground hover:underline"
-                      >
-                        {c.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {c.email}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={c.status} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(c.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/${tenantId}/customers/${c.id}`}>
-                          View
-                        </Link>
-                      </Button>
-                    </TableCell>
+            {/* Desktop table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell>
+                        <Link
+                          href={`/${tenantId}/customers/${c.id}`}
+                          className="font-medium text-foreground hover:underline"
+                        >
+                          {c.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {c.email}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={c.status} />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDate(c.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/${tenantId}/customers/${c.id}`}>View</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile card list */}
+            <div className="divide-y divide-border sm:hidden">
+              {rows.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/${tenantId}/customers/${c.id}`}
+                  className="flex items-center gap-3 p-4 hover:bg-secondary/40 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm text-foreground">{c.name}</p>
+                    <p className="truncate text-xs text-muted-foreground mt-0.5">{c.email}</p>
+                  </div>
+                  <StatusBadge status={c.status} />
+                </Link>
+              ))}
+            </div>
+
             <div className="border-t border-border">
               <Pagination
                 page={page}

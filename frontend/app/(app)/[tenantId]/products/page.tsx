@@ -74,27 +74,11 @@ export default function ProductsPage({
         title="Products"
         description="The catalog of subscription offerings you bill customers for."
         actions={
-          <div className="flex items-center gap-2">
-            <Select
-              value={statusFilter}
-              onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-                <SelectItem value="DELETED">Deleted</SelectItem>
-                <SelectItem value="ALL">All statuses</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button asChild>
-              <Link href={`/${tenantId}/products/new`}>
-                <Plus className="h-4 w-4" /> New product
-              </Link>
-            </Button>
-          </div>
+          <Button asChild>
+            <Link href={`/${tenantId}/products/new`}>
+              <Plus className="h-4 w-4" /> New product
+            </Link>
+          </Button>
         }
       />
 
@@ -105,9 +89,25 @@ export default function ProductsPage({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by name or description…"
           />
-          <p className="text-xs text-muted-foreground">
-            {data?.totalElements ?? 0} total
-          </p>
+          <div className="flex items-center gap-3 shrink-0">
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
+            >
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="DELETED">Deleted</SelectItem>
+                <SelectItem value="ALL">All statuses</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">
+              {data?.totalElements ?? 0} total
+            </p>
+          </div>
         </div>
 
         {isLoading ? (
@@ -127,62 +127,91 @@ export default function ProductsPage({
           />
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Cadence</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <Link
-                        href={`/${tenantId}/products/${p.id}`}
-                        className="font-medium text-foreground hover:underline"
-                      >
-                        {p.name}
-                      </Link>
-                      {p.description && (
-                        <p className="truncate text-xs text-muted-foreground">
-                          {p.description}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">
-                        {formatCurrency(p.price, p.currency)}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {p.currency}
-                      </p>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {CADENCE_LABEL[p.billingCadence] ??
-                        titleCase(p.billingCadence)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={p.status} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(p.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/${tenantId}/products/${p.id}`}>
-                          View
-                        </Link>
-                      </Button>
-                    </TableCell>
+            {/* Desktop table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Cadence</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        <Link
+                          href={`/${tenantId}/products/${p.id}`}
+                          className="font-medium text-foreground hover:underline"
+                        >
+                          {p.name}
+                        </Link>
+                        {p.description && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {p.description}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {formatCurrency(p.price, p.currency)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {p.currency}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {CADENCE_LABEL[p.billingCadence] ?? titleCase(p.billingCadence)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={p.status} />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDate(p.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/${tenantId}/products/${p.id}`}>View</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile card list */}
+            <div className="divide-y divide-border sm:hidden">
+              {rows.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/${tenantId}/products/${p.id}`}
+                  className="flex items-start gap-3 p-4 hover:bg-secondary/40 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm text-foreground">{p.name}</p>
+                    {p.description && (
+                      <p className="truncate text-xs text-muted-foreground mt-0.5">{p.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <StatusBadge status={p.status} />
+                      <span className="text-xs text-muted-foreground">
+                        {CADENCE_LABEL[p.billingCadence] ?? titleCase(p.billingCadence)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-medium text-sm">{formatCurrency(p.price, p.currency)}</p>
+                    <p className="text-xs text-muted-foreground">{p.currency}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
             <div className="border-t border-border">
               <Pagination
                 page={page}
