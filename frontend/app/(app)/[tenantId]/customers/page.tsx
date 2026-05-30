@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { Plus, UserCircle2 } from "lucide-react"
@@ -48,20 +48,11 @@ export default function CustomersPage({
   const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
 
   const { data, isLoading } = useQuery({
-    queryKey: ["customers", tenantId, page, size, apiStatus],
-    queryFn: () => customersApi.list(tenantId, page, size, apiStatus),
+    queryKey: ["customers", tenantId, page, size, apiStatus, debouncedQ],
+    queryFn: () => customersApi.list(tenantId, page, size, apiStatus, debouncedQ || undefined),
   })
 
-  const rows = useMemo(() => {
-    const list = data?.content ?? []
-    if (!debouncedQ) return list
-    const needle = debouncedQ.toLowerCase()
-    return list.filter(
-      (c) =>
-        c.name.toLowerCase().includes(needle) ||
-        c.email.toLowerCase().includes(needle)
-    )
-  }, [data, q])
+  const rows = data?.content ?? []
 
   return (
     <div className="space-y-6">

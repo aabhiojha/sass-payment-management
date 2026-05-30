@@ -7,10 +7,14 @@ import type {
 } from "@/types/api"
 
 export const customersApi = {
-  list: (tenantId: number, page = 0, size = 20, status?: string) =>
+  list: (tenantId: number, page = 0, size = 20, status?: string, search?: string) =>
     api
       .get<RawPage<CustomerResponse>>(`/tenants/${tenantId}/customers`, {
-        params: { page, size, ...(status ? { status } : {}) },
+        params: {
+          page, size,
+          ...(status ? { status } : {}),
+          ...(search ? { search } : {}),
+        },
       })
       .then((r) => normalizePage<CustomerResponse>(r.data)),
 

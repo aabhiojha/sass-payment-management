@@ -42,6 +42,8 @@ import { usersApi } from "@/lib/api/users"
 import { friendlyError } from "@/lib/axios"
 import { initials, formatDate } from "@/lib/utils"
 import { useRole } from "@/hooks/useRole"
+import { useDebounce } from "@/hooks/useDebounce"
+import { SearchInput } from "@/components/shared/SearchInput"
 import type { UserResponse } from "@/types/api"
 
 export default function UsersPage({
@@ -53,6 +55,8 @@ export default function UsersPage({
   const qc = useQueryClient()
   const [page, setPage] = useState(0)
   const [size] = useState(20)
+  const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const [confirmTarget, setConfirmTarget] = useState<UserResponse | null>(null)
   const { isAtLeast } = useRole()
 
@@ -95,7 +99,11 @@ export default function UsersPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
-  const rows = (data?.content ?? []).filter((u) => u.status === "ACTIVE")
+  const rows = (data?.content ?? []).filter((u) => {
+    if (u.status !== "ACTIVE") return false
+    if (!debouncedQ) return true
+    return u.email.toLowerCase().includes(debouncedQ.toLowerCase())
+  })
 
   return (
     <div className="space-y-6">
@@ -105,6 +113,13 @@ export default function UsersPage({
       />
 
       <Card>
+        <div className="border-b border-border p-4">
+          <SearchInput
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by email…"
+          />
+        </div>
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : rows.length === 0 ? (

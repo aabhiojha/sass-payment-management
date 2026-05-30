@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { Package, Plus } from "lucide-react"
@@ -55,20 +55,11 @@ export default function ProductsPage({
   const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
 
   const { data, isLoading } = useQuery({
-    queryKey: ["products", tenantId, page, size, apiStatus],
-    queryFn: () => productsApi.list(tenantId, page, size, apiStatus),
+    queryKey: ["products", tenantId, page, size, apiStatus, debouncedQ],
+    queryFn: () => productsApi.list(tenantId, page, size, apiStatus, debouncedQ || undefined),
   })
 
-  const rows = useMemo(() => {
-    const list = data?.content ?? []
-    if (!debouncedQ) return list
-    const needle = debouncedQ.toLowerCase()
-    return list.filter(
-      (p) =>
-        p.name.toLowerCase().includes(needle) ||
-        (p.description ?? "").toLowerCase().includes(needle)
-    )
-  }, [data, debouncedQ])
+  const rows = data?.content ?? []
 
   return (
     <div className="space-y-6">

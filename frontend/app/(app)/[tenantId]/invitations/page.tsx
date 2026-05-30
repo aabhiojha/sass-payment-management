@@ -38,6 +38,8 @@ import { invitationsApi } from "@/lib/api/invitations"
 import { formatDate } from "@/lib/utils"
 import { friendlyError } from "@/lib/axios"
 import { useRole } from "@/hooks/useRole"
+import { useDebounce } from "@/hooks/useDebounce"
+import { SearchInput } from "@/components/shared/SearchInput"
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -54,6 +56,8 @@ export default function InvitationsPage({
   const qc = useQueryClient()
   const [page, setPage] = useState(0)
   const [size] = useState(20)
+  const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const { isSuperAdmin } = useRole()
 
   const list = useQuery({
@@ -97,7 +101,10 @@ export default function InvitationsPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
-  const rows = list.data?.content ?? []
+  const allRows = list.data?.content ?? []
+  const rows = debouncedQ
+    ? allRows.filter((i) => i.email.toLowerCase().includes(debouncedQ.toLowerCase()))
+    : allRows
 
   return (
     <div className="space-y-6">
@@ -160,6 +167,13 @@ export default function InvitationsPage({
       </Card>
 
       <Card>
+        <div className="border-b border-border p-4">
+          <SearchInput
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Filter by email…"
+          />
+        </div>
         {list.isLoading ? (
           <TableSkeleton rows={5} cols={5} />
         ) : rows.length === 0 ? (

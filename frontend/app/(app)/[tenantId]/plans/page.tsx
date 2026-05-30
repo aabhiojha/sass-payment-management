@@ -29,6 +29,8 @@ import {
 
 import { plansApi } from "@/lib/api/plans"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { useDebounce } from "@/hooks/useDebounce"
+import { SearchInput } from "@/components/shared/SearchInput"
 
 export default function PlansPage({
   params,
@@ -39,10 +41,12 @@ export default function PlansPage({
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [filter, setFilter] = useState<string>("ALL")
+  const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["plans", tenantId, page, size, filter],
-    queryFn: () => plansApi.listAll(tenantId, page, size, filter),
+    queryKey: ["plans", tenantId, page, size, filter, debouncedQ],
+    queryFn: () => plansApi.listAll(tenantId, page, size, filter, debouncedQ || undefined),
   })
 
   const rows = data?.content ?? []
@@ -55,8 +59,14 @@ export default function PlansPage({
       />
 
       <Card>
-        <div className="flex items-center justify-between border-b border-border p-4">
-          <Select value={filter} onValueChange={setFilter}>
+        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <SearchInput
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setPage(0) }}
+            placeholder="Search by customer or product…"
+          />
+          <div className="flex items-center gap-3 shrink-0">
+          <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0) }}>
             <SelectTrigger className="w-[130px] h-8 text-xs">
               <SelectValue placeholder="Filter…" />
             </SelectTrigger>
@@ -67,9 +77,10 @@ export default function PlansPage({
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
             {data?.totalElements ?? 0} {filter === "ALL" ? "total" : filter.toLowerCase()}
           </p>
+          </div>
         </div>
         {isLoading ? (
           <TableSkeleton rows={6} cols={6} />
