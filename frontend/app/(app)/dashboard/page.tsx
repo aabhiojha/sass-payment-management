@@ -504,38 +504,41 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
               </Link>
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             {activity.isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
-              </div>
-            ) : activity.data && activity.data.length > 0 ? (
-              <div className="space-y-2">
-                {activity.data.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                        <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {describeEvent(a)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {timeAgo(a.createdAt)}
-                        </p>
-                      </div>
-                    </div>
+              <div className="divide-y divide-border">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-2">
+                    <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                    <Skeleton className="h-3.5 flex-1" />
+                    <Skeleton className="h-3 w-14 shrink-0" />
                   </div>
                 ))}
               </div>
+            ) : activity.data && activity.data.length > 0 ? (
+              <div className="divide-y divide-border">
+                {activity.data.map((a) => {
+                  const dotColor =
+                    a.action === "CREATE" ? "bg-success" :
+                    a.action === "DELETE" ? "bg-destructive" :
+                    a.action === "STATUS_CHANGE" ? "bg-warning" :
+                    a.action === "LOGIN_FAILED" ? "bg-destructive" :
+                    "bg-muted-foreground/40"
+                  return (
+                    <div key={a.id} className="flex items-center gap-3 px-4 py-2">
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
+                      <p className="flex-1 truncate text-xs text-foreground">
+                        {describeEvent(a)}
+                      </p>
+                      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                        {timeAgo(a.createdAt)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
+              <p className="py-6 text-center text-xs text-muted-foreground">
                 No activity recorded yet.
               </p>
             )}

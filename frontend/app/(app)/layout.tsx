@@ -65,6 +65,7 @@ export default function AppLayout({
           email: me.email,
           role: (me.role as Role) ?? user.role,
           tenantId: me.tenantId ?? null,
+          fullName: me.fullName ?? null,
         })
       }
       return me

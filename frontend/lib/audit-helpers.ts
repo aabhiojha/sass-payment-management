@@ -9,6 +9,30 @@ export const RESOURCE_LABELS: Record<string, string> = {
   PRODUCT: "Product",
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  name: "Name",
+  email: "Email",
+  status: "Status",
+  role: "Role",
+  price: "Price",
+  currency: "Currency",
+  billingCadence: "Billing cadence",
+  customPrice: "Custom price",
+  startsAt: "Start date",
+  endsAt: "End date",
+  notes: "Notes",
+  description: "Description",
+  productId: "Product",
+  customerId: "Customer",
+  planId: "Plan",
+  fullName: "Full name",
+}
+
+const SKIP_KEYS = new Set([
+  "id", "tenantId", "deletedAt", "deletedBy", "createdAt", "updatedAt",
+  "tenant", "passwordHash", "accessToken", "refreshToken",
+])
+
 const ROLE_LABELS: Record<string, string> = {
   TENANT_USER: "Member",
   TENANT_ADMIN: "Admin",
@@ -22,12 +46,37 @@ const STATUS_LABELS: Record<string, string> = {
   ARCHIVED: "Archived",
   DELETED: "Deleted",
   PENDING: "Pending",
+  PAUSED: "Paused",
+  CANCELLED: "Cancelled",
+  INACTIVE: "Inactive",
 }
 
-function humanValue(key: string, value: string): string {
-  if (key === "role") return ROLE_LABELS[value] ?? value
-  if (key === "status") return STATUS_LABELS[value] ?? value
-  return value
+const CADENCE_LABELS: Record<string, string> = {
+  MONTHLY: "Monthly",
+  YEARLY: "Yearly",
+  WEEKLY: "Weekly",
+  DAILY: "Daily",
+  ONE_TIME: "One-time",
+  QUARTERLY: "Quarterly",
+}
+
+function formatValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) return "—"
+  const str = String(value)
+  if (key === "role") return ROLE_LABELS[str] ?? str
+  if (key === "status") return STATUS_LABELS[str] ?? str
+  if (key === "billingCadence") return CADENCE_LABELS[str] ?? titleCase(str)
+  if (key === "customerId" || key === "productId" || key === "planId") return `#${str}`
+  if (str.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    try {
+      return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(str))
+    } catch { return str }
+  }
+  return str
+}
+
+function fieldLabel(key: string): string {
+  return FIELD_LABELS[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase()).trim()
 }
 
 function extractResourceName(log: Pick<AuditLogResponse, "oldValue" | "newValue">): string | null {
@@ -39,11 +88,14 @@ function extractResourceName(log: Pick<AuditLogResponse, "oldValue" | "newValue"
   }
 }
 
-export function describeEvent(log: Pick<AuditLogResponse, "actorEmail" | "action" | "resourceType" | "resourceId" | "oldValue" | "newValue">): string {
+export function describeEvent(
+  log: Pick<AuditLogResponse, "actorEmail" | "action" | "resourceType" | "resourceId" | "oldValue" | "newValue">
+): string {
   const actor = log.actorEmail.split("@")[0]
-  const resource = (RESOURCE_LABELS[log.resourceType] ?? titleCase(log.resourceType)).toLowerCase()
+  const resourceLabel = (RESOURCE_LABELS[log.resourceType] ?? titleCase(log.resourceType)).toLowerCase()
   const name = extractResourceName(log)
-  const ref = name ? `${resource} "${name}"` : resource
+  const ref = name ? `${resourceLabel} "${name}"` : resourceLabel
+
   switch (log.action) {
     case "CREATE":        return `${actor} created ${ref}`
     case "UPDATE":        return `${actor} updated ${ref}`
@@ -56,22 +108,36 @@ export function describeEvent(log: Pick<AuditLogResponse, "actorEmail" | "action
   }
 }
 
-export function describeChange(log: Pick<AuditLogResponse, "oldValue" | "newValue">): string | null {
+export function describeChange(
+  log: Pick<AuditLogResponse, "action" | "oldValue" | "newValue">
+): string | null {
   try {
     const oldObj = log.oldValue ? JSON.parse(log.oldValue) : null
     const newObj = log.newValue ? JSON.parse(log.newValue) : null
     if (!oldObj && !newObj) return null
-    const keys = Array.from(new Set([...Object.keys(oldObj ?? {}), ...Object.keys(newObj ?? {})]))
-    const parts = keys.map((key) => {
-      const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")
+
+    const isUpdate = log.action === "UPDATE" || log.action === "STATUS_CHANGE"
+
+    const allKeys = Array.from(
+      new Set([...Object.keys(oldObj ?? {}), ...Object.keys(newObj ?? {})])
+    ).filter((k) => !SKIP_KEYS.has(k))
+
+    const parts: string[] = []
+    for (const key of allKeys) {
       const oldVal = oldObj?.[key]
       const newVal = newObj?.[key]
-      if (oldVal !== undefined && newVal !== undefined && oldVal !== newVal) {
-        return `${label}: ${humanValue(key, String(oldVal))} → ${humanValue(key, String(newVal))}`
+      if (oldVal === newVal) continue
+      const label = fieldLabel(key)
+
+      if (isUpdate && oldVal !== undefined && newVal !== undefined) {
+        parts.push(`${label}: ${formatValue(key, oldVal)} → ${formatValue(key, newVal)}`)
+      } else if (newVal !== undefined) {
+        parts.push(`${label}: ${formatValue(key, newVal)}`)
+      } else if (oldVal !== undefined) {
+        parts.push(`${label}: ${formatValue(key, oldVal)}`)
       }
-      if (newVal !== undefined) return `${label}: ${humanValue(key, String(newVal))}`
-      return null
-    }).filter(Boolean)
+    }
+
     return parts.length > 0 ? parts.join(" · ") : null
   } catch {
     return null
