@@ -66,12 +66,12 @@ public class CustomerService {
     public Page<CustomerResponse> list(Long tenantId, CustomerStatus status, String search, Pageable pageable) {
         guard.requireTenantAccess(tenantId);
         String q = (search != null && !search.isBlank()) ? search.trim() : null;
-        if (status != null) {
-            return customerRepository.searchByTenantIdAndStatus(tenantId, status, q, pageable)
-                    .map(CustomerResponse::from);
+        if (q != null) {
+            if (status != null) return customerRepository.searchByTenantIdAndStatus(tenantId, status, q, pageable).map(CustomerResponse::from);
+            return customerRepository.searchByTenantId(tenantId, q, pageable).map(CustomerResponse::from);
         }
-        return customerRepository.searchByTenantId(tenantId, q, pageable)
-                .map(CustomerResponse::from);
+        if (status != null) return customerRepository.findAllByTenantIdAndStatus(tenantId, status, pageable).map(CustomerResponse::from);
+        return customerRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable).map(CustomerResponse::from);
     }
 
     @Transactional(readOnly = true)

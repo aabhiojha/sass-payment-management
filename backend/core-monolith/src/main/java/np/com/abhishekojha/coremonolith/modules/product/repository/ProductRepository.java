@@ -18,25 +18,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     Page<ProductEntity> findAllByTenantIdAndStatus(Long tenantId, ProductStatus status, Pageable pageable);
 
-    @Query("""
-            SELECT p FROM ProductEntity p
-            WHERE p.tenant.id = :tenantId AND p.deletedAt IS NULL
-            AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))
-            """)
+    @Query("SELECT p FROM ProductEntity p WHERE p.tenant.id = :tenantId AND p.deletedAt IS NULL AND LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<ProductEntity> searchByTenantId(@Param("tenantId") Long tenantId, @Param("search") String search, Pageable pageable);
 
-    @Query("""
-            SELECT p FROM ProductEntity p
-            WHERE p.tenant.id = :tenantId
-            AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))
-            """)
+    @Query("SELECT p FROM ProductEntity p WHERE p.tenant.id = :tenantId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<ProductEntity> searchAllByTenantId(@Param("tenantId") Long tenantId, @Param("search") String search, Pageable pageable);
 
-    @Query("""
-            SELECT p FROM ProductEntity p
-            WHERE p.tenant.id = :tenantId AND p.status = :status
-            AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))
-            """)
+    @Query("SELECT p FROM ProductEntity p WHERE p.tenant.id = :tenantId AND p.status = :status AND LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<ProductEntity> searchByTenantIdAndStatus(@Param("tenantId") Long tenantId, @Param("status") ProductStatus status, @Param("search") String search, Pageable pageable);
 
     Optional<ProductEntity> findByIdAndTenantIdAndDeletedAtIsNull(Long id, Long tenantId);

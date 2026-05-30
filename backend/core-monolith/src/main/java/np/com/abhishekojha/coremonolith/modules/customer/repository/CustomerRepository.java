@@ -16,22 +16,10 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, Long> 
 
     Page<CustomerEntity> findAllByTenantIdAndStatus(Long tenantId, CustomerStatus status, Pageable pageable);
 
-    @Query("""
-            SELECT c FROM CustomerEntity c
-            WHERE c.tenant.id = :tenantId AND c.deletedAt IS NULL
-            AND (:search IS NULL
-                 OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                 OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')))
-            """)
+    @Query("SELECT c FROM CustomerEntity c WHERE c.tenant.id = :tenantId AND c.deletedAt IS NULL AND (LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<CustomerEntity> searchByTenantId(@Param("tenantId") Long tenantId, @Param("search") String search, Pageable pageable);
 
-    @Query("""
-            SELECT c FROM CustomerEntity c
-            WHERE c.tenant.id = :tenantId AND c.status = :status
-            AND (:search IS NULL
-                 OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                 OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')))
-            """)
+    @Query("SELECT c FROM CustomerEntity c WHERE c.tenant.id = :tenantId AND c.status = :status AND (LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<CustomerEntity> searchByTenantIdAndStatus(@Param("tenantId") Long tenantId, @Param("status") CustomerStatus status, @Param("search") String search, Pageable pageable);
 
     Optional<CustomerEntity> findByIdAndTenantIdAndDeletedAtIsNull(Long id, Long tenantId);
