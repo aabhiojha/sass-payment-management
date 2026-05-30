@@ -16,6 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { Pagination } from "@/components/shared/Pagination"
 import { StatusBadge } from "@/components/shared/StatusBadge"
@@ -34,10 +41,13 @@ export default function CustomersPage({
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [q, setQ] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ACTIVE")
+
+  const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
 
   const { data, isLoading } = useQuery({
-    queryKey: ["customers", tenantId, page, size],
-    queryFn: () => customersApi.list(tenantId, page, size),
+    queryKey: ["customers", tenantId, page, size, apiStatus],
+    queryFn: () => customersApi.list(tenantId, page, size, apiStatus),
   })
 
   const rows = useMemo(() => {
@@ -57,12 +67,27 @@ export default function CustomersPage({
         title="Customers"
         description="Manage the people and organisations being billed in this workspace."
         actions={
-          <Button asChild>
-            <Link href={`/${tenantId}/customers/new`}>
-              <Plus className="h-4 w-4" />
-              New customer
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="DELETED">Deleted</SelectItem>
+                <SelectItem value="ALL">All statuses</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button asChild>
+              <Link href={`/${tenantId}/customers/new`}>
+                <Plus className="h-4 w-4" />
+                New customer
+              </Link>
+            </Button>
+          </div>
         }
       />
 

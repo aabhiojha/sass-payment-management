@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import np.com.abhishekojha.coremonolith.common.enums.CustomerStatus;
 import np.com.abhishekojha.coremonolith.modules.customer.dto.CreateCustomerRequest;
 import np.com.abhishekojha.coremonolith.modules.customer.dto.CustomerResponse;
 import np.com.abhishekojha.coremonolith.modules.customer.dto.UpdateCustomerRequest;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -56,8 +58,9 @@ public class CustomerController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'TENANT_ADMIN', 'TENANT_USER')")
     public ResponseEntity<Page<CustomerResponse>> list(
             @PathVariable Long tenantId,
+            @RequestParam(required = false) CustomerStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(customerService.list(tenantId, pageable));
+        return ResponseEntity.ok(customerService.list(tenantId, status, pageable));
     }
 
     @Operation(summary = "Get customer by ID")

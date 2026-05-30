@@ -31,7 +31,6 @@ import { EmptyState } from "@/components/shared/EmptyState"
 
 import { productsApi } from "@/lib/api/products"
 import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
-import { useRole } from "@/hooks/useRole"
 
 const CADENCE_LABEL: Record<string, string> = {
   WEEKLY: "Weekly",
@@ -46,7 +45,6 @@ export default function ProductsPage({
   params: { tenantId: string }
 }) {
   const tenantId = Number(params.tenantId)
-  const { isSuperAdmin } = useRole()
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [q, setQ] = useState("")
@@ -77,22 +75,20 @@ export default function ProductsPage({
         description="The catalog of subscription offerings you bill customers for."
         actions={
           <div className="flex items-center gap-2">
-            {isSuperAdmin && (
-              <Select
-                value={statusFilter}
-                onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All statuses</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="DELETED">Deleted</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="DELETED">Deleted</SelectItem>
+                <SelectItem value="ALL">All statuses</SelectItem>
+              </SelectContent>
+            </Select>
             <Button asChild>
               <Link href={`/${tenantId}/products/new`}>
                 <Plus className="h-4 w-4" /> New product
