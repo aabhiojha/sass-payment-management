@@ -134,25 +134,23 @@ export default function InvitationsPage({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={form.watch("role")}
-                onValueChange={(v) =>
-                  form.setValue("role", v as Values["role"])
-                }
-              >
-                <SelectTrigger id="role" className="w-[160px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TENANT_USER">Tenant User</SelectItem>
-                  {isSuperAdmin && (
+            {isSuperAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  value={form.watch("role")}
+                  onValueChange={(v) => form.setValue("role", v as Values["role"])}
+                >
+                  <SelectTrigger id="role" className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TENANT_USER">Tenant User</SelectItem>
                     <SelectItem value="TENANT_ADMIN">Tenant Admin</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <Button type="submit" loading={invite.isPending}>
               <Plus className="h-4 w-4" /> Send invite
