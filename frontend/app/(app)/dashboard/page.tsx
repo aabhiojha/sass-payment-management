@@ -36,6 +36,37 @@ import { useRole } from "@/hooks/useRole"
 import { dashboardApi } from "@/lib/api/dashboard"
 import { auditApi } from "@/lib/api/audit"
 import { describeEvent } from "@/lib/audit-helpers"
+import { useCountUp } from "@/hooks/useCountUp"
+
+/* ------------------------------------------------------------------ */
+/*  Animated stat cell                                                 */
+/* ------------------------------------------------------------------ */
+
+function StatCell({
+  label,
+  value,
+  sub,
+  delay = 0,
+}: {
+  label: string
+  value: number
+  sub: string | null
+  delay?: number
+}) {
+  const count = useCountUp(value)
+  return (
+    <div
+      className="flex flex-col gap-0.5 bg-card px-5 py-4 animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="font-display text-2xl font-semibold tracking-tight tabular-nums">
+        {count}
+      </span>
+      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
+    </div>
+  )
+}
 
 /* ------------------------------------------------------------------ */
 /*  Loading skeleton                                                   */
@@ -86,18 +117,10 @@ function AdminDashboard() {
     <div className="space-y-6">
       {/* Stats strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        {[
-          { label: "Active tenants", value: d.activeTenants, sub: `${totalTenants} total` },
-          { label: "Suspended", value: d.suspendedTenants, sub: null },
-          { label: "Total users", value: d.totalUsers, sub: null },
-          { label: "Reminders sent", value: d.remindersSent, sub: `${d.remindersFailed} failed` },
-        ].map((stat) => (
-          <div key={stat.label} className="flex flex-col gap-0.5 bg-card px-5 py-4">
-            <span className="text-xs text-muted-foreground">{stat.label}</span>
-            <span className="font-display text-2xl font-semibold tracking-tight">{stat.value}</span>
-            {stat.sub && <span className="text-xs text-muted-foreground">{stat.sub}</span>}
-          </div>
-        ))}
+        <StatCell label="Active tenants" value={d.activeTenants} sub={`${totalTenants} total`} delay={0} />
+        <StatCell label="Suspended" value={d.suspendedTenants} sub={null} delay={80} />
+        <StatCell label="Total users" value={d.totalUsers} sub={null} delay={160} />
+        <StatCell label="Reminders sent" value={d.remindersSent} sub={`${d.remindersFailed} failed`} delay={240} />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
@@ -235,18 +258,10 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
     <div className="space-y-6">
       {/* Stats strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        {[
-          { label: "Customers", value: s?.totalCustomers ?? 0, sub: null },
-          { label: "Products", value: s?.totalProducts ?? 0, sub: null },
-          { label: "Active plans", value: s?.activePlans ?? 0, sub: `${s?.pausedPlans ?? 0} paused` },
-          { label: "Reminders sent", value: reminderStats.data?.sent ?? 0, sub: reminderStats.data ? `${reminderStats.data.failed} failed` : null },
-        ].map((stat) => (
-          <div key={stat.label} className="flex flex-col gap-0.5 bg-card px-5 py-4">
-            <span className="text-xs text-muted-foreground">{stat.label}</span>
-            <span className="font-display text-2xl font-semibold tracking-tight">{stat.value}</span>
-            {stat.sub && <span className="text-xs text-muted-foreground">{stat.sub}</span>}
-          </div>
-        ))}
+        <StatCell label="Customers" value={s?.totalCustomers ?? 0} sub={null} delay={0} />
+        <StatCell label="Products" value={s?.totalProducts ?? 0} sub={null} delay={80} />
+        <StatCell label="Active plans" value={s?.activePlans ?? 0} sub={`${s?.pausedPlans ?? 0} paused`} delay={160} />
+        <StatCell label="Reminders sent" value={reminderStats.data?.sent ?? 0} sub={reminderStats.data ? `${reminderStats.data.failed} failed` : null} delay={240} />
       </div>
 
       {/* Revenue + Reminder stats row */}

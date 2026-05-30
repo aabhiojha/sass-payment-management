@@ -107,16 +107,19 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         active
           ? "bg-accent text-accent-foreground shadow-sm"
           : "text-muted-foreground hover:bg-secondary hover:text-foreground"
       )}
     >
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-full bg-primary" />
+      )}
       <Icon
         className={cn(
           "h-4 w-4 shrink-0 transition-colors",
-          active ? "text-accent-foreground" : "text-muted-foreground group-hover:text-foreground"
+          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
         )}
       />
       <span className="truncate">{label}</span>
