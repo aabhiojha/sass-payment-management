@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import np.com.abhishekojha.coremonolith.common.enums.ReminderStatus;
 import np.com.abhishekojha.coremonolith.modules.reminder.dto.ReminderResponse;
 import np.com.abhishekojha.coremonolith.modules.reminder.service.ReminderService;
 import org.springdoc.core.annotations.ParameterObject;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -37,8 +39,9 @@ public class ReminderController {
     @GetMapping
     public ResponseEntity<Page<ReminderResponse>> list(
             @PathVariable Long tenantId,
+            @RequestParam(required = false) ReminderStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(reminderService.list(tenantId, pageable));
+        return ResponseEntity.ok(reminderService.list(tenantId, status, pageable));
     }
 
     @Operation(summary = "Get reminder record")

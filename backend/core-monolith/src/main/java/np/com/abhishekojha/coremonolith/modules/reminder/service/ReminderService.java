@@ -50,8 +50,12 @@ public class ReminderService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public Page<ReminderResponse> list(Long tenantId, Pageable pageable) {
+    public Page<ReminderResponse> list(Long tenantId, ReminderStatus status, Pageable pageable) {
         guard.requireTenantAccess(tenantId);
+        if (status != null) {
+            return reminderRepository.findAllByTenantIdAndStatus(tenantId, status, pageable)
+                    .map(ReminderResponse::from);
+        }
         return reminderRepository.findAllByTenantId(tenantId, pageable)
                 .map(ReminderResponse::from);
     }

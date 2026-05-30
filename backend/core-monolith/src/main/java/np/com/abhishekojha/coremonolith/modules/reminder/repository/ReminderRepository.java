@@ -14,6 +14,8 @@ public interface ReminderRepository extends JpaRepository<ReminderEntity, Long> 
 
     Page<ReminderEntity> findAllByTenantId(Long tenantId, Pageable pageable);
 
+    Page<ReminderEntity> findAllByTenantIdAndStatus(Long tenantId, ReminderStatus status, Pageable pageable);
+
     Optional<ReminderEntity> findByIdAndTenantId(Long id, Long tenantId);
 
     long countByTenantIdAndStatusAndCreatedAtBetween(

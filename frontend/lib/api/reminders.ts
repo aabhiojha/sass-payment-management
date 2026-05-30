@@ -3,10 +3,10 @@ import { normalizePage } from "@/lib/utils"
 import type { RawPage, ReminderResponse } from "@/types/api"
 
 export const remindersApi = {
-  list: (tenantId: number, page = 0, size = 20) =>
+  list: (tenantId: number, page = 0, size = 20, status?: string) =>
     api
       .get<RawPage<ReminderResponse>>(`/tenants/${tenantId}/reminders`, {
-        params: { page, size },
+        params: { page, size, ...(status && status !== "ALL" ? { status } : {}) },
       })
       .then((r) => normalizePage<ReminderResponse>(r.data)),
 
