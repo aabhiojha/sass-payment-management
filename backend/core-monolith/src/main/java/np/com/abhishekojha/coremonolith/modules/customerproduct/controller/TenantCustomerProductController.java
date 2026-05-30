@@ -36,7 +36,8 @@ public class TenantCustomerProductController {
     public ResponseEntity<Page<CustomerProductResponse>> listAll(
             @PathVariable Long tenantId,
             @RequestParam(required = false) CustomerProductStatus status,
+            @RequestParam(required = false) String search,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(customerProductService.listByTenant(tenantId, status, pageable));
+        return ResponseEntity.ok(customerProductService.listByTenant(tenantId, status, search, pageable));
     }
 }
