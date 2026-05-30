@@ -31,6 +31,7 @@ import { EmptyState } from "@/components/shared/EmptyState"
 
 import { productsApi } from "@/lib/api/products"
 import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
+import { useDebounce } from "@/hooks/useDebounce"
 
 const CADENCE_LABEL: Record<string, string> = {
   WEEKLY: "Weekly",
@@ -48,6 +49,7 @@ export default function ProductsPage({
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const [statusFilter, setStatusFilter] = useState("ACTIVE")
 
   const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
@@ -59,14 +61,14 @@ export default function ProductsPage({
 
   const rows = useMemo(() => {
     const list = data?.content ?? []
-    if (!q) return list
-    const needle = q.toLowerCase()
+    if (!debouncedQ) return list
+    const needle = debouncedQ.toLowerCase()
     return list.filter(
       (p) =>
         p.name.toLowerCase().includes(needle) ||
         (p.description ?? "").toLowerCase().includes(needle)
     )
-  }, [data, q])
+  }, [data, debouncedQ])
 
   return (
     <div className="space-y-6">

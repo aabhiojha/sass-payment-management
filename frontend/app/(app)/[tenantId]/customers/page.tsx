@@ -31,6 +31,7 @@ import { EmptyState } from "@/components/shared/EmptyState"
 
 import { customersApi } from "@/lib/api/customers"
 import { formatDate } from "@/lib/utils"
+import { useDebounce } from "@/hooks/useDebounce"
 
 export default function CustomersPage({
   params,
@@ -41,6 +42,7 @@ export default function CustomersPage({
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const [statusFilter, setStatusFilter] = useState("ACTIVE")
 
   const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
@@ -52,8 +54,8 @@ export default function CustomersPage({
 
   const rows = useMemo(() => {
     const list = data?.content ?? []
-    if (!q) return list
-    const needle = q.toLowerCase()
+    if (!debouncedQ) return list
+    const needle = debouncedQ.toLowerCase()
     return list.filter(
       (c) =>
         c.name.toLowerCase().includes(needle) ||

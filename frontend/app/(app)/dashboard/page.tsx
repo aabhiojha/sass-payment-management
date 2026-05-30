@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import {
@@ -42,7 +43,7 @@ import { useCountUp } from "@/hooks/useCountUp"
 /*  Animated stat cell                                                 */
 /* ------------------------------------------------------------------ */
 
-function StatCell({
+const StatCell = memo(function StatCell({
   label,
   value,
   sub,
@@ -66,7 +67,7 @@ function StatCell({
       {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
     </div>
   )
-}
+})
 
 /* ------------------------------------------------------------------ */
 /*  Loading skeleton                                                   */
