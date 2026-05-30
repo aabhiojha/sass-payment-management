@@ -16,9 +16,16 @@ const display = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: "PayFlow — Billing & Reminders",
+  title: "PayNest",
   description:
-    "PayFlow: billing and payment reminder platform for modern subscription teams.",
+    "PayNest: billing and payment reminder platform for modern subscription teams.",
+  icons: {
+    icon: [
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 }
 
 export default function RootLayout({
