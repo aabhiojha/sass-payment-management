@@ -28,7 +28,13 @@ public class NotificationClient {
     }
 
     public void sendReminder(ReminderNotificationPayload payload) {
-        dispatch("/internal/notify/reminder", payload, payload.customerEmail());
+        // Intentionally does NOT swallow — callers must handle failure to record correct status
+        restClient.post()
+                .uri("/internal/notify/reminder")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private void dispatch(String uri, Object body, String recipientEmail) {
