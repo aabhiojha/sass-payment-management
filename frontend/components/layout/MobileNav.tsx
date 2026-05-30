@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
@@ -11,6 +11,8 @@ import { Logo } from "./Logo"
 export function MobileNav() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+
+  useEffect(() => { setOpen(false) }, [pathname])
 
   return (
     <>
@@ -31,7 +33,7 @@ export function MobileNav() {
             className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-72 border-r border-border bg-card">
+          <div className="absolute left-0 top-0 h-full w-72 border-r border-border bg-card [&>aside]:!flex [&>aside]:h-full [&>aside]:w-full">
             <Sidebar />
           </div>
         </div>
