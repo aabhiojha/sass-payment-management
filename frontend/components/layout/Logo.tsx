@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 export function Logo({
@@ -9,7 +10,7 @@ export function Logo({
   showText?: boolean
 }) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
+    <Link href="/dashboard" className={cn("flex items-center gap-2.5", className)}>
       <Image
         src="/favicon-96x96.png"
         alt="PayNest"
@@ -25,6 +26,6 @@ export function Logo({
           </span>
         </div>
       )}
-    </div>
+    </Link>
   )
 }
