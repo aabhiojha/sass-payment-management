@@ -175,7 +175,7 @@ class AuthServiceTest {
     void acceptInvite_invalidToken_throws400() {
         when(invitationRepository.findByTokenHash(any())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("bad", "pass123!")))
+        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("bad", "pass123!", null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(e -> ((ResponseStatusException) e).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
@@ -187,7 +187,7 @@ class AuthServiceTest {
         inv.setStatus(InvitationStatus.ACCEPTED);
         when(invitationRepository.findByTokenHash(any())).thenReturn(Optional.of(inv));
 
-        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!")))
+        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!", null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(e -> ((ResponseStatusException) e).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
@@ -199,7 +199,7 @@ class AuthServiceTest {
         inv.setExpiresAt(Instant.now().minusSeconds(1));
         when(invitationRepository.findByTokenHash(any())).thenReturn(Optional.of(inv));
 
-        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!")))
+        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!", null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(e -> ((ResponseStatusException) e).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
@@ -212,7 +212,7 @@ class AuthServiceTest {
         when(invitationRepository.findByTokenHash(any())).thenReturn(Optional.of(inv));
         when(userRepository.existsByEmail(inv.getEmail())).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!")))
+        assertThatThrownBy(() -> authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!", null)))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(e -> ((ResponseStatusException) e).getStatusCode())
                 .isEqualTo(HttpStatus.CONFLICT);
@@ -226,7 +226,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(any())).thenReturn("hashed");
         when(jwtService.generateAccessToken(any())).thenReturn("jwt");
 
-        AuthResponse response = authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!"));
+        AuthResponse response = authService.acceptInvite(new AcceptInviteRequest("tok", "pass123!", null));
 
         assertThat(inv.getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
         assertThat(inv.getAcceptedAt()).isNotNull();
