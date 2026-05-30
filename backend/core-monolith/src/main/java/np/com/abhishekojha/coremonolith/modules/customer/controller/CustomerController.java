@@ -59,8 +59,9 @@ public class CustomerController {
     public ResponseEntity<Page<CustomerResponse>> list(
             @PathVariable Long tenantId,
             @RequestParam(required = false) CustomerStatus status,
+            @RequestParam(required = false) String search,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(customerService.list(tenantId, status, pageable));
+        return ResponseEntity.ok(customerService.list(tenantId, status, search, pageable));
     }
 
     @Operation(summary = "Get customer by ID")
