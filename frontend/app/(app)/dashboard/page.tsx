@@ -5,17 +5,10 @@ import Link from "next/link"
 import {
   ArrowUpRight,
   Bell,
-  Building2,
-  Calendar,
-  ClipboardList,
-  DollarSign,
-  Package,
-  PauseCircle,
   ScrollText,
   Send,
   SkipForward,
   UserCircle2,
-  Users,
   XCircle,
   AlertCircle,
 } from "lucide-react"
@@ -45,68 +38,20 @@ import { auditApi } from "@/lib/api/audit"
 import { describeEvent } from "@/lib/audit-helpers"
 
 /* ------------------------------------------------------------------ */
-/*  Stat card                                                          */
-/* ------------------------------------------------------------------ */
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  accent,
-  sub,
-}: {
-  label: string
-  value: string | number
-  icon: React.ComponentType<{ className?: string }>
-  accent: string
-  sub?: string
-}) {
-  return (
-    <Card className="relative overflow-hidden">
-      <div
-        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20 blur-2xl ${accent}`}
-      />
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardDescription className="text-xs font-medium uppercase tracking-wider">
-          {label}
-        </CardDescription>
-        <div
-          className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent} text-white`}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="font-display text-3xl font-semibold tracking-tight">
-          {value}
-        </p>
-        {sub && (
-          <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /*  Loading skeleton                                                   */
 /* ------------------------------------------------------------------ */
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-32" />
-        ))}
-      </div>
+    <div className="space-y-6">
+      <Skeleton className="h-16 rounded-xl" />
       <div className="grid gap-6 lg:grid-cols-3">
-        <Skeleton className="h-72 lg:col-span-2" />
-        <Skeleton className="h-72" />
+        <Skeleton className="h-56 lg:col-span-2" />
+        <Skeleton className="h-56" />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-64" />
+        <Skeleton className="h-52" />
+        <Skeleton className="h-52" />
       </div>
     </div>
   )
@@ -138,75 +83,60 @@ function AdminDashboard() {
   const totalReminders = d.remindersSent + d.remindersFailed + d.remindersSkipped
 
   return (
-    <>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Active tenants"
-          value={d.activeTenants}
-          icon={Building2}
-          accent="bg-gradient-to-br from-primary to-[hsl(280_85%_55%)]"
-          sub={`${totalTenants} total`}
-        />
-        <StatCard
-          label="Suspended tenants"
-          value={d.suspendedTenants}
-          icon={PauseCircle}
-          accent="bg-gradient-to-br from-[hsl(38_92%_50%)] to-[hsl(28_92%_55%)]"
-        />
-        <StatCard
-          label="Total users"
-          value={d.totalUsers}
-          icon={Users}
-          accent="bg-gradient-to-br from-[hsl(199_89%_48%)] to-[hsl(212_92%_45%)]"
-        />
-        <StatCard
-          label="Reminders sent"
-          value={d.remindersSent}
-          icon={Send}
-          accent="bg-gradient-to-br from-[hsl(152_65%_38%)] to-[hsl(160_70%_42%)]"
-          sub={`${totalReminders} total · ${d.remindersFailed} failed`}
-        />
+    <div className="space-y-6">
+      {/* Stats strip */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
+        {[
+          { label: "Active tenants", value: d.activeTenants, sub: `${totalTenants} total` },
+          { label: "Suspended", value: d.suspendedTenants, sub: null },
+          { label: "Total users", value: d.totalUsers, sub: null },
+          { label: "Reminders sent", value: d.remindersSent, sub: `${d.remindersFailed} failed` },
+        ].map((stat) => (
+          <div key={stat.label} className="flex flex-col gap-0.5 bg-card px-5 py-4">
+            <span className="text-xs text-muted-foreground">{stat.label}</span>
+            <span className="font-display text-2xl font-semibold tracking-tight">{stat.value}</span>
+            {stat.sub && <span className="text-xs text-muted-foreground">{stat.sub}</span>}
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription className="text-xs font-medium uppercase tracking-wider">
-              Tenant breakdown
-            </CardDescription>
+            <CardTitle className="text-sm font-medium">Tenant breakdown</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: "Active", value: d.activeTenants, variant: "success" as const },
-              { label: "Suspended", value: d.suspendedTenants, variant: "warning" as const },
-              { label: "Archived", value: d.archivedTenants, variant: "muted" as const },
-            ].map((row) => (
-              <div key={row.label} className="flex items-center justify-between">
-                <Badge variant={row.variant}>{row.label}</Badge>
-                <span className="font-display text-lg font-semibold">
-                  {row.value}
-                </span>
-              </div>
-            ))}
+          <CardContent className="px-0 pb-0">
+            <div className="divide-y divide-border">
+              {[
+                { label: "Active", value: d.activeTenants, variant: "success" as const },
+                { label: "Suspended", value: d.suspendedTenants, variant: "warning" as const },
+                { label: "Archived", value: d.archivedTenants, variant: "muted" as const },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between px-6 py-3">
+                  <Badge variant={row.variant}>{row.label}</Badge>
+                  <span className="font-display text-lg font-semibold">{row.value}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
         <Card className="sm:col-span-2">
           <CardHeader className="pb-3">
-            <CardDescription className="text-xs font-medium uppercase tracking-wider">
-              Reminder delivery
-            </CardDescription>
+            <CardTitle className="text-sm font-medium">Reminder delivery</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
+          <CardContent className="px-0 pb-0">
+            <div className="divide-y divide-border">
               {[
                 { label: "Sent", value: d.remindersSent, icon: Send, color: "text-success" },
                 { label: "Failed", value: d.remindersFailed, icon: XCircle, color: "text-destructive" },
                 { label: "Skipped", value: d.remindersSkipped, icon: SkipForward, color: "text-muted-foreground" },
-              ].map((s) => (
-                <div key={s.label} className="text-center">
-                  <s.icon className={`mx-auto mb-2 h-5 w-5 ${s.color}`} />
-                  <p className="font-display text-2xl font-semibold">{s.value}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between px-6 py-3">
+                  <div className="flex items-center gap-2">
+                    <row.icon className={`h-3.5 w-3.5 ${row.color}`} />
+                    <span className="text-sm text-muted-foreground">{row.label}</span>
+                  </div>
+                  <span className="font-display text-base font-semibold">{row.value}</span>
                 </div>
               ))}
             </div>
@@ -222,49 +152,41 @@ function AdminDashboard() {
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/audit-logs">
-              View all
-              <ArrowUpRight className="h-3.5 w-3.5" />
+              View all <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 pb-0">
           {auditLogs.isLoading ? (
-            <div className="space-y-2">
+            <div className="divide-y divide-border">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12" />
+                <div key={i} className="flex items-center gap-3 px-6 py-3">
+                  <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                  <Skeleton className="h-3.5 flex-1" />
+                  <Skeleton className="h-3 w-14 shrink-0" />
+                </div>
               ))}
             </div>
           ) : auditLogs.data && auditLogs.data.content.length > 0 ? (
-            <div className="space-y-2">
+            <div className="divide-y divide-border">
               {auditLogs.data.content.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                      <ScrollText className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {describeEvent(a)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {timeAgo(a.createdAt)}
-                      </p>
-                    </div>
-                  </div>
+                <div key={a.id} className="flex items-center gap-3 px-6 py-2.5">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
+                  <p className="flex-1 truncate text-xs text-foreground">{describeEvent(a)}</p>
+                  <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                    {timeAgo(a.createdAt)}
+                  </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">
+            <p className="px-6 py-8 text-center text-sm text-muted-foreground">
               No audit logs yet.
             </p>
           )}
         </CardContent>
       </Card>
-    </>
+    </div>
   )
 }
 
@@ -310,85 +232,57 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
   const s = summary.data
 
   return (
-    <>
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Customers"
-          value={s?.totalCustomers ?? 0}
-          icon={UserCircle2}
-          accent="bg-gradient-to-br from-primary to-[hsl(280_85%_55%)]"
-        />
-        <StatCard
-          label="Products"
-          value={s?.totalProducts ?? 0}
-          icon={Package}
-          accent="bg-gradient-to-br from-[hsl(199_89%_48%)] to-[hsl(212_92%_45%)]"
-        />
-        <StatCard
-          label="Active plans"
-          value={s?.activePlans ?? 0}
-          icon={ClipboardList}
-          accent="bg-gradient-to-br from-[hsl(152_65%_38%)] to-[hsl(160_70%_42%)]"
-          sub={`${s?.pausedPlans ?? 0} paused · ${s?.cancelledPlans ?? 0} cancelled`}
-        />
-        <StatCard
-          label="Reminders sent"
-          value={reminderStats.data?.sent ?? 0}
-          icon={Bell}
-          accent="bg-gradient-to-br from-[hsl(38_92%_50%)] to-[hsl(28_92%_55%)]"
-          sub={
-            reminderStats.data
-              ? `${reminderStats.data.failed} failed · last 30 days`
-              : undefined
-          }
-        />
+    <div className="space-y-6">
+      {/* Stats strip */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
+        {[
+          { label: "Customers", value: s?.totalCustomers ?? 0, sub: null },
+          { label: "Products", value: s?.totalProducts ?? 0, sub: null },
+          { label: "Active plans", value: s?.activePlans ?? 0, sub: `${s?.pausedPlans ?? 0} paused` },
+          { label: "Reminders sent", value: reminderStats.data?.sent ?? 0, sub: reminderStats.data ? `${reminderStats.data.failed} failed` : null },
+        ].map((stat) => (
+          <div key={stat.label} className="flex flex-col gap-0.5 bg-card px-5 py-4">
+            <span className="text-xs text-muted-foreground">{stat.label}</span>
+            <span className="font-display text-2xl font-semibold tracking-tight">{stat.value}</span>
+            {stat.sub && <span className="text-xs text-muted-foreground">{stat.sub}</span>}
+          </div>
+        ))}
       </div>
 
       {/* Revenue + Reminder stats row */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Revenue overview</CardTitle>
-              <CardDescription>
-                Active plan amounts by currency
-              </CardDescription>
-            </div>
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle>Revenue overview</CardTitle>
+            <CardDescription>Active plan amounts by currency</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             {revenue.isLoading ? (
-              <div className="space-y-3">
+              <div className="space-y-px px-6 pb-6">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-12" />
                 ))}
               </div>
             ) : revenue.data?.totals && revenue.data.totals.length > 0 ? (
-              <div className="space-y-3">
+              <div className="divide-y divide-border">
                 {revenue.data.totals.map((t) => (
-                  <div
-                    key={t.currency}
-                    className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
-                  >
+                  <div key={t.currency} className="flex items-center justify-between px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
                         {t.currency}
-                      </div>
-                      <div>
-                        <p className="font-display text-xl font-semibold tracking-tight">
-                          {formatCurrency(t.totalAmount, t.currency)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {t.planCount} active {t.planCount === 1 ? "plan" : "plans"}
-                        </p>
-                      </div>
+                      </span>
+                      <p className="text-xs text-muted-foreground">
+                        {t.planCount} active {t.planCount === 1 ? "plan" : "plans"}
+                      </p>
                     </div>
+                    <p className="font-display text-xl font-semibold tracking-tight">
+                      {formatCurrency(t.totalAmount, t.currency)}
+                    </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
+              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
                 No active plans yet.
               </p>
             )}
@@ -404,106 +298,87 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
                 : "Last 30 days"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             {reminderStats.isLoading ? (
-              <div className="space-y-3">
+              <div className="space-y-px px-6 pb-6">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-10" />
                 ))}
               </div>
             ) : reminderStats.data ? (
-              <div className="space-y-4">
+              <div className="divide-y divide-border">
                 {[
-                  { label: "Sent", value: reminderStats.data.sent, icon: Send, color: "text-success", bg: "bg-success/10" },
-                  { label: "Failed", value: reminderStats.data.failed, icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10" },
-                  { label: "Skipped", value: reminderStats.data.skipped, icon: SkipForward, color: "text-muted-foreground", bg: "bg-muted" },
+                  { label: "Sent", value: reminderStats.data.sent, icon: Send, color: "text-success" },
+                  { label: "Failed", value: reminderStats.data.failed, icon: AlertCircle, color: "text-destructive" },
+                  { label: "Skipped", value: reminderStats.data.skipped, icon: SkipForward, color: "text-muted-foreground" },
+                  { label: "Total", value: reminderStats.data.total, icon: Bell, color: "text-foreground" },
                 ].map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${row.bg}`}>
-                        <row.icon className={`h-4 w-4 ${row.color}`} />
-                      </div>
-                      <span className="text-sm font-medium">{row.label}</span>
+                  <div key={row.label} className="flex items-center justify-between px-6 py-3">
+                    <div className="flex items-center gap-2">
+                      <row.icon className={`h-3.5 w-3.5 ${row.color}`} />
+                      <span className="text-sm text-muted-foreground">{row.label}</span>
                     </div>
-                    <span className="font-display text-lg font-semibold">
+                    <span className="font-display text-base font-semibold">
                       {row.value}
                     </span>
                   </div>
                 ))}
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Total
-                  </span>
-                  <span className="font-display text-lg font-semibold">
-                    {reminderStats.data.total}
-                  </span>
-                </div>
               </div>
             ) : null}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
             <CardTitle>Upcoming reminders</CardTitle>
             <CardDescription>Due within the next 7 days</CardDescription>
-          </div>
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {upcoming.isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-14" />
-              ))}
-            </div>
-          ) : upcoming.data && upcoming.data.length > 0 ? (
-            <div className="space-y-2">
-              {upcoming.data.map((u) => (
-                <div
-                  key={u.customerProductId}
-                  className="flex items-center justify-between rounded-xl border border-border bg-card/50 px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {u.customerName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {u.productName} · {formatCurrency(u.amount, u.currency)}
-                    </p>
-                  </div>
-                  <Badge variant="info">{formatDate(u.endsAt)}</Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No upcoming reminders.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent activity */}
-      {showActivity && (
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent activity</CardTitle>
-              <CardDescription>Last 10 audit log entries</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/audit-logs`}>
-                View all
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
           </CardHeader>
+          <CardContent className="px-0 pb-0">
+            {upcoming.isLoading ? (
+              <div className="space-y-px px-6 pb-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12" />
+                ))}
+              </div>
+            ) : upcoming.data && upcoming.data.length > 0 ? (
+              <div className="divide-y divide-border">
+                {upcoming.data.map((u) => (
+                  <div key={u.customerProductId} className="flex items-center justify-between px-6 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{u.customerName}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {u.productName} · {formatCurrency(u.amount, u.currency)}
+                      </p>
+                    </div>
+                    <Badge variant="info" className="shrink-0 ml-3">{formatDate(u.endsAt)}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
+                No upcoming reminders.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent activity — sits beside upcoming reminders on lg */}
+        {showActivity && (
+          <Card>
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle>Recent activity</CardTitle>
+                <CardDescription>Last 10 audit log entries</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/audit-logs`}>
+                  View all
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </CardHeader>
           <CardContent className="px-0 pb-0">
             {activity.isLoading ? (
               <div className="divide-y divide-border">
@@ -544,8 +419,9 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
             )}
           </CardContent>
         </Card>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   )
 }
 
