@@ -18,6 +18,7 @@ import {
   MoreHorizontal,
   Package,
   PauseCircle,
+  Pencil,
   Play,
   Plus,
   Power,
@@ -72,6 +73,7 @@ import { productPlansApi } from "@/lib/api/product-plans"
 import { friendlyError } from "@/lib/axios"
 import { cn, formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { useRole } from "@/hooks/useRole"
+import { Textarea } from "@/components/ui/textarea"
 import type { BillingCadence } from "@/types/api"
 
 const CADENCE_LABEL: Record<string, string> = {
@@ -98,6 +100,15 @@ const PLAN_FILTERS: { label: string; value: "ALL" | PlanStatus }[] = [
 
 const CURRENCIES = ["USD", "NPR"] as const
 
+const editSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  description: z.string().optional(),
+  price: z.coerce.number().positive("Price must be greater than 0"),
+  currency: z.enum(CURRENCIES),
+  billingCadence: z.enum(["WEEKLY", "MONTHLY", "QUARTERLY", "ANNUALLY"]),
+})
+type EditValues = z.infer<typeof editSchema>
+
 const pricingTierSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   price: z.coerce.number().min(0, "Price must be non-negative"),
@@ -116,8 +127,10 @@ export default function ProductDetailPage({
   const router = useRouter()
   const qc = useQueryClient()
   const { isAtLeast } = useRole()
+  const canEdit = isAtLeast("TENANT_ADMIN")
   const canDelete = isAtLeast("TENANT_ADMIN")
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [filter, setFilter] = useState<"ALL" | PlanStatus>("ALL")
   const [activeTab, setActiveTab] = useState<"customers" | "tiers">("customers")
   const [addTierOpen, setAddTierOpen] = useState(false)
@@ -176,6 +189,20 @@ export default function ProductDetailPage({
       })
       qc.invalidateQueries({ queryKey: ["plans", tenantId] })
       toast.success("Plan updated")
+    },
+    onError: (e) => toast.error(friendlyError(e)),
+  })
+
+  const editForm = useForm<EditValues>({
+    resolver: zodResolver(editSchema),
+  })
+
+  const editMut = useMutation({
+    mutationFn: (data: EditValues) => productsApi.update(tenantId, productId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products", tenantId] })
+      toast.success("Product updated")
+      setEditOpen(false)
     },
     onError: (e) => toast.error(friendlyError(e)),
   })
@@ -265,6 +292,23 @@ export default function ProductDetailPage({
         actions={
           p && (
             <>
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    editForm.reset({
+                      name: p.name,
+                      description: p.description ?? "",
+                      price: p.price,
+                      currency: (CURRENCIES.includes(p.currency as typeof CURRENCIES[number]) ? p.currency : "USD") as typeof CURRENCIES[number],
+                      billingCadence: p.billingCadence as EditValues["billingCadence"],
+                    })
+                    setEditOpen(true)
+                  }}
+                >
+                  <Pencil className="h-4 w-4" /> Edit
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => toggle.mutate()}
@@ -644,6 +688,91 @@ export default function ProductDetailPage({
           )}
         </>
       )}
+
+      {/* Edit product dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Edit product</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={editForm.handleSubmit((v) => editMut.mutate(v))}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="editName">Name</Label>
+              <Input id="editName" placeholder="Pro Plan" {...editForm.register("name")} />
+              {editForm.formState.errors.name && (
+                <p className="text-xs text-destructive">{editForm.formState.errors.name.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editDescription">Description</Label>
+              <Textarea
+                id="editDescription"
+                rows={3}
+                placeholder="What does this product include?"
+                {...editForm.register("description")}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="editPrice">Price</Label>
+                <Input
+                  id="editPrice"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  {...editForm.register("price")}
+                />
+                {editForm.formState.errors.price && (
+                  <p className="text-xs text-destructive">{editForm.formState.errors.price.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editCurrency">Currency</Label>
+                <Select
+                  value={editForm.watch("currency")}
+                  onValueChange={(v) => editForm.setValue("currency", v as typeof CURRENCIES[number])}
+                >
+                  <SelectTrigger id="editCurrency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="NPR">NPR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editCadence">Billing cadence</Label>
+              <Select
+                value={editForm.watch("billingCadence")}
+                onValueChange={(v) => editForm.setValue("billingCadence", v as EditValues["billingCadence"])}
+              >
+                <SelectTrigger id="editCadence">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                  <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                  <SelectItem value="ANNUALLY">Annually</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={editMut.isPending}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Add pricing tier dialog */}
       <Dialog open={addTierOpen} onOpenChange={setAddTierOpen}>
