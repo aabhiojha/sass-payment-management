@@ -50,7 +50,8 @@ public class EmailService {
     }
 
     public void sendReminder(ReminderEmailRequest req) {
-        String subject = "Payment Reminder – " + req.getProductName() + " due " + req.getDueDate();
+        String days = req.getDaysBeforeExpiry() == 1 ? "tomorrow" : "in " + req.getDaysBeforeExpiry() + " days";
+        String subject = "Reminder: " + req.getProductName() + " expires " + days;
         send(req.getCustomerEmail(), subject, renderReminder(req));
     }
 
@@ -75,13 +76,13 @@ public class EmailService {
 
     private String renderReminder(ReminderEmailRequest req) {
         Map<String, Object> vars = new java.util.HashMap<>();
-        vars.put("customerName",  req.getCustomerName());
-        vars.put("productName",   req.getProductName());
-        vars.put("planName",      req.getPlanName());
-        vars.put("amount",        req.getAmount());
-        vars.put("dueDate",       req.getDueDate());
-        vars.put("tenantName",    req.getTenantName());
-        vars.put("invoiceNumber", req.getInvoiceNumber() != null ? req.getInvoiceNumber() : "N/A");
+        vars.put("customerName",     req.getCustomerName());
+        vars.put("productName",      req.getProductName());
+        vars.put("planName",         req.getPlanName());
+        vars.put("amount",           req.getAmount());
+        vars.put("dueDate",          req.getDueDate());
+        vars.put("tenantName",       req.getTenantName());
+        vars.put("daysBeforeExpiry", req.getDaysBeforeExpiry());
         return render("email/reminder", vars);
     }
 

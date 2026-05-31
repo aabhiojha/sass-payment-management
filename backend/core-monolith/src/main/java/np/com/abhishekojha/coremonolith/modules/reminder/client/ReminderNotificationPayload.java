@@ -8,5 +8,6 @@ public record ReminderNotificationPayload(
         String productName,
         String planName,
         String amount,
-        String dueDate
+        String dueDate,
+        int daysBeforeExpiry
 ) {}
