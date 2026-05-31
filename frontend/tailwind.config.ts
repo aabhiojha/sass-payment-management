@@ -52,6 +52,14 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          fg: "hsl(var(--sidebar-foreground))",
+          muted: "hsl(var(--sidebar-muted))",
+          border: "hsl(var(--sidebar-border))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-fg": "hsl(var(--sidebar-accent-fg))",
+        },
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",

@@ -110,8 +110,8 @@ function NavLink({
       className={cn(
         "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         active
-          ? "bg-accent text-accent-foreground shadow-sm"
-          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          ? "bg-sidebar-accent text-sidebar-accent-fg"
+          : "text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-sidebar-fg"
       )}
     >
       {active && (
@@ -120,7 +120,7 @@ function NavLink({
       <Icon
         className={cn(
           "h-4 w-4 shrink-0 transition-colors",
-          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+          active ? "text-primary" : "text-sidebar-muted group-hover:text-sidebar-fg"
         )}
       />
       <span className="truncate">{label}</span>
@@ -154,7 +154,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-card/40 backdrop-blur md:flex">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-fg md:flex">
       <div className="px-5 pt-6 pb-4">
         <Logo />
       </div>
@@ -169,7 +169,7 @@ export function Sidebar() {
         {/* Superadmin global admin section — superOnly items only (e.g. Audit log) */}
         {isSuperAdmin && (
           <div className="space-y-1">
-            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+            <p className="px-3 pb-2 text-[10px] font-semibold text-sidebar-muted">
               Administration
             </p>
             {nav.admin.filter((i) => i.superOnly).map((i) => (
@@ -181,7 +181,7 @@ export function Sidebar() {
         {/* Superadmin: tenant workspace section when a tenant is selected */}
         {isSuperAdmin && tenantId && (
           <>
-            <div className="mx-3 border-t border-border" />
+            <div className="mx-3 border-t border-sidebar-border" />
             <div className="space-y-1">
               <div className="flex items-center justify-between px-3 pb-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -190,13 +190,13 @@ export function Sidebar() {
                       {initials(storeTenantName ?? String(tenantId))}
                     </AvatarFallback>
                   </Avatar>
-                  <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                  <p className="truncate text-[10px] font-semibold text-sidebar-muted">
                     {storeTenantName ?? `Tenant #${tenantId}`}
                   </p>
                 </div>
                 <button
                   onClick={handleClearTenant}
-                  className="ml-1 shrink-0 rounded p-0.5 text-muted-foreground/60 hover:bg-secondary hover:text-muted-foreground transition-colors"
+                  className="ml-1 shrink-0 rounded p-0.5 text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-fg transition-colors"
                   aria-label="Stop viewing tenant"
                 >
                   <X className="h-3 w-3" />
@@ -221,7 +221,7 @@ export function Sidebar() {
           <>
             {nav.workspace.length > 0 && (
               <div className="space-y-1">
-                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                <p className="px-3 pb-2 text-[10px] font-semibold text-sidebar-muted">
                   Workspace
                 </p>
                 {nav.workspace.map((i) => (
@@ -232,7 +232,7 @@ export function Sidebar() {
 
             {nav.admin.length > 0 && (
               <div className="space-y-1">
-                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+                <p className="px-3 pb-2 text-[10px] font-semibold text-sidebar-muted">
                   Administration
                 </p>
                 {nav.admin.map((i) => {
@@ -248,15 +248,15 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="border-t border-border p-3">
+      <div className="border-t border-sidebar-border p-3">
         <Link
           href="/me"
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-secondary",
-            pathname === "/me" && "bg-accent text-accent-foreground"
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-sidebar-muted hover:bg-sidebar-accent/60 hover:text-sidebar-fg",
+            pathname === "/me" && "bg-sidebar-accent text-sidebar-accent-fg"
           )}
         >
-          <Settings className="h-4 w-4 text-muted-foreground" />
+          <Settings className="h-4 w-4" />
           <span>My profile</span>
         </Link>
       </div>
