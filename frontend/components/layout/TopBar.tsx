@@ -137,7 +137,7 @@ export function TopBar() {
   const name = user?.email?.split("@")[0] ?? "User"
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 hidden h-14 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md md:flex sm:px-6">
       {isSuperAdmin && (
         <div className="hidden flex-1 md:block">
           <TenantPicker />
