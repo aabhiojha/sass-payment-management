@@ -87,7 +87,7 @@ export default function ProductsPage({
               value={statusFilter}
               onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
             >
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="min-w-[130px] h-8 text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

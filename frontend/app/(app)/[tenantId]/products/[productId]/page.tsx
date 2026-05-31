@@ -380,7 +380,7 @@ export default function ProductDetailPage({
             <Card>
               <div className="flex items-center justify-between border-b border-border p-4">
                 <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-                  <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectTrigger className="min-w-[130px] h-8 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -505,16 +505,16 @@ export default function ProductDetailPage({
                         {plan.status !== "CANCELLED" && (
                           <div className="flex gap-2 pt-1">
                             {plan.status === "ACTIVE" && (
-                              <Button size="xs" variant="outline" onClick={() => planStatusMut.mutate({ customerId: plan.customerId, cpId: plan.id, status: "PAUSED" })}>
+                              <Button size="sm" variant="outline" onClick={() => planStatusMut.mutate({ customerId: plan.customerId, cpId: plan.id, status: "PAUSED" })}>
                                 <PauseCircle className="h-3 w-3" /> Pause
                               </Button>
                             )}
                             {plan.status === "PAUSED" && (
-                              <Button size="xs" variant="outline" onClick={() => planStatusMut.mutate({ customerId: plan.customerId, cpId: plan.id, status: "ACTIVE" })}>
+                              <Button size="sm" variant="outline" onClick={() => planStatusMut.mutate({ customerId: plan.customerId, cpId: plan.id, status: "ACTIVE" })}>
                                 <Play className="h-3 w-3" /> Resume
                               </Button>
                             )}
-                            <Button size="xs" variant="outline" className="text-destructive ml-auto" onClick={() => planStatusMut.mutate({ customerId: plan.customerId, cpId: plan.id, status: "CANCELLED" })}>
+                            <Button size="sm" variant="outline" className="text-destructive ml-auto" onClick={() => planStatusMut.mutate({ customerId: plan.customerId, cpId: plan.id, status: "CANCELLED" })}>
                               <Ban className="h-3 w-3" /> Cancel
                             </Button>
                           </div>

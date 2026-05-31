@@ -155,7 +155,7 @@ export default function PlansPage({
           />
           <div className="flex items-center gap-3 shrink-0">
             <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0) }}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="min-w-[130px] h-8 text-xs">
                 <SelectValue placeholder="Filter…" />
               </SelectTrigger>
               <SelectContent>
@@ -279,22 +279,22 @@ export default function PlansPage({
                     <p className="text-sm font-medium shrink-0">{formatCurrency(p.amount, p.currency)}</p>
                   </div>
                   <div className="flex gap-2 pt-1">
-                    <Button size="xs" variant="outline" onClick={() => openEdit(p)}>
+                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
                       <Pencil className="h-3 w-3" /> Edit
                     </Button>
                     {p.status === "ACTIVE" && (
-                      <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ plan: p, status: "PAUSED" })}>
+                      <Button size="sm" variant="outline" onClick={() => statusMut.mutate({ plan: p, status: "PAUSED" })}>
                         <PauseCircle className="h-3 w-3" /> Pause
                       </Button>
                     )}
                     {p.status === "PAUSED" && (
-                      <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ plan: p, status: "ACTIVE" })}>
+                      <Button size="sm" variant="outline" onClick={() => statusMut.mutate({ plan: p, status: "ACTIVE" })}>
                         <Play className="h-3 w-3" /> Resume
                       </Button>
                     )}
                     {p.status !== "CANCELLED" && (
                       <Button
-                        size="xs"
+                        size="sm"
                         variant="outline"
                         className="text-destructive ml-auto"
                         onClick={() => statusMut.mutate({ plan: p, status: "CANCELLED" })}

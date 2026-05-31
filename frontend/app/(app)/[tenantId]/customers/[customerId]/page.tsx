@@ -396,22 +396,22 @@ export default function CustomerDetailPage({
                         </span>
                       </div>
                       <div className="flex gap-2 pt-1">
-                        <Button size="xs" variant="outline" onClick={() => openEditPlan(p)}>
+                        <Button size="sm" variant="outline" onClick={() => openEditPlan(p)}>
                           <Pencil className="h-3 w-3" /> Edit
                         </Button>
                         {p.status === "ACTIVE" && (
-                          <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "PAUSED" })}>
+                          <Button size="sm" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "PAUSED" })}>
                             <PauseCircle className="h-3 w-3" /> Pause
                           </Button>
                         )}
                         {p.status === "PAUSED" && (
-                          <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "ACTIVE" })}>
+                          <Button size="sm" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "ACTIVE" })}>
                             <Play className="h-3 w-3" /> Resume
                           </Button>
                         )}
                         {p.status !== "CANCELLED" && (
                           <Button
-                            size="xs"
+                            size="sm"
                             variant="outline"
                             className="text-destructive ml-auto"
                             onClick={() => statusMut.mutate({ cpId: p.id, status: "CANCELLED" })}

@@ -58,7 +58,7 @@ export default function CustomersPage({
     <div className="space-y-6">
       <PageHeader
         title="Customers"
-        description="Manage the people and organisations being billed in this workspace."
+        description="Manage the people and organizations being billed in this workspace."
         actions={
           <Button asChild>
             <Link href={`/${tenantId}/customers/new`}>
@@ -80,7 +80,7 @@ export default function CustomersPage({
               value={statusFilter}
               onValueChange={(v) => { setStatusFilter(v); setPage(0) }}
             >
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="min-w-[130px] h-8 text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

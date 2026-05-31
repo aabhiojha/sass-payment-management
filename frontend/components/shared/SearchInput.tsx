@@ -21,6 +21,7 @@ export function SearchInput({
       <Input
         {...props}
         placeholder={placeholder}
+        aria-label={props["aria-label"] ?? placeholder}
         className={cn("pl-9", className)}
       />
     </div>

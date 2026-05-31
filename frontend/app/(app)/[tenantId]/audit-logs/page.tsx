@@ -175,6 +175,8 @@ export default function TenantAuditLogsPage({
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    id="actor-search"
+                    aria-label="Search by actor email"
                     placeholder="Search actor email…"
                     value={actorSearch}
                     onChange={(e) => { setActorSearch(e.target.value); setPage(0) }}
@@ -182,6 +184,8 @@ export default function TenantAuditLogsPage({
                   />
                 </div>
                 <Input
+                  id="resource-id-filter"
+                  aria-label="Filter by resource ID"
                   placeholder="Resource ID"
                   value={resourceIdInput}
                   onChange={(e) => { setResourceIdInput(e.target.value); setPage(0) }}

@@ -106,6 +106,7 @@ function NavLink({
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={cn(
         "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         active
@@ -158,7 +159,7 @@ export function Sidebar() {
         <Logo />
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-6 scrollbar-thin">
+      <nav aria-label="Main navigation" className="flex-1 space-y-6 overflow-y-auto px-3 pb-6 scrollbar-thin">
         <div className="space-y-1">
           {nav.primary.map((i) => (
             <NavLink key={i.href} item={i} active={isActive(i.href)} />
