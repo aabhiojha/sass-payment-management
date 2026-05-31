@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { Building2, ChevronDown, LogOut, User as UserIcon, X } from "lucide-react"
 import { initials } from "@/lib/utils"
 import { RoleBadge } from "@/components/shared/RoleBadge"
+import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter, usePathname } from "next/navigation"
@@ -144,6 +145,7 @@ export function TopBar() {
       )}
 
       <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

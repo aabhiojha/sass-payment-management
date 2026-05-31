@@ -2,6 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* New theme layer: driven entirely by JS clip-path animation */
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Old theme layer: direction-aware dissolve */
+html[data-theme-next="light"]::view-transition-old(root) {
+  animation: 520ms ease-in theme-sunrise-out both;
+}
+
+html[data-theme-next="dark"]::view-transition-old(root) {
+  animation: 440ms ease-in theme-eclipse-out both;
+}
+
+/* Fallback when data attr isn't set yet */
+::view-transition-old(root) {
+  animation: 300ms ease-in theme-fade-out both;
+}
+
+/*
+  Sunrise dissolve: old dark UI bleaches warm → overexposed → gone
+  Mimics direct sunlight washing out the screen.
+*/
+@keyframes theme-sunrise-out {
+  0%   { filter: brightness(1)   saturate(1)   blur(0px);   opacity: 1;   }
+  45%  { filter: brightness(1.6) saturate(0.7) blur(1px);   opacity: 0.8; }
+  80%  { filter: brightness(2.8) saturate(0.2) blur(4px);   opacity: 0.4; }
+  100% { filter: brightness(4)   saturate(0)   blur(8px);   opacity: 0;   }
+}
+
+/*
+  Eclipse dissolve: old light UI dims, shifts amber-warm (sunset),
+  then collapses to darkness like a solar eclipse totality.
+*/
+@keyframes theme-eclipse-out {
+  0%   { filter: brightness(1)    saturate(1)    hue-rotate(0deg)   blur(0px); opacity: 1;   }
+  35%  { filter: brightness(0.85) saturate(1.1)  hue-rotate(-8deg)  blur(0px); opacity: 0.9; }
+  70%  { filter: brightness(0.45) saturate(0.6)  hue-rotate(-15deg) blur(2px); opacity: 0.5; }
+  100% { filter: brightness(0.05) saturate(0)    hue-rotate(-20deg) blur(6px); opacity: 0;   }
+}
+
+@keyframes theme-fade-out {
+  to { opacity: 0; }
+}
+
 @layer base {
   :root {
     --background: 220 30% 98.5%;
@@ -45,42 +91,42 @@
   }
 
   .dark {
-    --background: 224 32% 7%;
-    --foreground: 210 40% 96%;
+    --background: 220 16% 10%;
+    --foreground: 210 12% 91%;
 
-    --card: 224 32% 9%;
-    --card-foreground: 210 40% 96%;
+    --card: 220 16% 14%;
+    --card-foreground: 210 12% 91%;
 
-    --popover: 224 32% 9%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 220 16% 16%;
+    --popover-foreground: 210 12% 91%;
 
-    --primary: 244 90% 70%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 244 82% 68%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 30% 14%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 218 14% 20%;
+    --secondary-foreground: 210 12% 91%;
 
-    --muted: 217 30% 14%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 218 14% 20%;
+    --muted-foreground: 215 10% 58%;
 
-    --accent: 244 75% 22%;
-    --accent-foreground: 244 95% 85%;
+    --accent: 244 50% 22%;
+    --accent-foreground: 244 88% 84%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 0 65% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 55% 45%;
+    --success: 152 55% 46%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 55%;
+    --warning: 38 90% 55%;
     --warning-foreground: 36 50% 14%;
 
-    --info: 212 92% 55%;
+    --info: 212 85% 57%;
     --info-foreground: 0 0% 100%;
 
-    --border: 217 30% 18%;
-    --input: 217 30% 18%;
-    --ring: 244 90% 70%;
+    --border: 218 13% 25%;
+    --input: 218 13% 25%;
+    --ring: 244 82% 68%;
   }
 }
 
