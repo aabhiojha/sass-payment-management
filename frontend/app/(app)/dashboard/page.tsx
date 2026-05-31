@@ -389,7 +389,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
                 <CardDescription>Last 10 audit log entries</CardDescription>
               </div>
               <Button variant="ghost" size="sm" asChild>
-                <Link href={`/audit-logs`}>
+                <Link href={`/${tenantId}/audit-logs`}>
                   View all
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
