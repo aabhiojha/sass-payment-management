@@ -36,7 +36,7 @@ import java.util.Map;
 @Slf4j
 public class ReminderService {
 
-    private static final List<Integer> MILESTONES = List.of(30, 7, 1);
+    private static final List<Integer> MILESTONES = List.of(2);
 
     private static final DateTimeFormatter DUE_DATE_FMT =
             DateTimeFormatter.ofPattern("MMM d, yyyy").withZone(ZoneOffset.UTC);

@@ -495,7 +495,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
         <Card>
           <CardHeader>
             <CardTitle>Upcoming reminders</CardTitle>
-            <CardDescription>Plans expiring at the next milestone</CardDescription>
+            <CardDescription>Plans expiring within 2 days</CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
             {upcoming.isLoading ? (
