@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +25,4 @@ public interface ReminderRepository extends JpaRepository<ReminderEntity, Long> 
     boolean existsByCustomerProductIdAndDaysBeforeExpiryAndStatusIn(
             Long customerProductId, Integer daysBeforeExpiry, List<ReminderStatus> statuses);
 
-    List<ReminderEntity> findAllByTenantIdAndStatusAndCreatedAtAfter(
-            Long tenantId, ReminderStatus status, Instant after);
 }

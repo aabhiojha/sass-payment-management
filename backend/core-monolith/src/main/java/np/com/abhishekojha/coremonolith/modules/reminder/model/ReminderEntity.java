@@ -56,6 +56,4 @@ public class ReminderEntity extends BaseAuditEntity {
     @Column(name = "days_before_expiry")
     private Integer daysBeforeExpiry;
 
-    @Column(name = "retry_count", nullable = false)
-    private int retryCount = 0;
 }

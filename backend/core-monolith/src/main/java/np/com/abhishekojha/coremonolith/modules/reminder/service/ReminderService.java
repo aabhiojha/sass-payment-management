@@ -7,9 +7,9 @@ import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
 import np.com.abhishekojha.coremonolith.common.enums.CustomerProductStatus;
 import np.com.abhishekojha.coremonolith.common.enums.ReminderStatus;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
-import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.customerproduct.model.CustomerProductEntity;
 import np.com.abhishekojha.coremonolith.modules.customerproduct.repository.CustomerProductRepository;
+import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.invitation.client.NotificationClient;
 import np.com.abhishekojha.coremonolith.modules.reminder.client.ReminderNotificationPayload;
 import np.com.abhishekojha.coremonolith.modules.reminder.dto.ReminderResponse;
@@ -36,7 +36,6 @@ import java.util.Map;
 @Slf4j
 public class ReminderService {
 
-    // Days before expiry at which reminders are sent
     private static final List<Integer> MILESTONES = List.of(30, 7, 1);
 
     private static final DateTimeFormatter DUE_DATE_FMT =
@@ -83,8 +82,6 @@ public class ReminderService {
         List<ReminderResponse> results = new ArrayList<>();
 
         for (int milestone : MILESTONES) {
-            // Exclusive upper bound avoids capturing the same plan on two consecutive daily runs
-            // when endsAt lands exactly on the boundary.
             Instant windowStart = now.plus(milestone - 1, ChronoUnit.DAYS);
             Instant windowEnd   = now.plus(milestone,     ChronoUnit.DAYS).minusSeconds(1);
 
@@ -111,38 +108,6 @@ public class ReminderService {
         return results;
     }
 
-    // Retry FAILED reminders from the last 48 hours
-    public int retryFailed(TenantEntity tenant) {
-        Instant cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
-        List<ReminderEntity> failed = reminderRepository
-                .findAllByTenantIdAndStatusAndCreatedAtAfter(
-                        tenant.getId(), ReminderStatus.FAILED, cutoff);
-
-        int retried = 0;
-        for (ReminderEntity reminder : failed) {
-            CustomerProductEntity cp = reminder.getCustomerProduct();
-            // Skip if the plan is no longer active
-            if (cp.getStatus() != CustomerProductStatus.ACTIVE || cp.getDeletedAt() != null) {
-                continue;
-            }
-            try {
-                notificationClient.sendReminder(buildPayload(tenant, cp));
-                reminder.setStatus(ReminderStatus.SENT);
-                reminder.setSentAt(Instant.now());
-                reminder.setRetryCount(reminder.getRetryCount() + 1);
-                reminder.setErrorMessage(null);
-                retried++;
-                log.info("Retry succeeded for reminder={} customerProduct={}", reminder.getId(), cp.getId());
-            } catch (Exception e) {
-                reminder.setRetryCount(reminder.getRetryCount() + 1);
-                reminder.setErrorMessage(e.getMessage());
-                log.warn("Retry failed for reminder={}: {}", reminder.getId(), e.getMessage());
-            }
-        }
-        return retried;
-    }
-
-    // Cancel overdue ACTIVE plans (endsAt in the past) and log them
     public int cancelOverduePlans(TenantEntity tenant) {
         List<CustomerProductEntity> overdue = customerProductRepository
                 .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBefore(

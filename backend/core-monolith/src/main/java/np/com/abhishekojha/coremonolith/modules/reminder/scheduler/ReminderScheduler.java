@@ -27,24 +27,16 @@ public class ReminderScheduler {
 
         for (TenantEntity tenant : activeTenants) {
             try {
-                // 1. Auto-cancel overdue plans
                 int cancelled = reminderService.cancelOverduePlans(tenant);
                 if (cancelled > 0) {
                     log.info("Auto-cancelled {} overdue plan(s) for tenant={}", cancelled, tenant.getId());
                 }
 
-                // 2. Send milestone reminders (30d, 7d, 1d)
                 int sent = (int) reminderService.triggerForTenant(tenant).stream()
                         .filter(r -> "SENT".equals(r.status()))
                         .count();
                 if (sent > 0) {
                     log.info("Sent {} reminder(s) for tenant={}", sent, tenant.getId());
-                }
-
-                // 3. Retry failed reminders from the last 48 hours
-                int retried = reminderService.retryFailed(tenant);
-                if (retried > 0) {
-                    log.info("Retried {} failed reminder(s) for tenant={}", retried, tenant.getId());
                 }
             } catch (Exception e) {
                 log.error("Daily job failed for tenant={}: {}", tenant.getId(), e.getMessage(), e);
