@@ -1,14 +1,17 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import {
   AlertCircle,
+  ArrowRight,
   ArrowUpRight,
+  Check,
   Send,
   SkipForward,
   UserCircle2,
+  X,
   XCircle,
 } from "lucide-react"
 
@@ -95,6 +98,118 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         Try again
       </Button>
     </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Getting started checklist                                          */
+/* ------------------------------------------------------------------ */
+
+interface SummaryData {
+  totalProducts: number
+  totalCustomers: number
+  activePlans: number
+  pausedPlans: number
+}
+
+const ONBOARD_STEPS = [
+  {
+    id: "product",
+    label: "Add a product",
+    isComplete: (s: SummaryData) => s.totalProducts > 0,
+    href: (id: number) => `/${id}/products/new`,
+    action: "Add product",
+  },
+  {
+    id: "customer",
+    label: "Add a customer",
+    isComplete: (s: SummaryData) => s.totalCustomers > 0,
+    href: (id: number) => `/${id}/customers/new`,
+    action: "Add customer",
+  },
+  {
+    id: "plan",
+    label: "Assign a plan",
+    isComplete: (s: SummaryData) => (s.activePlans ?? 0) + (s.pausedPlans ?? 0) > 0,
+    href: (id: number) => `/${id}/customers`,
+    action: "Go to customers",
+  },
+] as const
+
+function GettingStarted({ tenantId, summary }: { tenantId: number; summary: SummaryData }) {
+  const storageKey = `paynest-gs-dismissed-${tenantId}`
+  const [dismissed, setDismissed] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setDismissed(localStorage.getItem(storageKey) === "1")
+    setHydrated(true)
+  }, [storageKey])
+
+  const steps = ONBOARD_STEPS.map((s) => ({ ...s, done: s.isComplete(summary) }))
+  const doneCount = steps.filter((s) => s.done).length
+  const allDone = doneCount === steps.length
+
+  // Hide once all steps are complete or user dismissed
+  if (!hydrated || dismissed || allDone) return null
+
+  function dismiss() {
+    localStorage.setItem(storageKey, "1")
+    setDismissed(true)
+  }
+
+  return (
+    <Card className="animate-fade-in">
+      <CardHeader className="flex-row items-center justify-between pb-3">
+        <div className="flex items-center gap-3">
+          <CardTitle className="text-base">Get started</CardTitle>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {doneCount} of {steps.length}
+          </span>
+        </div>
+        <button
+          onClick={dismiss}
+          aria-label="Dismiss getting started"
+          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </CardHeader>
+      <CardContent className="px-0 pb-0">
+        <ol className="divide-y divide-border" aria-label="Setup checklist">
+          {steps.map((step) => (
+            <li key={step.id} className="flex items-center gap-4 px-6 py-3">
+              {step.done ? (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                  <Check className="h-3 w-3" strokeWidth={2.5} />
+                </span>
+              ) : (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-border" />
+              )}
+              <span className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : "font-medium"}`}>
+                {step.label}
+              </span>
+              {!step.done && (
+                <Button variant="ghost" size="sm" asChild className="h-7 shrink-0 gap-1 text-xs">
+                  <Link href={step.href(tenantId)}>
+                    {step.action}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </Button>
+              )}
+            </li>
+          ))}
+        </ol>
+        <div className="px-6 py-3">
+          <div className="h-1 overflow-hidden rounded-full bg-border">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${(doneCount / steps.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -269,6 +384,9 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
 
   return (
     <div className="space-y-6">
+      {/* Getting started — shown to new workspaces until all steps complete */}
+      <GettingStarted tenantId={tenantId} summary={s} />
+
       {/* Failed reminders alert — only shown when action is needed */}
       {failedCount > 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
