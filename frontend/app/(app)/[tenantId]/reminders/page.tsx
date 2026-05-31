@@ -30,8 +30,19 @@ import {
 } from "@/components/ui/select"
 
 import { remindersApi } from "@/lib/api/reminders"
-import { formatDateTime } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import { friendlyError } from "@/lib/axios"
+
+// Maps milestone days to a label and urgency color
+function NoticeLabel({ days }: { days: number | null }) {
+  if (days === null) return <span className="text-muted-foreground">—</span>
+  const label = days === 1 ? "1 day" : `${days} days`
+  const color =
+    days <= 1 ? "text-destructive" :
+    days <= 7 ? "text-warning" :
+    "text-muted-foreground"
+  return <span className={`text-sm font-medium ${color}`}>{label}</span>
+}
 
 export default function RemindersPage({
   params,
@@ -60,6 +71,10 @@ export default function RemindersPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
+  const countLabel = filter === "ALL"
+    ? `${data?.totalElements ?? 0} total`
+    : `${data?.totalElements ?? 0} ${filter.toLowerCase()}`
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -74,18 +89,20 @@ export default function RemindersPage({
 
       <Card>
         <div className="flex items-center justify-between border-b border-border p-4">
-          <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0) }}>
-            <SelectTrigger className="min-w-[130px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All statuses</SelectItem>
-              <SelectItem value="SENT">Sent</SelectItem>
-              <SelectItem value="FAILED">Failed</SelectItem>
-              <SelectItem value="SKIPPED">Skipped</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">{data?.totalElements ?? 0} total</p>
+          <div className="flex items-center gap-3 ml-auto">
+            <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0) }}>
+              <SelectTrigger className="min-w-[130px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All statuses</SelectItem>
+                <SelectItem value="SENT">Sent</SelectItem>
+                <SelectItem value="FAILED">Failed</SelectItem>
+                <SelectItem value="SKIPPED">Skipped</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground whitespace-nowrap">{countLabel}</p>
+          </div>
         </div>
 
         {isLoading ? (
@@ -116,9 +133,9 @@ export default function RemindersPage({
                   <TableRow>
                     <TableHead>Customer</TableHead>
                     <TableHead>Product</TableHead>
+                    <TableHead>Notice</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Sent</TableHead>
-                    <TableHead>Note</TableHead>
+                    <TableHead className="text-right">Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -131,16 +148,23 @@ export default function RemindersPage({
                         >
                           {r.customerName}
                         </Link>
+                        {r.status === "FAILED" && r.errorMessage && (
+                          <p className="mt-0.5 truncate text-xs text-destructive max-w-[220px]">
+                            {r.errorMessage}
+                          </p>
+                        )}
                       </TableCell>
-                      <TableCell className="text-sm">{r.productName}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.productName}
+                      </TableCell>
+                      <TableCell>
+                        <NoticeLabel days={r.daysBeforeExpiry} />
+                      </TableCell>
                       <TableCell>
                         <StatusBadge status={r.status} />
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                        {formatDateTime(r.sentAt)}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
-                        {r.errorMessage ?? "—"}
+                      <TableCell className="text-right text-sm text-muted-foreground whitespace-nowrap">
+                        {formatDate(r.sentAt ?? r.createdAt)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -155,17 +179,22 @@ export default function RemindersPage({
                   <div className="flex items-center justify-between gap-2">
                     <Link
                       href={`/${tenantId}/customers/${r.customerId}`}
-                      className="font-medium text-sm hover:underline"
+                      className="font-medium text-sm hover:underline truncate"
                     >
                       {r.customerName}
                     </Link>
                     <StatusBadge status={r.status} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{r.productName}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground truncate">{r.productName}</p>
+                    <NoticeLabel days={r.daysBeforeExpiry} />
+                  </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">{formatDateTime(r.sentAt)}</span>
-                    {r.errorMessage && (
-                      <span className="truncate text-[11px] text-destructive max-w-[60%] text-right">
+                    <span className="text-[11px] text-muted-foreground">
+                      {formatDate(r.sentAt ?? r.createdAt)}
+                    </span>
+                    {r.status === "FAILED" && r.errorMessage && (
+                      <span className="text-[11px] text-destructive text-right truncate max-w-[60%]">
                         {r.errorMessage}
                       </span>
                     )}

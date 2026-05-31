@@ -101,6 +101,7 @@ export interface ReminderResponse {
   productId: number
   productName: string
   status: "SENT" | "FAILED" | "SKIPPED"
+  daysBeforeExpiry: number | null
   sentAt: string | null
   errorMessage: string | null
   createdAt: string
