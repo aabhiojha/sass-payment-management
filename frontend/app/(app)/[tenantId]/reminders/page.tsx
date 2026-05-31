@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Bell, Zap } from "lucide-react"
+import { Clock, Zap } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Card } from "@/components/ui/card"
@@ -75,7 +75,7 @@ export default function RemindersPage({
       <Card>
         <div className="flex items-center justify-between border-b border-border p-4">
           <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0) }}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
+            <SelectTrigger className="min-w-[130px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -92,7 +92,7 @@ export default function RemindersPage({
           <TableSkeleton rows={6} cols={5} />
         ) : rows.length === 0 ? (
           <EmptyState
-            icon={Bell}
+            icon={Clock}
             title={filter === "ALL" ? "No reminders yet" : "No matching reminders"}
             description={
               filter === "ALL"
