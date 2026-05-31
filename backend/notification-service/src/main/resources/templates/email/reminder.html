@@ -107,7 +107,7 @@
                         <tr>
                           <td>
                             <p th:text="${productName}" style="margin:0 0 2px;font-size:13px;font-weight:700;color:#0f172a;">Premium Subscription</p>
-                            <p style="margin:0;font-size:12px;color:#64748b;">Annual plan</p>
+                            <p th:text="${planName != null ? planName : 'Default plan'}" style="margin:0;font-size:12px;color:#64748b;">Default plan</p>
                           </td>
                           <td align="right">
                             <p th:text="${amount}" style="margin:0;font-size:14px;font-weight:700;color:#0f172a;">$0.00</p>

@@ -13,6 +13,7 @@ public class ReminderEmailRequest {
     private String customerName;
     private String customerEmail;
     private String productName;
+    private String planName;
     private String amount;
     private String dueDate;
     private String invoiceNumber;

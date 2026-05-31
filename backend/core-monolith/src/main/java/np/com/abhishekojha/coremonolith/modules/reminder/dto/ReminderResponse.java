@@ -14,7 +14,6 @@ public record ReminderResponse(
         String productName,
         String status,
         Integer daysBeforeExpiry,
-        int retryCount,
         Instant sentAt,
         String errorMessage,
         Instant createdAt
@@ -30,7 +29,6 @@ public record ReminderResponse(
                 r.getCustomerProduct().getProduct().getName(),
                 r.getStatus().name(),
                 r.getDaysBeforeExpiry(),
-                r.getRetryCount(),
                 r.getSentAt(),
                 r.getErrorMessage(),
                 r.getCreatedAt()

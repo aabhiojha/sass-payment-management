@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
 import np.com.abhishekojha.coremonolith.modules.product.dto.CreateProductPlanRequest;
 import np.com.abhishekojha.coremonolith.modules.product.dto.ProductPlanResponse;
+import np.com.abhishekojha.coremonolith.modules.product.dto.UpdateProductPlanRequest;
 import np.com.abhishekojha.coremonolith.modules.product.model.ProductEntity;
 import np.com.abhishekojha.coremonolith.modules.product.model.ProductPlanEntity;
 import np.com.abhishekojha.coremonolith.modules.product.repository.ProductPlanRepository;
@@ -51,6 +52,20 @@ public class ProductPlanService {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
         return productPlanRepository.findAllByProductIdAndTenantId(productId, tenantId)
                 .stream().map(ProductPlanResponse::from).toList();
+    }
+
+    public ProductPlanResponse update(Long tenantId, Long productId, Long planId, UpdateProductPlanRequest req) {
+        guard.requireTenantAccess(tenantId);
+        ProductPlanEntity plan = productPlanRepository
+                .findByIdAndProductIdAndTenantId(planId, productId, tenantId)
+                .orElseThrow(() -> new EntityNotFoundException("Product plan not found: " + planId));
+
+        if (req.name() != null) plan.setName(req.name());
+        if (req.price() != null) plan.setPrice(req.price());
+        if (req.currency() != null) plan.setCurrency(req.currency());
+        if (req.billingCadence() != null) plan.setBillingCadence(req.billingCadence());
+
+        return ProductPlanResponse.from(plan);
     }
 
     public void delete(Long tenantId, Long productId, Long planId) {

@@ -156,6 +156,7 @@ public class ReminderService {
             amount = cp.getProduct().getCurrency() + " " + cp.getProduct().getPrice().toPlainString();
         }
 
+        String planName = cp.getProductPlan() != null ? cp.getProductPlan().getName() : null;
         String dueDate = cp.getEndsAt() != null ? DUE_DATE_FMT.format(cp.getEndsAt()) : "N/A";
 
         return new ReminderNotificationPayload(
@@ -164,6 +165,7 @@ public class ReminderService {
                 cp.getCustomer().getName(),
                 cp.getCustomer().getEmail(),
                 cp.getProduct().getName(),
+                planName,
                 amount,
                 dueDate
         );

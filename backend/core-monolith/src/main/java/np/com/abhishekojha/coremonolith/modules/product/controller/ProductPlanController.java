@@ -7,12 +7,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import np.com.abhishekojha.coremonolith.modules.product.dto.CreateProductPlanRequest;
 import np.com.abhishekojha.coremonolith.modules.product.dto.ProductPlanResponse;
+import np.com.abhishekojha.coremonolith.modules.product.dto.UpdateProductPlanRequest;
 import np.com.abhishekojha.coremonolith.modules.product.service.ProductPlanService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,6 +50,17 @@ public class ProductPlanController {
             @Valid @RequestBody CreateProductPlanRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(productPlanService.create(tenantId, productId, req));
+    }
+
+    @Operation(summary = "Update a pricing tier")
+    @PatchMapping("/{planId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'TENANT_ADMIN', 'TENANT_USER')")
+    public ResponseEntity<ProductPlanResponse> update(
+            @PathVariable Long tenantId,
+            @PathVariable Long productId,
+            @PathVariable Long planId,
+            @Valid @RequestBody UpdateProductPlanRequest req) {
+        return ResponseEntity.ok(productPlanService.update(tenantId, productId, planId, req));
     }
 
     @Operation(summary = "Delete a pricing tier")
