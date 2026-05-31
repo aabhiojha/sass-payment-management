@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-31T00:00:00Z",
+  "title": "Design System: PayNest",
+  "extensions": {
+    "colorMeta": {
+      "primary":        { "role": "primary",   "displayName": "Control Indigo",  "canonical": "hsl(244 75% 57%)", "tonalRamp": ["#1a1566","#241fa0","#2d27c9","#4038d4","#4f46e5","#7b72f0","#9f99f5","#c4c0fa","#e2e0fd","#f3f2fe"] },
+      "primary-dark":   { "role": "primary",   "displayName": "Control Indigo Dark", "canonical": "hsl(244 82% 68%)", "tonalRamp": ["#1a1566","#2d27c9","#4f46e5","#7b72f0","#9f99f5","#c4c0fa","#e2e0fd"] },
+      "accent-tint":    { "role": "accent",    "displayName": "Accent Tint",     "canonical": "hsl(244 100% 97%)", "tonalRamp": ["#2d21ba","#4f46e5","#7b72f0","#a8a3f8","#ccc9fc","#eeeffe","#f7f6ff"] },
+      "accent-ink":     { "role": "accent",    "displayName": "Accent Ink",      "canonical": "hsl(244 75% 35%)", "tonalRamp": ["#1a1566","#241fa0","#2d21ba","#4338ca","#4f46e5"] },
+      "background":     { "role": "neutral",   "displayName": "Working White",   "canonical": "hsl(220 30% 98.5%)", "tonalRamp": ["#c5cad5","#d4d9e4","#e2e4e9","#eceff4","#f1f2f5","#f7f9fd","#fafbfe"] },
+      "surface":        { "role": "neutral",   "displayName": "Surface White",   "canonical": "hsl(0 0% 100%)",   "tonalRamp": ["#c5cad5","#d4d9e4","#e2e4e9","#f1f2f5","#f7f9fd","#ffffff"] },
+      "surface-raised": { "role": "neutral",   "displayName": "Raised Surface",  "canonical": "hsl(220 14% 96%)", "tonalRamp": ["#c5cad5","#d4d9e4","#e2e4e9","#eceff4","#f1f2f5","#f7f9fd"] },
+      "ink":            { "role": "neutral",   "displayName": "Ink Black",       "canonical": "hsl(222 47% 11%)", "tonalRamp": ["#0f172a","#1e293b","#334155","#475569","#64748b","#94a3b8","#cbd5e1","#e2e8f0"] },
+      "ink-muted":      { "role": "neutral",   "displayName": "Ink Muted",       "canonical": "hsl(220 9% 46%)",  "tonalRamp": ["#374151","#4b5563","#6b7280","#9ca3af","#d1d5db","#f3f4f6"] },
+      "border":         { "role": "neutral",   "displayName": "Border Gray",     "canonical": "hsl(220 13% 91%)", "tonalRamp": ["#9ca3af","#d1d5db","#e2e4e9","#f1f2f5","#f9fafb"] },
+      "destructive":    { "role": "tertiary",  "displayName": "Destructive Red", "canonical": "hsl(0 72% 51%)",   "tonalRamp": ["#7f1d1d","#b91c1c","#e02222","#ef4444","#fca5a5","#fee2e2","#fff1f2"] },
+      "success":        { "role": "tertiary",  "displayName": "Success Green",   "canonical": "hsl(152 65% 38%)", "tonalRamp": ["#14532d","#166534","#15803d","#22a866","#4ade80","#bbf7d0","#dcfce7"] },
+      "warning":        { "role": "tertiary",  "displayName": "Warning Amber",   "canonical": "hsl(38 92% 50%)",  "tonalRamp": ["#78350f","#92400e","#b45309","#d97706","#f59e0b","#fcd34d","#fef3c7"] },
+      "info":           { "role": "tertiary",  "displayName": "Info Blue",       "canonical": "hsl(212 92% 45%)", "tonalRamp": ["#0c4a6e","#075985","#0369a1","#0b7ed4","#38bdf8","#bae6fd","#e0f2fe"] },
+      "dark-background":{ "role": "neutral",   "displayName": "Dark Ground",     "canonical": "hsl(220 16% 10%)", "tonalRamp": ["#161a22","#1e2330","#262d3c","#363c48","#4b5563","#6b7280"] },
+      "dark-surface":   { "role": "neutral",   "displayName": "Dark Surface",    "canonical": "hsl(220 16% 14%)", "tonalRamp": ["#161a22","#1e2330","#262d3c","#363c48"] },
+      "dark-border":    { "role": "neutral",   "displayName": "Dark Border",     "canonical": "hsl(218 13% 25%)", "tonalRamp": ["#1e2330","#262d3c","#363c48","#4b5563","#6b7280"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display",  "purpose": "Page titles and hero copy. One per screen." },
+      "headline": { "displayName": "Headline", "purpose": "Card section titles and sidebar labels." },
+      "title":    { "displayName": "Title",    "purpose": "Toolbar labels and dialog subheadings." },
+      "body":     { "displayName": "Body",     "purpose": "All running text, table cells, descriptions." },
+      "label":    { "displayName": "Label",    "purpose": "Form labels, badge text, table headers." }
+    },
+    "shadows": [
+      {
+        "name": "shadow-soft",
+        "value": "0 1px 0 0 hsl(220 13% 91% / 0.6), 0 1px 2px -1px hsl(222 47% 11% / 0.04), 0 4px 12px -4px hsl(222 47% 11% / 0.06)",
+        "purpose": "Inline cards in dense contexts. Barely perceptible; signals boundary without competing."
+      },
+      {
+        "name": "shadow-pop",
+        "value": "0 1px 0 0 hsl(220 13% 91% / 0.6), 0 6px 16px -6px hsl(222 47% 11% / 0.12), 0 16px 32px -12px hsl(222 47% 11% / 0.10)",
+        "purpose": "Dialogs, popovers, and the login panel. The only elevated shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fade-in",
+        "value": "fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Page section and list item entrance. Translate Y 8px + opacity 0→1."
+      },
+      {
+        "name": "ease-spring",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Default easing for all entrance animations. Exponential ease-out, no bounce."
+      },
+      {
+        "name": "theme-sunrise-out",
+        "value": "520ms ease-in; brightness+saturation+blur collapse to overexposed white",
+        "purpose": "Dark→light theme transition: old layer bleaches like direct sunlight."
+      },
+      {
+        "name": "theme-eclipse-out",
+        "value": "440ms ease-in; brightness dims, hue shifts amber-warm, collapses to near-black",
+        "purpose": "Light→dark theme transition: old layer dims like a solar eclipse totality."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm",  "value": "640px"  },
+      { "name": "md",  "value": "768px"  },
+      { "name": "lg",  "value": "1024px" },
+      { "name": "xl",  "value": "1280px" },
+      { "name": "2xl", "value": "1400px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action. Use once per section, alongside outline or ghost secondaries.",
+      "html": "<button class=\"ds-btn-primary\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg> Save changes</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #4f46e5; color: #fff; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.875rem; font-weight: 500; height: 40px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.08); transition: background 0.15s, box-shadow 0.15s, transform 0.1s; } .ds-btn-primary:hover { background: #4338ca; box-shadow: 0 2px 8px rgba(79,70,229,0.25); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4f46e5; } .ds-btn-primary:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action alongside a primary. Edit, cancel, and non-destructive alternatives.",
+      "html": "<button class=\"ds-btn-outline\">Edit customer</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #fff; color: #0f172a; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.875rem; font-weight: 500; height: 40px; padding: 0 16px; border: 1px solid #e2e4e9; border-radius: 12px; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s; } .ds-btn-outline:hover { background: #f1f2f5; } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4f46e5; } .ds-btn-outline:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Irreversible actions: delete, cancel plan. Always confirm via dialog before acting.",
+      "html": "<button class=\"ds-btn-destructive\">Delete customer</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #e02222; color: #fff; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.875rem; font-weight: 500; height: 40px; padding: 0 16px; border: none; border-radius: 12px; cursor: pointer; transition: background 0.15s, transform 0.1s; } .ds-btn-destructive:hover { background: #b91c1c; } .ds-btn-destructive:focus-visible { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #e02222; } .ds-btn-destructive:active { transform: scale(0.98); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Default form input. Used across all create/edit dialogs and filter toolbars.",
+      "html": "<div class=\"ds-input-wrap\"><svg class=\"ds-input-icon\" xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.35-4.35\"/></svg><input class=\"ds-input\" type=\"text\" placeholder=\"Search customers, products…\" /></div>",
+      "css": ".ds-input-wrap { position: relative; display: inline-flex; align-items: center; width: 280px; } .ds-input-icon { position: absolute; left: 12px; color: #6b7280; pointer-events: none; } .ds-input { width: 100%; height: 36px; padding: 0 12px 0 32px; background: #fff; color: #0f172a; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.875rem; border: 1px solid #e2e4e9; border-radius: 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: #6b7280; } .ds-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Communicates plan, customer, or reminder state. Color is semantic, always paired with text.",
+      "html": "<div style=\"display:flex;gap:8px;align-items:center;\"><span class=\"ds-badge ds-badge--active\">Active</span><span class=\"ds-badge ds-badge--paused\">Paused</span><span class=\"ds-badge ds-badge--cancelled\">Cancelled</span><span class=\"ds-badge ds-badge--failed\">Failed</span></div>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.75rem; font-weight: 500; line-height: 1.4; white-space: nowrap; } .ds-badge--active { background: #dcfce7; color: #166534; } .ds-badge--paused { background: #fef9c3; color: #854d0e; } .ds-badge--cancelled { background: #fee2e2; color: #991b1b; } .ds-badge--failed { background: #fee2e2; color: #991b1b; }"
+    },
+    {
+      "name": "Data Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Primary container for detail views. Uses divide-y lists internally, not nested cards.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><span class=\"ds-card-title\">Customer details</span></div><dl class=\"ds-card-list\"><div class=\"ds-card-row\"><dt class=\"ds-card-label\">Email</dt><dd class=\"ds-card-value\">john@acme.com</dd></div><div class=\"ds-card-row\"><dt class=\"ds-card-label\">Phone</dt><dd class=\"ds-card-value\">+1 555 000 1234</dd></div><div class=\"ds-card-row\"><dt class=\"ds-card-label\">Status</dt><dd class=\"ds-card-value\"><span class=\"ds-badge ds-badge--active\">Active</span></dd></div></dl></div>",
+      "css": ".ds-card { background: #fff; border: 1px solid #e2e4e9; border-radius: 12px; overflow: hidden; } .ds-card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e2e4e9; } .ds-card-title { font-family: 'Space Grotesk', ui-sans-serif, system-ui; font-size: 1rem; font-weight: 600; color: #0f172a; } .ds-card-list { display: flex; flex-direction: column; } .ds-card-row { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 24px; border-bottom: 1px solid #e2e4e9; } .ds-card-row:last-child { border-bottom: none; } .ds-card-label { font-family: Inter, ui-sans-serif, system-ui; font-size: 0.75rem; font-weight: 500; color: #6b7280; width: 96px; flex-shrink: 0; } .ds-card-value { font-family: Inter, ui-sans-serif, system-ui; font-size: 0.875rem; color: #0f172a; text-align: right; } .ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.75rem; font-weight: 500; } .ds-badge--active { background: #dcfce7; color: #166534; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "description": "Left sidebar navigation with active indicator pill. 256px wide at desktop.",
+      "html": "<nav class=\"ds-sidebar\"><a class=\"ds-nav-item ds-nav-item--active\" href=\"#\"><span class=\"ds-nav-indicator\"></span><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"ds-nav-icon ds-nav-icon--active\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg><span>Dashboard</span></a><a class=\"ds-nav-item\" href=\"#\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"ds-nav-icon\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg><span>Customers</span></a><a class=\"ds-nav-item\" href=\"#\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"ds-nav-icon\"><path d=\"m7.5 4.27 9 5.15\"/><path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/><path d=\"M12 22V12\"/></svg><span>Products</span></a></nav>",
+      "css": ".ds-sidebar { display: flex; flex-direction: column; gap: 2px; padding: 8px; background: #fff; width: 256px; height: 100vh; border-right: 1px solid #e2e4e9; } .ds-nav-item { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; font-family: Inter, ui-sans-serif, system-ui; font-size: 0.875rem; font-weight: 500; color: #6b7280; text-decoration: none; transition: background 0.15s, color 0.15s; } .ds-nav-item:hover { background: #f1f2f5; color: #0f172a; } .ds-nav-item--active { color: #0f172a; background: #f1f2f5; } .ds-nav-indicator { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 2px; height: 16px; background: #4f46e5; border-radius: 9999px; } .ds-nav-icon { flex-shrink: 0; } .ds-nav-icon--active { color: #4f46e5; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clean Ledger",
+    "overview": "PayNest is a working surface, not a showpiece. The design system reflects that: every element earns its place by making data clearer, not by making the interface more attractive. The ideal screen feels like a well-kept spreadsheet, which is to say, the structure disappears and the content speaks. There is no decoration without information, no chrome without function.\n\nThe palette is cool, low-saturation, and deliberately understated. Color is used for status communication (active, paused, failed, cancelled) and for primary actions only. The indigo primary anchors the eye on interactive elements without competing with data. Surfaces are white or near-white with subtle blue-gray tint; the dark mode mirrors this logic: charcoal grounds, not black holes.\n\nThis system explicitly rejects the generic SaaS aesthetic: off-white backgrounds, indigo-primary rounded card grids, and gradient text all belong to the same 2023 template; PayNest should feel chosen, not generated.",
+    "keyCharacteristics": [
+      "Data density varies by context: list pages are scannable, detail pages breathe, dialogs are focused.",
+      "Status is always visible; exceptions surface where users naturally look.",
+      "Two-font system: Space Grotesk for structural headings, Inter for body and data.",
+      "Flat at rest, shadow on elevation; structural not decorative.",
+      "Divider lists over nested cards. Tables over card grids.",
+      "Theme-aware: the system maintains the same design logic in light and dark mode."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule",    "body": "The indigo primary appears on ≤10% of any given screen at once. It lives on the active nav pill, the primary button, and focus rings. If something else wants to be indigo, it should not be: use ink or a status color instead.", "section": "colors" },
+      { "name": "The Status-Only Rule",   "body": "Red, green, amber, and blue are reserved for status communication. Never use them decoratively. A green background that doesn't mean 'active' misleads the user about system state.", "section": "colors" },
+      { "name": "The No All-Caps Rule",   "body": "Labels and badges stay lowercase. All-caps is reserved for abbreviations only (USD, NPR). Sentence-case labels read faster in data-dense views.", "section": "typography" },
+      { "name": "The Single Display Rule","body": "One Space Grotesk display heading per screen. If a second element competes, it should be a body-size title, not a headline. Stacked bold headings signal poor hierarchy.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule","body": "Application surfaces (sidebar, topbar, list cards, table rows) carry no shadow at rest. shadow-soft is the maximum for an inline card. shadow-pop is reserved for modals and login panels.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use divide-y divide-border lists for key-value detail views. They read faster than nested cards and scale better on mobile.",
+      "Do put status (ACTIVE, PAUSED, CANCELLED, SENT, FAILED) in a dedicated badge column. Never embed status in a text string.",
+      "Do use the sidebar active indicator: 2px bg-primary left pill on the active nav item. Not a full-row highlight, not a left-border stripe wider than 1px.",
+      "Do surface failure states prominently. Failed reminders and cancelled plans should be in the visible list, not hidden behind a filter.",
+      "Do match density to the task: toolbar rows use h-8 text-xs controls; page-level actions use h-10.",
+      "Do reduce motion: every animate-fade-in animation needs a prefers-reduced-motion alternative.",
+      "Do use Space Grotesk for structural headings and Inter for everything the user reads. Never swap them."
+    ],
+    "donts": [
+      "Don't use a cream, sand, or warm-tinted body background. The background is #F7F9FD (cool blue-gray). Warm-neutral backgrounds signal generic AI-generated SaaS templates.",
+      "Don't use gradient text (background-clip: text with a gradient). Decorative and meaningless. Use a single solid color.",
+      "Don't build identical card grids (icon + heading + body text, repeated). Use tables for list data; use divider lists for details.",
+      "Don't put a border-left wider than 1px as a colored accent stripe on cards or list items.",
+      "Don't use color decoratively. Red means failed or destructive. Green means active or success. Amber means paused. Blue means informational.",
+      "Don't stack two bold Space Grotesk headings.",
+      "Don't use all-caps for labels or badge text in sentences.",
+      "Don't nest cards. A Card inside a Card means the layout is wrong.",
+      "Don't use shadow-pop on inline elements. It belongs on dialogs and the login panel.",
+      "Don't use the indigo primary on more than ~10% of any given screen."
+    ]
+  }
+}
