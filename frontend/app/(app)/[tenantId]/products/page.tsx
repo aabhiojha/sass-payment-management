@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { Package, Plus } from "lucide-react"
@@ -31,6 +31,7 @@ import { EmptyState } from "@/components/shared/EmptyState"
 
 import { productsApi } from "@/lib/api/products"
 import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
+import { useDebounce } from "@/hooks/useDebounce"
 
 const CADENCE_LABEL: Record<string, string> = {
   WEEKLY: "Weekly",
@@ -48,25 +49,17 @@ export default function ProductsPage({
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const [statusFilter, setStatusFilter] = useState("ACTIVE")
 
   const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
 
   const { data, isLoading } = useQuery({
-    queryKey: ["products", tenantId, page, size, apiStatus],
-    queryFn: () => productsApi.list(tenantId, page, size, apiStatus),
+    queryKey: ["products", tenantId, page, size, apiStatus, debouncedQ],
+    queryFn: () => productsApi.list(tenantId, page, size, apiStatus, debouncedQ || undefined),
   })
 
-  const rows = useMemo(() => {
-    const list = data?.content ?? []
-    if (!q) return list
-    const needle = q.toLowerCase()
-    return list.filter(
-      (p) =>
-        p.name.toLowerCase().includes(needle) ||
-        (p.description ?? "").toLowerCase().includes(needle)
-    )
-  }, [data, q])
+  const rows = data?.content ?? []
 
   return (
     <div className="space-y-6">

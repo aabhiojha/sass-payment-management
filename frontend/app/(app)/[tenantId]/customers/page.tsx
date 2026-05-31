@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import { Plus, UserCircle2 } from "lucide-react"
@@ -31,6 +31,7 @@ import { EmptyState } from "@/components/shared/EmptyState"
 
 import { customersApi } from "@/lib/api/customers"
 import { formatDate } from "@/lib/utils"
+import { useDebounce } from "@/hooks/useDebounce"
 
 export default function CustomersPage({
   params,
@@ -41,25 +42,17 @@ export default function CustomersPage({
   const [page, setPage] = useState(0)
   const [size] = useState(20)
   const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const [statusFilter, setStatusFilter] = useState("ACTIVE")
 
   const apiStatus = statusFilter === "ALL" ? undefined : statusFilter
 
   const { data, isLoading } = useQuery({
-    queryKey: ["customers", tenantId, page, size, apiStatus],
-    queryFn: () => customersApi.list(tenantId, page, size, apiStatus),
+    queryKey: ["customers", tenantId, page, size, apiStatus, debouncedQ],
+    queryFn: () => customersApi.list(tenantId, page, size, apiStatus, debouncedQ || undefined),
   })
 
-  const rows = useMemo(() => {
-    const list = data?.content ?? []
-    if (!q) return list
-    const needle = q.toLowerCase()
-    return list.filter(
-      (c) =>
-        c.name.toLowerCase().includes(needle) ||
-        c.email.toLowerCase().includes(needle)
-    )
-  }, [data, q])
+  const rows = data?.content ?? []
 
   return (
     <div className="space-y-6">

@@ -62,8 +62,9 @@ public class ProductController {
     public ResponseEntity<Page<ProductResponse>> list(
             @PathVariable Long tenantId,
             @Parameter(description = "Filter by status") @RequestParam(required = false) ProductStatus status,
+            @Parameter(description = "Search by name") @RequestParam(required = false) String search,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(productService.list(tenantId, status, pageable));
+        return ResponseEntity.ok(productService.list(tenantId, status, search, pageable));
     }
 
     @Operation(summary = "Get product by ID")

@@ -1,106 +1,113 @@
-"use client"
+"use client";
 
-import { Suspense, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { toast } from "sonner"
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react"
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import {
+  ArrowRight,
+  Clock,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Logo } from "@/components/layout/Logo"
-import { useAuth } from "@/hooks/useAuth"
-import { friendlyError } from "@/lib/axios"
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/layout/Logo";
+import { useAuth } from "@/hooks/useAuth";
+import { friendlyError } from "@/lib/axios";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
   password: z.string().min(1, "Password is required"),
-})
-type LoginValues = z.infer<typeof loginSchema>
+});
+type LoginValues = z.infer<typeof loginSchema>;
+
+const features = [
+  { icon: Users,      label: "Multi-tenant workspaces" },
+  { icon: Clock,      label: "Automated renewal reminders" },
+  { icon: ShieldCheck, label: "Full audit trails" },
+];
 
 export default function LoginPage() {
   return (
     <Suspense fallback={null}>
       <LoginForm />
     </Suspense>
-  )
+  );
 }
 
 function LoginForm() {
-  const router = useRouter()
-  const params = useSearchParams()
-  const { login } = useAuth()
-  const [showPwd, setShowPwd] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const router = useRouter();
+  const params = useSearchParams();
+  const { login } = useAuth();
+  const [showPwd, setShowPwd] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
-  })
+  });
 
   async function onSubmit(values: LoginValues) {
-    setSubmitting(true)
+    setSubmitting(true);
     try {
-      await login(values.email, values.password)
-      const redirect = params.get("from") ?? "/dashboard"
-      router.replace(redirect)
+      await login(values.email, values.password);
+      const redirect = params.get("from") ?? "/dashboard";
+      router.replace(redirect);
     } catch (err) {
-      toast.error(friendlyError(err))
+      toast.error(friendlyError(err));
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className="grid w-full max-w-5xl gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-16 animate-fade-in">
+    <div className="grid w-full max-w-5xl gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16 animate-fade-in">
       {/* Marketing panel */}
-      <div className="hidden flex-col justify-between rounded-3xl border border-border bg-card/40 p-10 lg:flex">
+      <div className="hidden flex-col justify-between rounded-3xl border border-border bg-card/50 p-10 lg:flex">
         <Logo />
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground shadow-sm">
-            <Sparkles className="h-3 w-3 text-primary" />
-            New: Auto reminders are now live
-          </div>
-          <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-balance">
-            The billing & reminder workspace your finance team will{" "}
-            <span className="bg-gradient-to-r from-primary to-[hsl(280_85%_55%)] bg-clip-text text-transparent">
-              actually love.
+
+        <div className="space-y-8">
+          <h1 className="font-display text-3xl font-semibold leading-snug tracking-tight text-balance">
+            Billing & payments,{" "}
+            <span className="bg-gradient-to-br from-primary via-violet-500 to-indigo-400 bg-clip-text text-transparent">
+              without the spreadsheets.
             </span>
           </h1>
-          <p className="max-w-md text-sm text-muted-foreground">
-            Manage customers, products and recurring plans across every tenant —
-            with audit-grade visibility and zero spreadsheets.
-          </p>
+
+          <ul className="space-y-3">
+            {features.map(({ icon: Icon, label }) => (
+              <li key={label} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                <Icon className="h-4 w-4 shrink-0 text-primary" />
+                {label}
+              </li>
+            ))}
+          </ul>
         </div>
-        <dl className="grid grid-cols-3 gap-4">
-          {[
-            { k: "12k+", v: "Active plans" },
-            { k: "99.95%", v: "Uptime" },
-            { k: "120 ms", v: "p50 latency" },
-          ].map((s) => (
-            <div
-              key={s.v}
-              className="rounded-xl border border-border bg-card/60 p-3"
-            >
-              <dt className="font-display text-lg font-semibold tracking-tight">
-                {s.k}
-              </dt>
-              <dd className="text-xs text-muted-foreground">{s.v}</dd>
-            </div>
-          ))}
-        </dl>
+
+        <p className="text-xs text-muted-foreground/60">
+          © {new Date().getFullYear()} PayNest
+        </p>
       </div>
 
       {/* Form panel */}
       <div className="flex flex-col justify-center">
         <div className="mx-auto w-full max-w-md space-y-8 rounded-3xl border border-border bg-card p-8 shadow-pop sm:p-10">
-          <div className="space-y-2 lg:hidden">
+          {/* Mobile logo */}
+          <div className="lg:hidden">
             <Logo />
           </div>
+
           <div className="space-y-1.5">
             <h2 className="font-display text-2xl font-semibold tracking-tight">
               Welcome back
@@ -135,16 +142,8 @@ function LoginForm() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <button
-                  type="button"
-                  className="text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
-                  Forgot?
-                </button>
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -200,5 +199,5 @@ function LoginForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

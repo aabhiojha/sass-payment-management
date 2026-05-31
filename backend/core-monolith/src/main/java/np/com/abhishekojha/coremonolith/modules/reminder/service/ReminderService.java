@@ -50,8 +50,12 @@ public class ReminderService {
     private final AuditService auditService;
 
     @Transactional(readOnly = true)
-    public Page<ReminderResponse> list(Long tenantId, Pageable pageable) {
+    public Page<ReminderResponse> list(Long tenantId, ReminderStatus status, Pageable pageable) {
         guard.requireTenantAccess(tenantId);
+        if (status != null) {
+            return reminderRepository.findAllByTenantIdAndStatus(tenantId, status, pageable)
+                    .map(ReminderResponse::from);
+        }
         return reminderRepository.findAllByTenantId(tenantId, pageable)
                 .map(ReminderResponse::from);
     }
@@ -79,8 +83,10 @@ public class ReminderService {
         List<ReminderResponse> results = new ArrayList<>();
 
         for (int milestone : MILESTONES) {
+            // Exclusive upper bound avoids capturing the same plan on two consecutive daily runs
+            // when endsAt lands exactly on the boundary.
             Instant windowStart = now.plus(milestone - 1, ChronoUnit.DAYS);
-            Instant windowEnd   = now.plus(milestone,     ChronoUnit.DAYS);
+            Instant windowEnd   = now.plus(milestone,     ChronoUnit.DAYS).minusSeconds(1);
 
             List<CustomerProductEntity> duePlans = customerProductRepository
                     .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBetween(
@@ -95,10 +101,10 @@ public class ReminderService {
                 if (alreadyHandled) {
                     log.debug("Skipping milestone={}d for customerProduct={} — already handled",
                             milestone, cp.getId());
-                    results.add(recordSkipped(tenant, cp, milestone));
-                } else {
-                    results.add(sendReminder(tenant, cp, milestone));
+                    continue;
                 }
+
+                results.add(sendReminder(tenant, cp, milestone));
             }
         }
 
@@ -175,16 +181,6 @@ public class ReminderService {
         return ReminderResponse.from(reminder);
     }
 
-    private ReminderResponse recordSkipped(TenantEntity tenant, CustomerProductEntity cp, int milestone) {
-        ReminderEntity reminder = new ReminderEntity();
-        reminder.setTenant(tenant);
-        reminder.setCustomerProduct(cp);
-        reminder.setDaysBeforeExpiry(milestone);
-        reminder.setStatus(ReminderStatus.SKIPPED);
-        reminderRepository.save(reminder);
-        return ReminderResponse.from(reminder);
-    }
-
     private ReminderNotificationPayload buildPayload(TenantEntity tenant, CustomerProductEntity cp) {
         String amount;
         if (cp.getCustomPrice() != null) {
@@ -195,6 +191,8 @@ public class ReminderService {
             amount = cp.getProduct().getCurrency() + " " + cp.getProduct().getPrice().toPlainString();
         }
 
+        String dueDate = cp.getEndsAt() != null ? DUE_DATE_FMT.format(cp.getEndsAt()) : "N/A";
+
         return new ReminderNotificationPayload(
                 tenant.getId(),
                 tenant.getName(),
@@ -202,7 +200,7 @@ public class ReminderService {
                 cp.getCustomer().getEmail(),
                 cp.getProduct().getName(),
                 amount,
-                DUE_DATE_FMT.format(cp.getEndsAt())
+                dueDate
         );
     }
 }

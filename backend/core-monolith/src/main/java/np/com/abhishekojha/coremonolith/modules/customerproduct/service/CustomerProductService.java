@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
+import np.com.abhishekojha.coremonolith.common.enums.CustomerProductStatus;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
@@ -134,10 +135,15 @@ public class CustomerProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CustomerProductResponse> listByTenant(Long tenantId, Pageable pageable) {
+    public Page<CustomerProductResponse> listByTenant(Long tenantId, CustomerProductStatus status, String search, Pageable pageable) {
         guard.requireTenantAccess(tenantId);
-        return customerProductRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable)
-                .map(CustomerProductResponse::from);
+        String q = (search != null && !search.isBlank()) ? search.trim() : null;
+        if (q != null) {
+            if (status != null) return customerProductRepository.searchByTenantAndStatus(tenantId, status, q, pageable).map(CustomerProductResponse::from);
+            return customerProductRepository.searchByTenant(tenantId, q, pageable).map(CustomerProductResponse::from);
+        }
+        if (status != null) return customerProductRepository.findAllByTenantIdAndStatusAndDeletedAtIsNull(tenantId, status, pageable).map(CustomerProductResponse::from);
+        return customerProductRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable).map(CustomerProductResponse::from);
     }
 
     @Transactional(readOnly = true)
