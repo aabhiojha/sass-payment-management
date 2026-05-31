@@ -23,6 +23,7 @@ export const metadata: Metadata = {
     "PayNest: billing and payment reminder platform for modern subscription teams.",
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",

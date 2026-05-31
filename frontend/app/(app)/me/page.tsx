@@ -67,10 +67,10 @@ export default function MePage() {
         }
       />
 
-      {me.isLoading && <Skeleton className="h-52 max-w-xl rounded-xl" />}
+      {me.isLoading && <Skeleton className="h-52 max-w-xl mx-auto rounded-xl" />}
 
       {me.data && (
-        <Card className="max-w-xl">
+        <Card className="max-w-xl mx-auto">
           <CardHeader className="flex-row items-center gap-4 pb-4">
             <Avatar className="h-12 w-12 shrink-0">
               <AvatarFallback className="text-sm font-medium">
