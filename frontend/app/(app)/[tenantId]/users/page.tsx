@@ -42,6 +42,8 @@ import { usersApi } from "@/lib/api/users"
 import { friendlyError } from "@/lib/axios"
 import { initials, formatDate } from "@/lib/utils"
 import { useRole } from "@/hooks/useRole"
+import { useDebounce } from "@/hooks/useDebounce"
+import { SearchInput } from "@/components/shared/SearchInput"
 import type { UserResponse } from "@/types/api"
 
 export default function UsersPage({
@@ -53,6 +55,8 @@ export default function UsersPage({
   const qc = useQueryClient()
   const [page, setPage] = useState(0)
   const [size] = useState(20)
+  const [q, setQ] = useState("")
+  const debouncedQ = useDebounce(q)
   const [confirmTarget, setConfirmTarget] = useState<UserResponse | null>(null)
   const { isAtLeast } = useRole()
 
@@ -95,7 +99,11 @@ export default function UsersPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
-  const rows = (data?.content ?? []).filter((u) => u.status === "ACTIVE")
+  const rows = (data?.content ?? []).filter((u) => {
+    if (u.status !== "ACTIVE") return false
+    if (!debouncedQ) return true
+    return u.email.toLowerCase().includes(debouncedQ.toLowerCase())
+  })
 
   return (
     <div className="space-y-6">
@@ -105,6 +113,13 @@ export default function UsersPage({
       />
 
       <Card>
+        <div className="border-b border-border p-4">
+          <SearchInput
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by email…"
+          />
+        </div>
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : rows.length === 0 ? (
@@ -115,91 +130,111 @@ export default function UsersPage({
           />
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-[10px]">
-                            {initials(u.email)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{u.email}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <RoleBadge role={u.role} />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={u.status} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(u.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {isAtLeast("TENANT_ADMIN") && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {u.role !== "TENANT_ADMIN" && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  updateRole.mutate({
-                                    userId: u.id,
-                                    role: "TENANT_ADMIN",
-                                  })
-                                }
-                              >
-                                <ShieldCheck className="h-4 w-4" /> Make admin
-                              </DropdownMenuItem>
-                            )}
-                            {u.role !== "TENANT_USER" && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  updateRole.mutate({
-                                    userId: u.id,
-                                    role: "TENANT_USER",
-                                  })
-                                }
-                              >
-                                <UserCog className="h-4 w-4" /> Make member
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => disable.mutate(u.id)}
-                            >
-                              <Ban className="h-4 w-4" /> Disable
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              destructive
-                              onClick={() => setConfirmTarget(u)}
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </TableCell>
+            {/* Desktop table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Joined</TableHead>
+                    {isAtLeast("TENANT_ADMIN") && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8 shrink-0">
+                            <AvatarFallback className="text-[10px]">{initials(u.email)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium truncate">{u.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell><RoleBadge role={u.role} /></TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{formatDate(u.createdAt)}</TableCell>
+                      {isAtLeast("TENANT_ADMIN") && (
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {u.role !== "TENANT_ADMIN" && (
+                                <DropdownMenuItem onClick={() => updateRole.mutate({ userId: u.id, role: "TENANT_ADMIN" })}>
+                                  <ShieldCheck className="h-4 w-4" /> Make admin
+                                </DropdownMenuItem>
+                              )}
+                              {u.role !== "TENANT_USER" && (
+                                <DropdownMenuItem onClick={() => updateRole.mutate({ userId: u.id, role: "TENANT_USER" })}>
+                                  <UserCog className="h-4 w-4" /> Make member
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => disable.mutate(u.id)}>
+                                <Ban className="h-4 w-4" /> Disable
+                              </DropdownMenuItem>
+                              <DropdownMenuItem destructive onClick={() => setConfirmTarget(u)}>
+                                <Trash2 className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile card list */}
+            <div className="divide-y divide-border sm:hidden">
+              {rows.map((u) => (
+                <div key={u.id} className="flex items-center gap-3 p-4">
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarFallback className="text-[10px]">{initials(u.email)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{u.email}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <RoleBadge role={u.role} />
+                    </div>
+                  </div>
+                  {isAtLeast("TENANT_ADMIN") && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {u.role !== "TENANT_ADMIN" && (
+                          <DropdownMenuItem onClick={() => updateRole.mutate({ userId: u.id, role: "TENANT_ADMIN" })}>
+                            <ShieldCheck className="h-4 w-4" /> Make admin
+                          </DropdownMenuItem>
+                        )}
+                        {u.role !== "TENANT_USER" && (
+                          <DropdownMenuItem onClick={() => updateRole.mutate({ userId: u.id, role: "TENANT_USER" })}>
+                            <UserCog className="h-4 w-4" /> Make member
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => disable.mutate(u.id)}>
+                          <Ban className="h-4 w-4" /> Disable
+                        </DropdownMenuItem>
+                        <DropdownMenuItem destructive onClick={() => setConfirmTarget(u)}>
+                          <Trash2 className="h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+              ))}
+            </div>
+
             <div className="border-t border-border">
               <Pagination
                 page={page}

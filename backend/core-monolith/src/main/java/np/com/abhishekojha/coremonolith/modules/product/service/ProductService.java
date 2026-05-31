@@ -60,18 +60,17 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> list(Long tenantId, ProductStatus status, Pageable pageable) {
+    public Page<ProductResponse> list(Long tenantId, ProductStatus status, String search, Pageable pageable) {
         UserEntity caller = guard.requireTenantAccess(tenantId);
-        if (status != null) {
-            return productRepository.findAllByTenantIdAndStatus(tenantId, status, pageable)
-                    .map(ProductResponse::from);
+        String q = (search != null && !search.isBlank()) ? search.trim() : null;
+        if (q != null) {
+            if (status != null) return productRepository.searchByTenantIdAndStatus(tenantId, status, q, pageable).map(ProductResponse::from);
+            if (caller.getRole() == UserRole.SUPER_ADMIN) return productRepository.searchAllByTenantId(tenantId, q, pageable).map(ProductResponse::from);
+            return productRepository.searchByTenantId(tenantId, q, pageable).map(ProductResponse::from);
         }
-        if (caller.getRole() == UserRole.SUPER_ADMIN) {
-            return productRepository.findAllByTenantId(tenantId, pageable)
-                    .map(ProductResponse::from);
-        }
-        return productRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable)
-                .map(ProductResponse::from);
+        if (status != null) return productRepository.findAllByTenantIdAndStatus(tenantId, status, pageable).map(ProductResponse::from);
+        if (caller.getRole() == UserRole.SUPER_ADMIN) return productRepository.findAllByTenantId(tenantId, pageable).map(ProductResponse::from);
+        return productRepository.findAllByTenantIdAndDeletedAtIsNull(tenantId, pageable).map(ProductResponse::from);
     }
 
     @Transactional(readOnly = true)

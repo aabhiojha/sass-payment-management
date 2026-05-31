@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Mail, Calendar, ShieldCheck, Pencil, Check, X, User } from "lucide-react"
+import { Check, Pencil, X } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/PageHeader"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/shared/StatusBadge"
@@ -46,7 +46,6 @@ export default function MePage() {
     mutationFn: () => authApi.updateProfile(nameInput.trim()),
     onSuccess: (updated) => {
       qc.setQueryData(["me"], updated)
-      // Sync fullName into the auth store so the dashboard greeting updates immediately.
       if (user && accessToken) {
         setAuth(accessToken, { ...user, fullName: updated.fullName })
       }
@@ -68,136 +67,93 @@ export default function MePage() {
         }
       />
 
-      {me.isLoading && <Skeleton className="h-60" />}
+      {me.isLoading && <Skeleton className="h-52 max-w-xl rounded-xl" />}
 
       {me.data && (
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex-row items-center gap-4">
-              <Avatar className="h-14 w-14">
-                <AvatarFallback className="text-base">
-                  {initials(me.data.email)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="space-y-1">
-                <CardTitle>{me.data.fullName ?? me.data.email}</CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
-                  <RoleBadge role={me.data.role as any} />
-                  <StatusBadge status={me.data.status} />
-                </div>
+        <Card className="max-w-xl">
+          <CardHeader className="flex-row items-center gap-4 pb-4">
+            <Avatar className="h-12 w-12 shrink-0">
+              <AvatarFallback className="text-sm font-medium">
+                {initials(me.data.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="font-display text-lg font-semibold tracking-tight truncate">
+                {me.data.fullName ?? me.data.email}
+              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <RoleBadge role={me.data.role as any} />
+                <StatusBadge status={me.data.status} />
               </div>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid gap-4 sm:grid-cols-2">
-                {/* Editable full name */}
-                <div className="col-span-full rounded-xl border border-border bg-card/50 p-4">
-                  <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    <User className="h-3.5 w-3.5" /> Full name
-                  </p>
-                  {editing ? (
-                    <div className="mt-2 flex items-center gap-2">
-                      <Input
-                        value={nameInput}
-                        onChange={(e) => setNameInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") save.mutate()
-                          if (e.key === "Escape") cancelEdit()
-                        }}
-                        placeholder="Your full name"
-                        className="h-8 text-sm"
-                        autoFocus
-                        maxLength={100}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 shrink-0 text-success hover:text-success"
-                        onClick={() => save.mutate()}
-                        disabled={save.isPending || !nameInput.trim()}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 shrink-0"
-                        onClick={cancelEdit}
-                        disabled={save.isPending}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <p className="text-sm">
-                        {me.data.fullName ?? (
-                          <span className="text-muted-foreground">Not set</span>
-                        )}
-                      </p>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-muted-foreground"
-                        onClick={startEdit}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+            </div>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            <dl className="divide-y divide-border">
+              <div className="flex items-center justify-between px-6 py-3">
+                <dt className="text-xs text-muted-foreground w-24 shrink-0">Full name</dt>
+                {editing ? (
+                  <div className="flex items-center gap-2 flex-1 justify-end">
+                    <Input
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") save.mutate()
+                        if (e.key === "Escape") cancelEdit()
+                      }}
+                      placeholder="Your full name"
+                      className="h-7 text-sm max-w-[200px]"
+                      autoFocus
+                      maxLength={100}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0 text-success hover:text-success"
+                      onClick={() => save.mutate()}
+                      disabled={save.isPending || !nameInput.trim()}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      onClick={cancelEdit}
+                      disabled={save.isPending}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <dd className="text-sm">
+                      {me.data.fullName ?? <span className="text-muted-foreground/50">Not set</span>}
+                    </dd>
+                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground" onClick={startEdit}>
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-                <Item label="Email" icon={Mail}>
-                  {me.data.email}
-                </Item>
-                <Item label="Role" icon={ShieldCheck}>
-                  {me.data.role}
-                </Item>
-                <Item label="Joined" icon={Calendar}>
-                  {formatDate(me.data.createdAt)}
-                </Item>
-                <Item label="Last updated" icon={Calendar}>
-                  {formatDate(me.data.updatedAt)}
-                </Item>
-              </dl>
-            </CardContent>
-          </Card>
+              <div className="flex items-center justify-between px-6 py-3">
+                <dt className="text-xs text-muted-foreground w-24 shrink-0">Email</dt>
+                <dd className="text-sm break-all text-right">{me.data.email}</dd>
+              </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Security</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                Need to change your password or remove access? Contact your
-                workspace admin.
-              </p>
-              <p>
-                Sessions are protected by short-lived tokens that auto-refresh
-                while you're active.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="flex items-center justify-between px-6 py-3">
+                <dt className="text-xs text-muted-foreground w-24 shrink-0">Role</dt>
+                <dd><RoleBadge role={me.data.role as any} /></dd>
+              </div>
+
+              <div className="flex items-center justify-between px-6 py-3">
+                <dt className="text-xs text-muted-foreground w-24 shrink-0">Joined</dt>
+                <dd className="text-sm text-muted-foreground">{formatDate(me.data.createdAt)}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
       )}
-    </div>
-  )
-}
-
-function Item({
-  label,
-  icon: Icon,
-  children,
-}: {
-  label: string
-  icon?: React.ComponentType<{ className?: string }>
-  children: React.ReactNode
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card/50 p-4">
-      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {Icon && <Icon className="h-3.5 w-3.5" />} {label}
-      </p>
-      <p className="mt-1.5 text-sm">{children}</p>
     </div>
   )
 }

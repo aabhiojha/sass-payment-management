@@ -42,17 +42,14 @@ export default function RemindersPage({
   const qc = useQueryClient()
   const [page, setPage] = useState(0)
   const [size] = useState(20)
-  const [filter, setFilter] = useState<string>("ALL")
+  const [filter, setFilter] = useState("ALL")
 
   const { data, isLoading } = useQuery({
-    queryKey: ["reminders", tenantId, page, size],
-    queryFn: () => remindersApi.list(tenantId, page, size),
+    queryKey: ["reminders", tenantId, page, size, filter],
+    queryFn: () => remindersApi.list(tenantId, page, size, filter),
   })
 
-  const rows =
-    filter === "ALL"
-      ? data?.content ?? []
-      : (data?.content ?? []).filter((r) => r.status === filter)
+  const rows = data?.content ?? []
 
   const trigger = useMutation({
     mutationFn: () => remindersApi.trigger(tenantId),
@@ -69,82 +66,114 @@ export default function RemindersPage({
         title="Reminders"
         description="Outbound reminder dispatches across this workspace."
         actions={
-          <>
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All statuses</SelectItem>
-                <SelectItem value="SENT">Sent</SelectItem>
-                <SelectItem value="FAILED">Failed</SelectItem>
-                <SelectItem value="SKIPPED">Skipped</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={() => trigger.mutate()}
-              loading={trigger.isPending}
-            >
-              <Zap className="h-4 w-4" /> Trigger now
-            </Button>
-          </>
+          <Button onClick={() => trigger.mutate()} loading={trigger.isPending}>
+            <Zap className="h-4 w-4" /> Trigger now
+          </Button>
         }
       />
 
       <Card>
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0) }}>
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All statuses</SelectItem>
+              <SelectItem value="SENT">Sent</SelectItem>
+              <SelectItem value="FAILED">Failed</SelectItem>
+              <SelectItem value="SKIPPED">Skipped</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">{data?.totalElements ?? 0} total</p>
+        </div>
+
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Bell}
-            title="No reminders yet"
-            description="Run a dispatch manually or wait for the scheduled batch to fire."
+            title={filter === "ALL" ? "No reminders yet" : "No matching reminders"}
+            description={
+              filter === "ALL"
+                ? "Run a dispatch manually or wait for the scheduled batch to fire."
+                : "Try a different status filter."
+            }
             action={
-              <Button
-                onClick={() => trigger.mutate()}
-                loading={trigger.isPending}
-              >
-                <Zap className="h-4 w-4" /> Trigger reminders
-              </Button>
+              filter === "ALL" ? (
+                <Button onClick={() => trigger.mutate()} loading={trigger.isPending}>
+                  <Zap className="h-4 w-4" /> Trigger reminders
+                </Button>
+              ) : undefined
             }
           />
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Sent</TableHead>
-                  <TableHead>Note</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>
-                      <Link
-                        href={`/${tenantId}/customers/${r.customerId}`}
-                        className="font-medium hover:underline"
-                      >
-                        {r.customerName}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{r.productName}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={r.status} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDateTime(r.sentAt)}
-                    </TableCell>
-                    <TableCell className="max-w-md truncate text-xs text-muted-foreground">
-                      {r.errorMessage ?? "—"}
-                    </TableCell>
+            {/* Desktop table */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Sent</TableHead>
+                    <TableHead>Note</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>
+                        <Link
+                          href={`/${tenantId}/customers/${r.customerId}`}
+                          className="font-medium hover:underline"
+                        >
+                          {r.customerName}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-sm">{r.productName}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={r.status} />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {formatDateTime(r.sentAt)}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
+                        {r.errorMessage ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile card list */}
+            <div className="divide-y divide-border sm:hidden">
+              {rows.map((r) => (
+                <div key={r.id} className="p-4 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      href={`/${tenantId}/customers/${r.customerId}`}
+                      className="font-medium text-sm hover:underline"
+                    >
+                      {r.customerName}
+                    </Link>
+                    <StatusBadge status={r.status} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">{r.productName}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">{formatDateTime(r.sentAt)}</span>
+                    {r.errorMessage && (
+                      <span className="truncate text-[11px] text-destructive max-w-[60%] text-right">
+                        {r.errorMessage}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div className="border-t border-border">
               <Pagination
                 page={page}
