@@ -17,6 +17,14 @@ export const productPlansApi = {
       )
       .then((r) => r.data),
 
+  update: (tenantId: number, productId: number, planId: number, data: Partial<CreateProductPlanRequest>) =>
+    api
+      .patch<ProductPlanResponse>(
+        `/tenants/${tenantId}/products/${productId}/plans/${planId}`,
+        data
+      )
+      .then((r) => r.data),
+
   delete: (tenantId: number, productId: number, planId: number) =>
     api
       .delete(`/tenants/${tenantId}/products/${productId}/plans/${planId}`)

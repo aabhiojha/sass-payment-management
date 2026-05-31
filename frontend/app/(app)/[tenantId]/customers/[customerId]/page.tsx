@@ -60,15 +60,39 @@ import { plansApi } from "@/lib/api/plans"
 import { friendlyError } from "@/lib/axios"
 import { formatCurrency, formatDate, initials } from "@/lib/utils"
 import { useRole } from "@/hooks/useRole"
+import type { CustomerProductResponse } from "@/types/api"
 
-const editSchema = z.object({
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function toLocalInput(iso?: string | null): string {
+  if (!iso) return ""
+  // "2024-03-15T10:30:00Z" → "2024-03-15T10:30"
+  return iso.slice(0, 16)
+}
+
+function toIso(local: string): string {
+  return local ? new Date(local).toISOString() : ""
+}
+
+// ── schemas ───────────────────────────────────────────────────────────────────
+
+const editCustomerSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   email: z.string().email("Enter a valid email"),
   phone: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
 })
-type EditValues = z.infer<typeof editSchema>
+type EditCustomerValues = z.infer<typeof editCustomerSchema>
+
+const editPlanSchema = z.object({
+  startsAt: z.string().min(1, "Start date is required"),
+  endsAt: z.string().optional(),
+  notes: z.string().optional(),
+})
+type EditPlanValues = z.infer<typeof editPlanSchema>
+
+// ── page ─────────────────────────────────────────────────────────────────────
 
 export default function CustomerDetailPage({
   params,
@@ -80,8 +104,11 @@ export default function CustomerDetailPage({
   const router = useRouter()
   const qc = useQueryClient()
   const { isAtLeast } = useRole()
+
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [editPlanOpen, setEditPlanOpen] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<CustomerProductResponse | null>(null)
 
   const customer = useQuery({
     queryKey: ["customers", tenantId, customerId],
@@ -92,15 +119,31 @@ export default function CustomerDetailPage({
     queryFn: () => plansApi.listForCustomer(tenantId, customerId, 0, 50),
   })
 
-  const editForm = useForm<EditValues>({ resolver: zodResolver(editSchema) })
+  const editForm = useForm<EditCustomerValues>({ resolver: zodResolver(editCustomerSchema) })
+  const editPlanForm = useForm<EditPlanValues>({ resolver: zodResolver(editPlanSchema) })
 
   const editMut = useMutation({
-    mutationFn: (data: EditValues) => customersApi.update(tenantId, customerId, data),
+    mutationFn: (data: EditCustomerValues) => customersApi.update(tenantId, customerId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["customers", tenantId, customerId] })
       qc.invalidateQueries({ queryKey: ["customers", tenantId] })
       toast.success("Customer updated")
       setEditOpen(false)
+    },
+    onError: (e) => toast.error(friendlyError(e)),
+  })
+
+  const editPlanMut = useMutation({
+    mutationFn: (data: EditPlanValues) =>
+      plansApi.update(tenantId, customerId, editingPlan!.id, {
+        startsAt: toIso(data.startsAt),
+        endsAt: data.endsAt ? toIso(data.endsAt) : undefined,
+        notes: data.notes || undefined,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customers", tenantId, customerId, "products"] })
+      toast.success("Plan updated")
+      setEditPlanOpen(false)
     },
     onError: (e) => toast.error(friendlyError(e)),
   })
@@ -124,6 +167,16 @@ export default function CustomerDetailPage({
     },
     onError: (e) => toast.error(friendlyError(e)),
   })
+
+  function openEditPlan(p: CustomerProductResponse) {
+    setEditingPlan(p)
+    editPlanForm.reset({
+      startsAt: toLocalInput(p.startsAt),
+      endsAt: toLocalInput(p.endsAt),
+      notes: p.notes ?? "",
+    })
+    setEditPlanOpen(true)
+  }
 
   const c = customer.data
   const planRows = plans.data?.content ?? []
@@ -289,6 +342,10 @@ export default function CustomerDetailPage({
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openEditPlan(p)}>
+                                  <Pencil className="h-4 w-4" /> Edit plan
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 {p.status === "ACTIVE" && (
                                   <DropdownMenuItem onClick={() => statusMut.mutate({ cpId: p.id, status: "PAUSED" })}>
                                     <PauseCircle className="h-4 w-4" /> Pause
@@ -338,18 +395,21 @@ export default function CustomerDetailPage({
                           {formatDate(p.startsAt)} → {p.endsAt ? formatDate(p.endsAt) : "Open-ended"}
                         </span>
                       </div>
-                      {p.status !== "CANCELLED" && (
-                        <div className="flex gap-2 pt-1">
-                          {p.status === "ACTIVE" && (
-                            <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "PAUSED" })}>
-                              <PauseCircle className="h-3 w-3" /> Pause
-                            </Button>
-                          )}
-                          {p.status === "PAUSED" && (
-                            <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "ACTIVE" })}>
-                              <Play className="h-3 w-3" /> Resume
-                            </Button>
-                          )}
+                      <div className="flex gap-2 pt-1">
+                        <Button size="xs" variant="outline" onClick={() => openEditPlan(p)}>
+                          <Pencil className="h-3 w-3" /> Edit
+                        </Button>
+                        {p.status === "ACTIVE" && (
+                          <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "PAUSED" })}>
+                            <PauseCircle className="h-3 w-3" /> Pause
+                          </Button>
+                        )}
+                        {p.status === "PAUSED" && (
+                          <Button size="xs" variant="outline" onClick={() => statusMut.mutate({ cpId: p.id, status: "ACTIVE" })}>
+                            <Play className="h-3 w-3" /> Resume
+                          </Button>
+                        )}
+                        {p.status !== "CANCELLED" && (
                           <Button
                             size="xs"
                             variant="outline"
@@ -358,8 +418,8 @@ export default function CustomerDetailPage({
                           >
                             <Ban className="h-3 w-3" /> Cancel
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -369,7 +429,7 @@ export default function CustomerDetailPage({
         </>
       )}
 
-      {/* Edit dialog */}
+      {/* Edit customer dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
@@ -407,6 +467,46 @@ export default function CustomerDetailPage({
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
               <Button type="submit" loading={editMut.isPending}>Save changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit plan dialog */}
+      <Dialog open={editPlanOpen} onOpenChange={setEditPlanOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Edit plan</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editPlanForm.handleSubmit((v) => editPlanMut.mutate(v))} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="planStartsAt">Start date</Label>
+              <Input
+                id="planStartsAt"
+                type="datetime-local"
+                {...editPlanForm.register("startsAt")}
+              />
+              {editPlanForm.formState.errors.startsAt && (
+                <p className="text-xs text-destructive">{editPlanForm.formState.errors.startsAt.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="planEndsAt">
+                End date <span className="text-muted-foreground font-normal">(leave blank for open-ended)</span>
+              </Label>
+              <Input
+                id="planEndsAt"
+                type="datetime-local"
+                {...editPlanForm.register("endsAt")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="planNotes">Notes</Label>
+              <Textarea id="planNotes" rows={2} {...editPlanForm.register("notes")} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditPlanOpen(false)}>Cancel</Button>
+              <Button type="submit" loading={editPlanMut.isPending}>Save changes</Button>
             </DialogFooter>
           </form>
         </DialogContent>

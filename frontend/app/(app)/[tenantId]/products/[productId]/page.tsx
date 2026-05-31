@@ -123,6 +123,8 @@ export default function ProductDetailPage({
   const [filter, setFilter] = useState<"ALL" | PlanStatus>("ALL")
   const [activeTab, setActiveTab] = useState<"customers" | "tiers">("customers")
   const [addTierOpen, setAddTierOpen] = useState(false)
+  const [editTierOpen, setEditTierOpen] = useState(false)
+  const [editingTier, setEditingTier] = useState<import("@/types/api").ProductPlanResponse | null>(null)
   const [confirmDeleteTier, setConfirmDeleteTier] = useState<number | null>(null)
 
   const product = useQuery({
@@ -185,6 +187,8 @@ export default function ProductDetailPage({
     onError: (e) => toast.error(friendlyError(e)),
   })
 
+  const editTierForm = useForm<PricingTierValues>({ resolver: zodResolver(pricingTierSchema) })
+
   const tierForm = useForm<PricingTierValues>({
     resolver: zodResolver(pricingTierSchema),
     defaultValues: {
@@ -208,6 +212,22 @@ export default function ProductDetailPage({
       toast.success("Pricing tier created")
       setAddTierOpen(false)
       tierForm.reset()
+    },
+    onError: (e) => toast.error(friendlyError(e)),
+  })
+
+  const updateTier = useMutation({
+    mutationFn: (data: PricingTierValues) =>
+      productPlansApi.update(tenantId, productId, editingTier!.id, {
+        name: data.name,
+        price: data.price,
+        currency: data.currency,
+        billingCadence: data.billingCadence as BillingCadence,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["product-plans", tenantId, productId] })
+      toast.success("Pricing tier updated")
+      setEditTierOpen(false)
     },
     onError: (e) => toast.error(friendlyError(e)),
   })
@@ -545,7 +565,7 @@ export default function ProductDetailPage({
                       <TableHead>Name</TableHead>
                       <TableHead>Price</TableHead>
                       <TableHead>Cadence</TableHead>
-                      {canEdit && <TableHead className="text-right">Actions</TableHead>}
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -556,18 +576,37 @@ export default function ProductDetailPage({
                         <TableCell className="text-sm text-muted-foreground">
                           {CADENCE_LABEL[tier.billingCadence] ?? titleCase(tier.billingCadence)}
                         </TableCell>
-                        {canEdit && (
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setConfirmDeleteTier(tier.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        )}
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                setEditingTier(tier)
+                                editTierForm.reset({
+                                  name: tier.name,
+                                  price: tier.price,
+                                  currency: tier.currency as typeof CURRENCIES[number],
+                                  billingCadence: tier.billingCadence as PricingTierValues["billingCadence"],
+                                })
+                                setEditTierOpen(true)
+                              }}>
+                                <Pencil className="h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              {canEdit && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem destructive onClick={() => setConfirmDeleteTier(tier.id)}>
+                                    <Trash2 className="h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -636,6 +675,65 @@ export default function ProductDetailPage({
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
               <Button type="submit" loading={editMut.isPending}>Save changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit pricing tier dialog */}
+      <Dialog open={editTierOpen} onOpenChange={setEditTierOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Edit pricing tier</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editTierForm.handleSubmit((v) => updateTier.mutate(v))} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editTierName">Name</Label>
+              <Input id="editTierName" placeholder="e.g. Starter, Pro, Enterprise" {...editTierForm.register("name")} />
+              {editTierForm.formState.errors.name && (
+                <p className="text-xs text-destructive">{editTierForm.formState.errors.name.message}</p>
+              )}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="editTierPrice">Price</Label>
+                <Input id="editTierPrice" type="number" step="0.01" min="0" {...editTierForm.register("price")} />
+                {editTierForm.formState.errors.price && (
+                  <p className="text-xs text-destructive">{editTierForm.formState.errors.price.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editTierCurrency">Currency</Label>
+                <Select
+                  value={editTierForm.watch("currency")}
+                  onValueChange={(v) => editTierForm.setValue("currency", v as typeof CURRENCIES[number])}
+                >
+                  <SelectTrigger id="editTierCurrency"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="NPR">NPR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editTierCadence">Billing cadence</Label>
+              <Select
+                value={editTierForm.watch("billingCadence")}
+                onValueChange={(v) => editTierForm.setValue("billingCadence", v as PricingTierValues["billingCadence"])}
+              >
+                <SelectTrigger id="editTierCadence"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                  <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                  <SelectItem value="ANNUALLY">Annually</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditTierOpen(false)}>Cancel</Button>
+              <Button type="submit" loading={updateTier.isPending}>Save changes</Button>
             </DialogFooter>
           </form>
         </DialogContent>
