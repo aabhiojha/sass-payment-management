@@ -4,14 +4,12 @@ import { memo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import {
+  AlertCircle,
   ArrowUpRight,
-  Bell,
-  ScrollText,
   Send,
   SkipForward,
   UserCircle2,
   XCircle,
-  AlertCircle,
 } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/PageHeader"
@@ -57,7 +55,7 @@ const StatCell = memo(function StatCell({
   const count = useCountUp(value)
   return (
     <div
-      className="flex flex-col gap-0.5 bg-card px-5 py-4 animate-fade-in opacity-0 [animation-fill-mode:forwards]"
+      className="flex flex-col gap-0.5 bg-card px-5 py-4 motion-safe:animate-fade-in motion-safe:opacity-0 motion-safe:[animation-fill-mode:forwards]"
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -89,6 +87,17 @@ function DashboardSkeleton() {
   )
 }
 
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="rounded-xl border border-border bg-card px-6 py-10 text-center">
+      <p className="text-sm text-muted-foreground">Could not load dashboard data.</p>
+      <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
+        Try again
+      </Button>
+    </div>
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /*  Super-admin dashboard                                              */
 /* ------------------------------------------------------------------ */
@@ -107,12 +116,12 @@ function AdminDashboard() {
   })
 
   if (admin.isLoading) return <DashboardSkeleton />
+  if (admin.isError || !admin.data) {
+    return <ErrorState onRetry={() => admin.refetch()} />
+  }
 
   const d = admin.data
-  if (!d) return null
-
   const totalTenants = d.activeTenants + d.suspendedTenants + d.archivedTenants
-  const totalReminders = d.remindersSent + d.remindersFailed + d.remindersSkipped
 
   return (
     <div className="space-y-6">
@@ -250,18 +259,35 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
     enabled: ready && showActivity,
   })
 
-  const isLoading = summary.isLoading
-  if (isLoading) return <DashboardSkeleton />
+  if (summary.isLoading) return <DashboardSkeleton />
+  if (summary.isError || !summary.data) {
+    return <ErrorState onRetry={() => summary.refetch()} />
+  }
 
   const s = summary.data
+  const failedCount = reminderStats.data?.failed ?? 0
 
   return (
     <div className="space-y-6">
+      {/* Failed reminders alert — only shown when action is needed */}
+      {failedCount > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+          <p className="flex-1 text-sm text-foreground">
+            <span className="font-medium">{failedCount} reminder {failedCount === 1 ? "delivery" : "deliveries"} failed.</span>{" "}
+            Check which plans were affected and retry.
+          </p>
+          <Button variant="outline" size="sm" asChild className="shrink-0">
+            <Link href={`/${tenantId}/reminders?status=FAILED`}>Review</Link>
+          </Button>
+        </div>
+      )}
+
       {/* Stats strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        <StatCell label="Customers" value={s?.totalCustomers ?? 0} sub={null} delay={0} />
-        <StatCell label="Products" value={s?.totalProducts ?? 0} sub={null} delay={80} />
-        <StatCell label="Active plans" value={s?.activePlans ?? 0} sub={`${s?.pausedPlans ?? 0} paused`} delay={160} />
+        <StatCell label="Customers" value={s.totalCustomers ?? 0} sub={null} delay={0} />
+        <StatCell label="Products" value={s.totalProducts ?? 0} sub={null} delay={80} />
+        <StatCell label="Active plans" value={s.activePlans ?? 0} sub={`${s.pausedPlans ?? 0} paused`} delay={160} />
         <StatCell label="Reminders sent" value={reminderStats.data?.sent ?? 0} sub={reminderStats.data ? `${reminderStats.data.failed} failed` : null} delay={240} />
       </div>
 
@@ -298,9 +324,12 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
                 ))}
               </div>
             ) : (
-              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
-                No active plans yet.
-              </p>
+              <div className="px-6 py-8 text-center">
+                <p className="text-sm text-muted-foreground">No active plans yet.</p>
+                <Button variant="outline" size="sm" className="mt-3" asChild>
+                  <Link href={`/${tenantId}/customers`}>Assign a product to a customer</Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -325,9 +354,8 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
               <div className="divide-y divide-border">
                 {[
                   { label: "Sent", value: reminderStats.data.sent, icon: Send, color: "text-success" },
-                  { label: "Failed", value: reminderStats.data.failed, icon: AlertCircle, color: "text-destructive" },
+                  { label: "Failed", value: reminderStats.data.failed, icon: XCircle, color: "text-destructive" },
                   { label: "Skipped", value: reminderStats.data.skipped, icon: SkipForward, color: "text-muted-foreground" },
-                  { label: "Total", value: reminderStats.data.total, icon: Bell, color: "text-foreground" },
                 ].map((row) => (
                   <div key={row.label} className="flex items-center justify-between px-6 py-3">
                     <div className="flex items-center gap-2">
@@ -349,7 +377,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
         <Card>
           <CardHeader>
             <CardTitle>Upcoming reminders</CardTitle>
-            <CardDescription>Due within the next 7 days</CardDescription>
+            <CardDescription>Plans expiring at the next milestone</CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
             {upcoming.isLoading ? (
@@ -380,7 +408,7 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
           </CardContent>
         </Card>
 
-        {/* Recent activity — sits beside upcoming reminders on lg */}
+        {/* Recent activity — TENANT_ADMIN+ only */}
         {showActivity && (
           <Card>
             <CardHeader className="flex-row items-center justify-between">
@@ -395,46 +423,46 @@ function TenantDashboard({ tenantId }: { tenantId: number }) {
                 </Link>
               </Button>
             </CardHeader>
-          <CardContent className="px-0 pb-0">
-            {activity.isLoading ? (
-              <div className="divide-y divide-border">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-2">
-                    <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
-                    <Skeleton className="h-3.5 flex-1" />
-                    <Skeleton className="h-3 w-14 shrink-0" />
-                  </div>
-                ))}
-              </div>
-            ) : activity.data && activity.data.length > 0 ? (
-              <div className="divide-y divide-border">
-                {activity.data.map((a) => {
-                  const dotColor =
-                    a.action === "CREATE" ? "bg-success" :
-                    a.action === "DELETE" ? "bg-destructive" :
-                    a.action === "STATUS_CHANGE" ? "bg-warning" :
-                    a.action === "LOGIN_FAILED" ? "bg-destructive" :
-                    "bg-muted-foreground/40"
-                  return (
-                    <div key={a.id} className="flex items-center gap-3 px-4 py-2">
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
-                      <p className="flex-1 truncate text-xs text-foreground">
-                        {describeEvent(a)}
-                      </p>
-                      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                        {timeAgo(a.createdAt)}
-                      </span>
+            <CardContent className="px-0 pb-0">
+              {activity.isLoading ? (
+                <div className="divide-y divide-border">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-6 py-2">
+                      <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                      <Skeleton className="h-3.5 flex-1" />
+                      <Skeleton className="h-3 w-14 shrink-0" />
                     </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="py-6 text-center text-xs text-muted-foreground">
-                No activity recorded yet.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : activity.data && activity.data.length > 0 ? (
+                <div className="divide-y divide-border">
+                  {activity.data.map((a) => {
+                    const dotColor =
+                      a.action === "CREATE" ? "bg-success" :
+                      a.action === "DELETE" ? "bg-destructive" :
+                      a.action === "STATUS_CHANGE" ? "bg-warning" :
+                      a.action === "LOGIN_FAILED" ? "bg-destructive" :
+                      "bg-muted-foreground/40"
+                    return (
+                      <div key={a.id} className="flex items-center gap-3 px-6 py-2">
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
+                        <p className="flex-1 truncate text-xs text-foreground">
+                          {describeEvent(a)}
+                        </p>
+                        <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                          {timeAgo(a.createdAt)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="py-6 text-center text-xs text-muted-foreground">
+                  No activity recorded yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
