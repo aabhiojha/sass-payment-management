@@ -16,5 +16,5 @@ public class ReminderEmailRequest {
     private String planName;
     private String amount;
     private String dueDate;
-    private String invoiceNumber;
+    private int daysBeforeExpiry;
 }

@@ -115,6 +115,7 @@ public class ReminderService {
         return results;
     }
 
+
     public int cancelOverduePlans(TenantEntity tenant) {
         List<CustomerProductEntity> overdue = customerProductRepository
                 .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBefore(
@@ -138,7 +139,7 @@ public class ReminderService {
         reminder.setDaysBeforeExpiry(milestone);
 
         try {
-            notificationClient.sendReminder(buildPayload(tenant, cp));
+            notificationClient.sendReminder(buildPayload(tenant, cp, milestone));
             reminder.setStatus(ReminderStatus.SENT);
             reminder.setSentAt(Instant.now());
             log.info("Sent {}d reminder for customerProduct={} customer={}",
@@ -153,7 +154,7 @@ public class ReminderService {
         return ReminderResponse.from(reminder);
     }
 
-    private ReminderNotificationPayload buildPayload(TenantEntity tenant, CustomerProductEntity cp) {
+    private ReminderNotificationPayload buildPayload(TenantEntity tenant, CustomerProductEntity cp, int daysBeforeExpiry) {
         String amount;
         if (cp.getCustomPrice() != null) {
             amount = cp.getProduct().getCurrency() + " " + cp.getCustomPrice().toPlainString();
@@ -174,7 +175,8 @@ public class ReminderService {
                 cp.getProduct().getName(),
                 planName,
                 amount,
-                dueDate
+                dueDate,
+                daysBeforeExpiry
         );
     }
 }
