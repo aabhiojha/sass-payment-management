@@ -142,11 +142,6 @@ export default function CustomerDetailPage({
         actions={
           c && (
             <>
-              <Button variant="outline" asChild>
-                <Link href={`/${tenantId}/customers/${customerId}/products/new`}>
-                  <Plus className="h-4 w-4" /> Assign product
-                </Link>
-              </Button>
               {isAtLeast("TENANT_ADMIN") && (
                 <Button
                   variant="outline"
