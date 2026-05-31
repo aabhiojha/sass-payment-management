@@ -90,6 +90,13 @@ public class ReminderService {
                             tenant.getId(), CustomerProductStatus.ACTIVE, windowStart, windowEnd);
 
             for (CustomerProductEntity cp : duePlans) {
+                // Skip if the plan hasn't been active long enough for this milestone to make sense.
+                // Prevents short plans (e.g. 7-day) from receiving a 7-day reminder on day 0.
+                if (cp.getStartsAt() != null &&
+                        cp.getStartsAt().plus(milestone, ChronoUnit.DAYS).isAfter(now)) {
+                    continue;
+                }
+
                 boolean alreadyHandled = reminderRepository
                         .existsByCustomerProductIdAndDaysBeforeExpiryAndStatusIn(
                                 cp.getId(), milestone,
