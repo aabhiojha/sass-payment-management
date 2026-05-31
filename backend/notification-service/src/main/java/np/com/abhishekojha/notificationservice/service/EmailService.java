@@ -74,14 +74,15 @@ public class EmailService {
     }
 
     private String renderReminder(ReminderEmailRequest req) {
-        return render("email/reminder", Map.of(
-                "customerName",  req.getCustomerName(),
-                "productName",   req.getProductName(),
-                "amount",        req.getAmount(),
-                "dueDate",       req.getDueDate(),
-                "tenantName",    req.getTenantName(),
-                "invoiceNumber", req.getInvoiceNumber() != null ? req.getInvoiceNumber() : "N/A"
-        ));
+        Map<String, Object> vars = new java.util.HashMap<>();
+        vars.put("customerName",  req.getCustomerName());
+        vars.put("productName",   req.getProductName());
+        vars.put("planName",      req.getPlanName());
+        vars.put("amount",        req.getAmount());
+        vars.put("dueDate",       req.getDueDate());
+        vars.put("tenantName",    req.getTenantName());
+        vars.put("invoiceNumber", req.getInvoiceNumber() != null ? req.getInvoiceNumber() : "N/A");
+        return render("email/reminder", vars);
     }
 
     private String render(String template, Map<String, Object> vars) {

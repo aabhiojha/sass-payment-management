@@ -114,7 +114,7 @@ public class CustomerProductController {
             @ApiResponse(responseCode = "404", description = "Not found")
     })
     @DeleteMapping("/{cpId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'TENANT_ADMIN', 'TENANT_USER')")
     public ResponseEntity<Void> delete(
             @PathVariable Long tenantId,
             @PathVariable Long customerId,

@@ -6,6 +6,7 @@ public record ReminderNotificationPayload(
         String customerName,
         String customerEmail,
         String productName,
+        String planName,
         String amount,
         String dueDate
 ) {}
