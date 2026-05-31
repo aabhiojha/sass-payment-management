@@ -142,7 +142,7 @@ export default function NewProductPage({
               <Select
                 defaultValue="MONTHLY"
                 onValueChange={(v) =>
-                  form.setValue("billingCadence", v as any)
+                  form.setValue("billingCadence", v as "WEEKLY" | "MONTHLY" | "QUARTERLY" | "ANNUALLY")
                 }
               >
                 <SelectTrigger>

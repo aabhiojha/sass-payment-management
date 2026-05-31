@@ -69,7 +69,7 @@ export default function NewCustomerPage({
           </Link>
         }
         title="New customer"
-        description="Capture the people and organisations you want to bill."
+        description="Capture the people and organizations you want to bill."
       />
 
       <form

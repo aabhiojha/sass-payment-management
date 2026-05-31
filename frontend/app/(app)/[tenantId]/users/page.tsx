@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import {
@@ -126,7 +127,14 @@ export default function UsersPage({
           <EmptyState
             icon={Users}
             title="No team members yet"
-            description="Invite teammates from the invitations page."
+            description="Invite teammates to give them access to this workspace."
+            action={
+              isAtLeast("TENANT_ADMIN") ? (
+                <Button asChild>
+                  <Link href={`/${tenantId}/invitations`}>Send an invitation</Link>
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           <>

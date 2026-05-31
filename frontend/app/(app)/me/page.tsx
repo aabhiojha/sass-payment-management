@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useAuthStore } from "@/store/authStore"
 import { friendlyError } from "@/lib/axios"
 import { formatDate, initials } from "@/lib/utils"
+import type { Role } from "@/types/api"
 
 export default function MePage() {
   const { logout } = useAuth()
@@ -82,7 +83,7 @@ export default function MePage() {
                 {me.data.fullName ?? me.data.email}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
-                <RoleBadge role={me.data.role as any} />
+                <RoleBadge role={me.data.role as Role} />
                 <StatusBadge status={me.data.status} />
               </div>
             </div>
@@ -143,7 +144,7 @@ export default function MePage() {
 
               <div className="flex items-center justify-between px-6 py-3">
                 <dt className="text-xs text-muted-foreground w-24 shrink-0">Role</dt>
-                <dd><RoleBadge role={me.data.role as any} /></dd>
+                <dd><RoleBadge role={me.data.role as Role} /></dd>
               </div>
 
               <div className="flex items-center justify-between px-6 py-3">

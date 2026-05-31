@@ -80,7 +80,7 @@ function LoginForm() {
         <div className="space-y-8">
           <h1 className="font-display text-3xl font-semibold leading-snug tracking-tight text-balance">
             Billing & payments,{" "}
-            <span className="bg-gradient-to-br from-primary via-violet-500 to-indigo-400 bg-clip-text text-transparent">
+            <span className="text-primary">
               without the spreadsheets.
             </span>
           </h1>
