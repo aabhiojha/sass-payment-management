@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/shared/StatusBadge"
-import { Bell, Building2, ChevronDown, LogOut, Search, User as UserIcon, X } from "lucide-react"
+import { Building2, ChevronDown, LogOut, Search, User as UserIcon, X } from "lucide-react"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { initials } from "@/lib/utils"
 import { RoleBadge } from "@/components/shared/RoleBadge"
@@ -153,11 +153,6 @@ export function TopBar() {
         {!isSuperAdmin && (
           <Button variant="ghost" size="icon" className="md:hidden" aria-label="Search">
             <Search className="h-4 w-4" />
-          </Button>
-        )}
-        {!isSuperAdmin && (
-          <Button variant="ghost" size="icon" aria-label="Notifications">
-            <Bell className="h-4 w-4" />
           </Button>
         )}
 

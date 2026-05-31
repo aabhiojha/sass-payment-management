@@ -9,7 +9,7 @@ import {
   UserCircle2,
   Package,
   ClipboardList,
-  Bell,
+  Clock,
   ScrollText,
   Settings,
   X,
@@ -56,7 +56,7 @@ function buildNav(tenantId: number | null): {
           {
             href: `${tenantBase}/reminders`,
             label: "Reminders",
-            icon: Bell,
+            icon: Clock,
           },
         ]
       : [],
