@@ -5,7 +5,7 @@ import { useAuthStore } from "@/store/authStore"
 import type { ApiError } from "@/types/api"
 
 const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8090/api/v1"
 
 export const api = axios.create({
   baseURL,
