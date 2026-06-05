@@ -2,7 +2,7 @@
 
 @theme {
   /* Font stacks */
-  --font-sans: var(--font-roboto), "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-lato), "Lato", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* App colors */
@@ -92,6 +92,11 @@
   box-sizing: border-box;
 }
 
+*:focus-visible {
+  outline: none;
+  border-color: #d8388a !important;
+}
+
 html,
 body {
   height: 100%;
@@ -99,7 +104,7 @@ body {
 
 body {
   margin: 0;
-  font-family: var(--font-roboto), "Roboto", "Segoe UI", -apple-system, sans-serif;
+  font-family: var(--font-lato), "Lato", "Segoe UI", -apple-system, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
