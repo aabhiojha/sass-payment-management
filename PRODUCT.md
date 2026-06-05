@@ -15,7 +15,7 @@ without asking them to interpret raw data.
 
 ## Product Purpose
 
-PayNest is a multi-tenant billing and subscription management platform. It lets
+PayNext is a multi-tenant billing and subscription management platform. It lets
 operators track customers, products, and recurring plans across tenant accounts, and
 automatically sends renewal reminders at 30, 7, and 1 day before plan expiry. It
 replaces spreadsheets and ad-hoc email chains with a structured, auditable system.
@@ -36,7 +36,7 @@ The tone is that of a good accountant: reliable, unhurried, never loud.
 
 - Generic SaaS cream/indigo: off-white backgrounds, rounded card grids, indigo primary
   buttons. This aesthetic signals "AI-generated template" to anyone in the space and
-  undercuts trust. PayNest should feel considered and specific, not assembled.
+  undercuts trust. PayNext should feel considered and specific, not assembled.
 - Legacy accounting software (QuickBooks era): high-density, low-contrast, cluttered
   with chrome. Functional but exhausting.
 - Bright consumer fintech (Revolut, Wise): gradient heroes, bold color blocks, playful

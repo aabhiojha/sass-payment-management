@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-05-31T00:00:00Z",
-  "title": "Design System: PayNest",
+  "title": "Design System: PayNext",
   "extensions": {
     "colorMeta": {
       "primary":        { "role": "primary",   "displayName": "Control Indigo",  "canonical": "hsl(244 75% 57%)", "tonalRamp": ["#1a1566","#241fa0","#2d27c9","#4038d4","#4f46e5","#7b72f0","#9f99f5","#c4c0fa","#e2e0fd","#f3f2fe"] },
@@ -130,7 +130,7 @@
   ],
   "narrative": {
     "northStar": "The Clean Ledger",
-    "overview": "PayNest is a working surface, not a showpiece. The design system reflects that: every element earns its place by making data clearer, not by making the interface more attractive. The ideal screen feels like a well-kept spreadsheet, which is to say, the structure disappears and the content speaks. There is no decoration without information, no chrome without function.\n\nThe palette is cool, low-saturation, and deliberately understated. Color is used for status communication (active, paused, failed, cancelled) and for primary actions only. The indigo primary anchors the eye on interactive elements without competing with data. Surfaces are white or near-white with subtle blue-gray tint; the dark mode mirrors this logic: charcoal grounds, not black holes.\n\nThis system explicitly rejects the generic SaaS aesthetic: off-white backgrounds, indigo-primary rounded card grids, and gradient text all belong to the same 2023 template; PayNest should feel chosen, not generated.",
+    "overview": "PayNext is a working surface, not a showpiece. The design system reflects that: every element earns its place by making data clearer, not by making the interface more attractive. The ideal screen feels like a well-kept spreadsheet, which is to say, the structure disappears and the content speaks. There is no decoration without information, no chrome without function.\n\nThe palette is cool, low-saturation, and deliberately understated. Color is used for status communication (active, paused, failed, cancelled) and for primary actions only. The indigo primary anchors the eye on interactive elements without competing with data. Surfaces are white or near-white with subtle blue-gray tint; the dark mode mirrors this logic: charcoal grounds, not black holes.\n\nThis system explicitly rejects the generic SaaS aesthetic: off-white backgrounds, indigo-primary rounded card grids, and gradient text all belong to the same 2023 template; PayNext should feel chosen, not generated.",
     "keyCharacteristics": [
       "Data density varies by context: list pages are scannable, detail pages breathe, dialogs are focused.",
       "Status is always visible; exceptions surface where users naturally look.",

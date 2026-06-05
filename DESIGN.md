@@ -1,5 +1,5 @@
 ---
-name: PayNest
+name: PayNext
 description: Multi-tenant billing and subscription management platform for finance teams.
 colors:
   primary: "#4F46E5"
@@ -116,13 +116,13 @@ components:
     padding: "2px 8px"
 ---
 
-# Design System: PayNest
+# Design System: PayNext
 
 ## 1. Overview
 
 **Creative North Star: "The Clean Ledger"**
 
-PayNest is a working surface, not a showpiece. The design system reflects that: every
+PayNext is a working surface, not a showpiece. The design system reflects that: every
 element earns its place by making data clearer, not by making the interface more
 attractive. The ideal screen feels like a well-kept spreadsheet, which is to say, the
 structure disappears and the content speaks. There is no decoration without information,
@@ -136,7 +136,7 @@ logic: charcoal grounds, not black holes.
 
 This system explicitly rejects the generic SaaS aesthetic: off-white backgrounds,
 indigo-primary rounded card grids, and gradient text all belong to the same 2023
-template; PayNest should feel chosen, not generated. It also rejects legacy accounting
+template; PayNext should feel chosen, not generated. It also rejects legacy accounting
 software density (cluttered, low-contrast, exhausting) and consumer fintech flash
 (gradient heroes, playful copy, wrong register for B2B billing).
 
@@ -221,7 +221,7 @@ poor hierarchy.
 
 ## 4. Elevation
 
-PayNest is flat by default. Most surfaces sit at the same visual plane; depth is
+PayNext is flat by default. Most surfaces sit at the same visual plane; depth is
 communicated through background-color difference (surface on background) and border
 strokes, not shadows. Shadows appear only when a surface is elevated in response to an
 interaction or as a structural signal.
@@ -326,7 +326,7 @@ The preferred pattern for key-value detail views (customer detail, profile, prod
 ### Don't:
 - **Don't** use a cream, sand, or warm-tinted body background. The background is #F7F9FD
   (cool blue-gray). Warm-neutral backgrounds signal generic AI-generated SaaS templates,
-  which is exactly what PayNest should not look like.
+  which is exactly what PayNext should not look like.
 - **Don't** use gradient text (`background-clip: text` with a gradient). Decorative and
   meaningless. Use a single solid color; vary weight or size for emphasis.
 - **Don't** build identical card grids (icon + heading + body text, repeated). This is the
