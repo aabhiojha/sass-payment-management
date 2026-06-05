@@ -77,7 +77,7 @@ function NavLink({
   return (
     <Link
       href={item.href}
-      className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-extrabold:] mb-0.5 transition-colors hover:bg-[#f1eaed]"
+      className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-black:] mb-0.5 transition-colors hover:bg-[#f1eaed]"
       style={
         isActive
           ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
