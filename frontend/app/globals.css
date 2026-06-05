@@ -1,207 +1,109 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0ms !important;
-  }
-  /* View transition blur is expensive and motion-sensitive — skip it */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none !important;
-  }
+@theme {
+  /* Font stacks */
+  --font-sans: var(--font-roboto), "Roboto", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* App colors */
+  --color-bg-app: #FEF7FA;
+  --color-bg-card: #FFF8EF;
+  --color-bg-search: #f1eaed;
+  --color-nav-active: #FBEBF3;
+  --color-nav-active-text: #DC4D96;
+  --color-primary: #DC4D96;
+  --color-border: #ede6de;
+
+  /* Pink scale */
+  --color-pink-50: #fdf2f8;
+  --color-pink-200: #fccee8;
+
+  /* Gray scale */
+  --color-gray-400: #99a1af;
+  --color-gray-500: #6a7282;
+  --color-gray-600: #4a5565;
+  --color-gray-700: #364153;
+  --color-gray-900: #101828;
+  --color-white: #fff;
+
+  /* Text sizes */
+  --text-xs: .75rem;
+  --text-xs--line-height: calc(1 / .75);
+  --text-sm: .875rem;
+  --text-sm--line-height: calc(1.25 / .875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+
+  /* Font weights */
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Tracking */
+  --tracking-tight: -.025em;
+  --tracking-wider: .05em;
+
+  /* Radius */
+  --radius-md: .375rem;
+  --radius-lg: .5rem;
+
+  /* Transitions */
+  --default-transition-duration: .15s;
+  --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
 }
 
-/* New theme layer: driven entirely by JS clip-path animation */
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+:root {
+  --bg-app: #FEF7FA;
+  --bg-card: #FFF8EF;
+  --bg-search: #f1eaed;
+  --nav-active: #FBEBF3;
+  --nav-active-text: #ac2c6e;
+  --primary: #DC4D96;
+  --border: #ede6de;
+
+  /* Milestone badges */
+  --badge-expiry-color: #494E5C;
+  --badge-expiry-bg: #ECEDF0;
+  --badge-7day-color: #386AF5;
+  --badge-7day-bg: #EBF0FE;
+  --badge-3day-color: #EF5F00;
+  --badge-3day-bg: #FEF0E6;
+  --badge-1day-color: #E79F1F;
+  --badge-1day-bg: #FEF9E6;
+
+  /* Result badges */
+  --badge-sent-color: #24A37D;
+  --badge-sent-bg: #E6F7F2;
+  --badge-skipped-color: #24A37D;
+  --badge-skipped-bg: #E6F7F2;
+  --badge-failed-color: #24A37D;
+  --badge-failed-bg: #E6F7F2;
 }
 
-/* Old theme layer: direction-aware dissolve */
-html[data-theme-next="light"]::view-transition-old(root) {
-  animation: 520ms ease-in theme-sunrise-out both;
+* {
+  box-sizing: border-box;
 }
 
-html[data-theme-next="dark"]::view-transition-old(root) {
-  animation: 440ms ease-in theme-eclipse-out both;
+html,
+body {
+  height: 100%;
 }
 
-/* Fallback when data attr isn't set yet */
-::view-transition-old(root) {
-  animation: 300ms ease-in theme-fade-out both;
-}
-
-/*
-  Sunrise dissolve: old dark UI bleaches warm → overexposed → gone
-  Mimics direct sunlight washing out the screen.
-*/
-@keyframes theme-sunrise-out {
-  0%   { filter: brightness(1)   saturate(1)   blur(0px);   opacity: 1;   }
-  45%  { filter: brightness(1.6) saturate(0.7) blur(1px);   opacity: 0.8; }
-  80%  { filter: brightness(2.8) saturate(0.2) blur(4px);   opacity: 0.4; }
-  100% { filter: brightness(4)   saturate(0)   blur(8px);   opacity: 0;   }
-}
-
-/*
-  Eclipse dissolve: old light UI dims, shifts amber-warm (sunset),
-  then collapses to darkness like a solar eclipse totality.
-*/
-@keyframes theme-eclipse-out {
-  0%   { filter: brightness(1)    saturate(1)    hue-rotate(0deg)   blur(0px); opacity: 1;   }
-  35%  { filter: brightness(0.85) saturate(1.1)  hue-rotate(-8deg)  blur(0px); opacity: 0.9; }
-  70%  { filter: brightness(0.45) saturate(0.6)  hue-rotate(-15deg) blur(2px); opacity: 0.5; }
-  100% { filter: brightness(0.05) saturate(0)    hue-rotate(-20deg) blur(6px); opacity: 0;   }
-}
-
-@keyframes theme-fade-out {
-  to { opacity: 0; }
-}
-
-@layer base {
-  :root {
-    --background: 220 30% 98.5%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 252 78% 59%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-
-    --accent: 244 100% 97%;
-    --accent-foreground: 244 75% 35%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 152 65% 38%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 36 50% 14%;
-
-    --info: 212 92% 45%;
-    --info-foreground: 0 0% 100%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 252 78% 59%;
-
-    --sidebar: 220 9% 11%;
-    --sidebar-foreground: 220 15% 88%;
-    --sidebar-muted: 220 7% 52%;
-    --sidebar-border: 220 8% 16%;
-    --sidebar-accent: 252 22% 20%;
-    --sidebar-accent-fg: 252 20% 94%;
-
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 220 16% 10%;
-    --foreground: 210 12% 91%;
-
-    --card: 220 16% 14%;
-    --card-foreground: 210 12% 91%;
-
-    --popover: 220 16% 16%;
-    --popover-foreground: 210 12% 91%;
-
-    --primary: 252 84% 70%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 218 14% 20%;
-    --secondary-foreground: 210 12% 91%;
-
-    --muted: 218 14% 20%;
-    --muted-foreground: 215 10% 58%;
-
-    --accent: 244 50% 22%;
-    --accent-foreground: 244 88% 84%;
-
-    --destructive: 0 65% 56%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 152 55% 46%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 90% 55%;
-    --warning-foreground: 36 50% 14%;
-
-    --info: 212 85% 57%;
-    --info-foreground: 0 0% 100%;
-
-    --border: 218 13% 25%;
-    --input: 218 13% 25%;
-    --ring: 252 84% 70%;
-
-    --sidebar: 220 10% 7%;
-    --sidebar-foreground: 220 12% 85%;
-    --sidebar-muted: 220 6% 48%;
-    --sidebar-border: 220 8% 11%;
-    --sidebar-accent: 252 20% 15%;
-    --sidebar-accent-fg: 252 15% 91%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1, "cv11" 1;
-    -webkit-font-smoothing: antialiased;
-  }
-  html, body, #__next {
-    height: 100%;
-  }
-}
-
-@layer utilities {
-  .glass {
-    background: hsl(var(--card) / 0.6);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-  }
-  .shadow-soft {
-    box-shadow:
-      0 1px 0 0 hsl(var(--border) / 0.6),
-      0 1px 2px -1px hsl(var(--foreground) / 0.04),
-      0 4px 12px -4px hsl(var(--foreground) / 0.06);
-  }
-  .shadow-pop {
-    box-shadow:
-      0 1px 0 0 hsl(var(--border) / 0.6),
-      0 6px 16px -6px hsl(var(--foreground) / 0.12),
-      0 16px 32px -12px hsl(var(--foreground) / 0.10);
-  }
-  .text-balance {
-    text-wrap: balance;
-  }
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 999px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
-  }
+body {
+  margin: 0;
+  font-family: var(--font-roboto), "Roboto", "Segoe UI", -apple-system, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  text-align: left;
+  background-color: var(--bg-app);
 }
