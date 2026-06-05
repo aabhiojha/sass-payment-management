@@ -1,645 +1,351 @@
-"use client"
+"use client";
 
-import { memo, useEffect, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import Link from "next/link"
-import {
-  AlertCircle,
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  Send,
-  SkipForward,
-  UserCircle2,
-  X,
-  XCircle,
-} from "lucide-react"
+import React, { useCallback, useRef, useState } from "react";
 
-import { PageHeader } from "@/components/shared/PageHeader"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
-import {
-  formatCurrency,
-  formatDate,
-  timeAgo,
-} from "@/lib/utils"
+function useColumnResize(initialWidths: number[]) {
+  const [widths, setWidths] = useState(initialWidths);
+  const dragging = useRef<{ col: number; startX: number; startW: number } | null>(null);
 
-import { useAuthStore } from "@/store/authStore"
-import { useTenantStore } from "@/store/tenantStore"
-import { useRole } from "@/hooks/useRole"
-import { dashboardApi } from "@/lib/api/dashboard"
-import { auditApi } from "@/lib/api/audit"
-import { describeEvent } from "@/lib/audit-helpers"
-import { useCountUp } from "@/hooks/useCountUp"
+  const onMouseDown = useCallback((col: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = { col, startX: e.clientX, startW: widths[col] };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
 
-/* ------------------------------------------------------------------ */
-/*  Animated stat cell                                                 */
-/* ------------------------------------------------------------------ */
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      const { col, startX, startW } = dragging.current;
+      const next = Math.max(60, startW + (e.clientX - startX));
+      setWidths((prev) => prev.map((w, i) => (i === col ? next : w)));
+    };
+    const onUp = () => {
+      dragging.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [widths]);
 
-const StatCell = memo(function StatCell({
-  label,
-  value,
-  sub,
-  delay = 0,
-}: {
-  label: string
-  value: number
-  sub: string | null
-  delay?: number
-}) {
-  const count = useCountUp(value)
+  return { widths, onMouseDown };
+}
+
+function CopyEmail({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleClick = () => {
+    navigator.clipboard.writeText(email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-1.5 transition-colors text-left group"
+    >
+      {copied ? (
+        <>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--primary)" }}>
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="text-xs font-medium" style={{ color: "var(--primary)" }}>Copied!</span>
+        </>
+      ) : (
+        <>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-gray-400 group-hover:text-[--primary] transition-colors">
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+          </svg>
+          <span className="group-hover:text-[--primary] transition-colors">{email}</span>
+        </>
+      )}
+    </button>
+  );
+}
+
+const expiringSoon = [
+  { id: "SUB-8", customer: "Hannah Abbott", plan: "Legacy Pro Plan", status: "Expiring Soon", endDate: "6/13/2026", price: "$380.00" },
+  { id: "SUB-3", customer: "Marcus Reid",   plan: "Starter Monthly",  status: "Expiring Soon", endDate: "6/11/2026", price: "$49.00"  },
+];
+
+const reminderLog = [
+  { customer: "Alice Johnson", milestone: "7-day",  result: "SENT",   sentAt: "5/1/2026, 2:45 PM",  recipient: "alex.smith@example.com"  },
+  { customer: "Alice Johnson", milestone: "3-day",  result: "SENT",   sentAt: "5/4/2026, 4:00 PM",  recipient: "alex.smith@example.com"  },
+  { customer: "Alice Johnson", milestone: "1-day",  result: "SENT",   sentAt: "5/6/2026, 2:15 PM",  recipient: "alex.smith@example.com"  },
+  { customer: "Alice Johnson", milestone: "expiry", result: "SENT",   sentAt: "5/7/2026, 4:45 PM",  recipient: "alex.smith@example.com"  },
+  { customer: "Alice Johnson", milestone: "7-day",  result: "FAILED", sentAt: "5/5/2026, 8:05 PM",  recipient: "jordan.b@techcorp.io"    },
+];
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    "Expiring Soon": { bg: "#f59e0b", color: "#ffffff" },
+    Active:          { bg: "#24A37D", color: "#ffffff" },
+    Paused:          { bg: "#9ca3af", color: "#ffffff" },
+    Cancelled:       { bg: "#dc2626", color: "#ffffff" },
+    Expired:         { bg: "#374151", color: "#ffffff" },
+  };
+  const s = map[status] ?? { bg: "#9ca3af", color: "#ffffff" };
+  return (
+    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
+      {status}
+    </span>
+  );
+}
+
+function MilestoneBadge({ milestone }: { milestone: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    "7-day":  { bg: "#386AF5", color: "#ffffff" },
+    "3-day":  { bg: "#EF5F00", color: "#ffffff" },
+    "1-day":  { bg: "#E79F1F", color: "#ffffff" },
+    "expiry": { bg: "#1f2937", color: "#ffffff" },
+  };
+  const s = map[milestone] ?? { bg: "#6b7280", color: "#ffffff" };
+  return (
+    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
+      {milestone === "expiry" ? "Expiry" : milestone}
+    </span>
+  );
+}
+
+function ResultBadge({ result }: { result: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    SENT:    { bg: "#24A37D", color: "#ffffff" },
+    SKIPPED: { bg: "#9ca3af", color: "#ffffff" },
+    FAILED:  { bg: "#dc2626", color: "#ffffff" },
+  };
+  const s = map[result] ?? { bg: "#9ca3af", color: "#ffffff" };
+  return (
+    <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
+      {result}
+    </span>
+  );
+}
+
+const ColIcon = {
+  text: (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7c0-.9319 0-1.3978.1522-1.7654a2 2 0 0 1 1.0824-1.0824C5.6022 4 6.0681 4 7 4h10c.9319 0 1.3978 0 1.7654.1522.49.203.8794.5924 1.0824 1.0824C20 5.6022 20 6.0681 20 7M9 20h6M12 4v16" />
+    </svg>
+  ),
+  status: (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 8h.01M2 5.2v4.4745c0 .4892 0 .7338.0553.964.049.204.1298.3991.2394.5781.1237.2018.2966.3748.6426.7207l7.6686 7.6686c1.188 1.188 1.7821 1.7821 2.467 2.0046a3 3 0 0 0 1.8541 0c.685-.2225 1.2791-.8166 2.4671-2.0046l2.2118-2.2118c1.188-1.188 1.7821-1.7821 2.0046-2.4671a3 3 0 0 0 0-1.8541c-.2225-.6849-.8166-1.279-2.0046-2.467l-7.6686-7.6686c-.3459-.346-.5189-.5189-.7207-.6426a2 2 0 0 0-.5781-.2394C10.4083 2 10.1637 2 9.6745 2H5.2c-1.1201 0-1.6802 0-2.108.218a2 2 0 0 0-.874.874C2 3.5198 2 4.08 2 5.2M8.5 8a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0" />
+    </svg>
+  ),
+  date: (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 10H3m13-8v4M8 2v4m-.2 16h8.4c1.6802 0 2.5202 0 3.162-.327a3 3 0 0 0 1.311-1.311C21 19.7202 21 18.8802 21 17.2V8.8c0-1.6802 0-2.5202-.327-3.162a3 3 0 0 0-1.311-1.311C18.7202 4 17.8802 4 16.2 4H7.8c-1.6802 0-2.5202 0-3.162.327a3 3 0 0 0-1.311 1.311C3 6.2798 3 7.1198 3 8.8v8.4c0 1.6802 0 2.5202.327 3.162a3 3 0 0 0 1.311 1.311C5.2798 22 6.1198 22 7.8 22" />
+    </svg>
+  ),
+  price: (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m9.5 3-3 18m11-18-3 18m6-13h-17m16 8h-17" />
+    </svg>
+  ),
+  email: (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m2 7 8.1649 5.7154c.6612.4629.9918.6943 1.3514.7839.3176.0792.6498.0792.9674 0 .3596-.0896.6902-.321 1.3514-.7839L22 7M6.8 20h10.4c1.6802 0 2.5202 0 3.162-.327a3 3 0 0 0 1.311-1.311C22 17.7202 22 16.8802 22 15.2V8.8c0-1.6802 0-2.5202-.327-3.162a3 3 0 0 0-1.311-1.311C19.7202 4 18.8802 4 17.2 4H6.8c-1.6802 0-2.5202 0-3.162.327a3 3 0 0 0-1.311 1.311C2 6.2798 2 7.1198 2 8.8v6.4c0 1.6802 0 2.5202.327 3.162a3 3 0 0 0 1.311 1.311C4.2798 20 5.1198 20 6.8 20" />
+    </svg>
+  ),
+};
+
+function SortIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="inline ml-1.5 opacity-40">
+      <path d="m7 15 5 5 5-5" />
+      <path d="m7 9 5-5 5 5" />
+    </svg>
+  );
+}
+
+function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
     <div
-      className="flex flex-col gap-0.5 bg-card px-5 py-4 motion-safe:animate-fade-in motion-safe:opacity-0 motion-safe:[animation-fill-mode:forwards]"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="font-display text-2xl font-semibold tracking-tight tabular-nums">
-        {count}
-      </span>
-      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
-    </div>
-  )
-})
-
-/* ------------------------------------------------------------------ */
-/*  Loading skeleton                                                   */
-/* ------------------------------------------------------------------ */
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <Skeleton className="h-16 rounded-xl" />
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Skeleton className="h-56 lg:col-span-2" />
-        <Skeleton className="h-56" />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-52" />
-        <Skeleton className="h-52" />
-      </div>
-    </div>
-  )
+      onMouseDown={onMouseDown}
+      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-pink-200 transition-colors"
+    />
+  );
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="rounded-xl border border-border bg-card px-6 py-10 text-center">
-      <p className="text-sm text-muted-foreground">Could not load dashboard data.</p>
-      <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
-        Try again
-      </Button>
-    </div>
-  )
-}
+const expiringHeaders: { label: string; icon?: React.ReactNode; sortable?: boolean }[] = [
+  { label: "Subscription", icon: ColIcon.text },
+  { label: "Customer",     icon: ColIcon.text,   sortable: true },
+  { label: "Plan",         icon: ColIcon.text,   sortable: true },
+  { label: "Status",       icon: ColIcon.status },
+  { label: "End Date",     icon: ColIcon.date,   sortable: true },
+  { label: "Price",        icon: ColIcon.price },
+  { label: "" },
+];
 
-/* ------------------------------------------------------------------ */
-/*  Getting started checklist                                          */
-/* ------------------------------------------------------------------ */
-
-interface SummaryData {
-  totalProducts: number
-  totalCustomers: number
-  activePlans: number
-  pausedPlans: number
-}
-
-const ONBOARD_STEPS = [
-  {
-    id: "product",
-    label: "Add a product",
-    isComplete: (s: SummaryData) => s.totalProducts > 0,
-    href: (id: number) => `/${id}/products/new`,
-    action: "Add product",
-  },
-  {
-    id: "customer",
-    label: "Add a customer",
-    isComplete: (s: SummaryData) => s.totalCustomers > 0,
-    href: (id: number) => `/${id}/customers/new`,
-    action: "Add customer",
-  },
-  {
-    id: "plan",
-    label: "Assign a plan",
-    isComplete: (s: SummaryData) => (s.activePlans ?? 0) + (s.pausedPlans ?? 0) > 0,
-    href: (id: number) => `/${id}/customers`,
-    action: "Go to customers",
-  },
-] as const
-
-function GettingStarted({ tenantId, summary }: { tenantId: number; summary: SummaryData }) {
-  const storageKey = `paynest-gs-dismissed-${tenantId}`
-  const [dismissed, setDismissed] = useState(false)
-  const [hydrated, setHydrated] = useState(false)
-
-  useEffect(() => {
-    setDismissed(localStorage.getItem(storageKey) === "1")
-    setHydrated(true)
-  }, [storageKey])
-
-  const steps = ONBOARD_STEPS.map((s) => ({ ...s, done: s.isComplete(summary) }))
-  const doneCount = steps.filter((s) => s.done).length
-  const allDone = doneCount === steps.length
-
-  // Hide once all steps are complete or user dismissed
-  if (!hydrated || dismissed || allDone) return null
-
-  function dismiss() {
-    localStorage.setItem(storageKey, "1")
-    setDismissed(true)
-  }
+function ExpiringTable() {
+  const cols = [112, 160, 176, 144, 112, 96, 40];
+  const { widths, onMouseDown } = useColumnResize(cols);
 
   return (
-    <Card className="animate-fade-in">
-      <CardHeader className="flex-row items-center justify-between pb-3">
-        <div className="flex items-center gap-3">
-          <CardTitle className="text-base">Get started</CardTitle>
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            {doneCount} of {steps.length}
-          </span>
-        </div>
-        <button
-          onClick={dismiss}
-          aria-label="Dismiss getting started"
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </CardHeader>
-      <CardContent className="px-0 pb-0">
-        <ol className="divide-y divide-border" aria-label="Setup checklist">
-          {steps.map((step) => (
-            <li key={step.id} className="flex items-center gap-4 px-6 py-3">
-              {step.done ? (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-                  <Check className="h-3 w-3" strokeWidth={2.5} />
-                </span>
-              ) : (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-border" />
-              )}
-              <span className={`flex-1 text-sm ${step.done ? "text-muted-foreground line-through" : "font-medium"}`}>
-                {step.label}
-              </span>
-              {!step.done && (
-                <Button variant="ghost" size="sm" asChild className="h-7 shrink-0 gap-1 text-xs">
-                  <Link href={step.href(tenantId)}>
-                    {step.action}
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </Button>
-              )}
-            </li>
-          ))}
-        </ol>
-        <div className="px-6 py-3">
-          <div className="h-1 overflow-hidden rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${(doneCount / steps.length) * 100}%` }}
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Super-admin dashboard                                              */
-/* ------------------------------------------------------------------ */
-
-function AdminDashboard() {
-  const accessToken = useAuthStore((s) => s.accessToken)
-  const admin = useQuery({
-    queryKey: ["admin-dashboard"],
-    queryFn: () => dashboardApi.adminSummary(),
-    enabled: !!accessToken,
-  })
-  const auditLogs = useQuery({
-    queryKey: ["admin-audit-logs-recent"],
-    queryFn: () => auditApi.list(0, 10),
-    enabled: !!accessToken,
-  })
-
-  if (admin.isLoading) return <DashboardSkeleton />
-  if (admin.isError || !admin.data) {
-    return <ErrorState onRetry={() => admin.refetch()} />
-  }
-
-  const d = admin.data
-  const totalTenants = d.activeTenants + d.suspendedTenants + d.archivedTenants
-
-  return (
-    <div className="space-y-6">
-      {/* Stats strip */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        <StatCell label="Active tenants" value={d.activeTenants} sub={`${totalTenants} total`} delay={0} />
-        <StatCell label="Suspended" value={d.suspendedTenants} sub={null} delay={80} />
-        <StatCell label="Total users" value={d.totalUsers} sub={null} delay={160} />
-        <StatCell label="Reminders sent" value={d.remindersSent} sub={`${d.remindersFailed} failed`} delay={240} />
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Tenant breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            <div className="divide-y divide-border">
-              {[
-                { label: "Active", value: d.activeTenants, variant: "success" as const },
-                { label: "Suspended", value: d.suspendedTenants, variant: "warning" as const },
-                { label: "Archived", value: d.archivedTenants, variant: "muted" as const },
-              ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between px-6 py-3">
-                  <Badge variant={row.variant}>{row.label}</Badge>
-                  <span className="font-display text-lg font-semibold">{row.value}</span>
-                </div>
+    <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="overflow-x-auto">
+        <table style={{ tableLayout: "fixed", width: "100%", minWidth: widths.reduce((a, b) => a + b, 0) }}>
+          <colgroup>{widths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
+          <thead>
+            <tr style={{ backgroundColor: "var(--bg-card)" }}>
+              {expiringHeaders.map((h, i) => (
+                <th key={i} className="relative text-left px-4 py-3 text-sm font-semibold text-gray-700 select-none overflow-hidden">
+                  <span className="truncate flex items-center pr-2">{h.icon}{h.label}{h.sortable && <SortIcon />}</span>
+                  {i < expiringHeaders.length - 1 && <ResizeHandle onMouseDown={(e) => onMouseDown(i, e)} />}
+                </th>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="sm:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Reminder delivery</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            <div className="divide-y divide-border">
-              {[
-                { label: "Sent", value: d.remindersSent, icon: Send, color: "text-success" },
-                { label: "Failed", value: d.remindersFailed, icon: XCircle, color: "text-destructive" },
-                { label: "Skipped", value: d.remindersSkipped, icon: SkipForward, color: "text-muted-foreground" },
-              ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between px-6 py-3">
-                  <div className="flex items-center gap-2">
-                    <row.icon className={`h-3.5 w-3.5 ${row.color}`} />
-                    <span className="text-sm text-muted-foreground">{row.label}</span>
-                  </div>
-                  <span className="font-display text-base font-semibold">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            </tr>
+          </thead>
+          <tbody>
+            {expiringSoon.map((row) => (
+              <tr key={row.id} style={{ borderTop: "1px solid var(--border)", backgroundColor: "#fef7fa" }}>
+                <td className="px-4 py-3 text-sm font-medium text-gray-700 truncate overflow-hidden">{row.id}</td>
+                <td className="px-4 py-3 text-sm text-gray-900 truncate overflow-hidden">{row.customer}</td>
+                <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.plan}</td>
+                <td className="px-4 py-3 overflow-hidden"><StatusBadge status={row.status} /></td>
+                <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.endDate}</td>
+                <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.price}</td>
+                <td className="px-4 py-3 text-sm text-gray-400 text-center">
+                  <button className="hover:text-gray-600">···</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <div>
-            <CardTitle>Recent audit logs</CardTitle>
-            <CardDescription>Last 10 events across all tenants</CardDescription>
-          </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/audit-logs">
-              View all <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          {auditLogs.isLoading ? (
-            <div className="divide-y divide-border">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-6 py-3">
-                  <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
-                  <Skeleton className="h-3.5 flex-1" />
-                  <Skeleton className="h-3 w-14 shrink-0" />
-                </div>
-              ))}
-            </div>
-          ) : auditLogs.data && auditLogs.data.content.length > 0 ? (
-            <div className="divide-y divide-border">
-              {auditLogs.data.content.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 px-6 py-2.5">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
-                  <p className="flex-1 truncate text-xs text-foreground">{describeEvent(a)}</p>
-                  <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                    {timeAgo(a.createdAt)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="px-6 py-8 text-center text-sm text-muted-foreground">
-              No audit logs yet.
-            </p>
-          )}
-        </CardContent>
-      </Card>
     </div>
-  )
+  );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Tenant dashboard                                                   */
-/* ------------------------------------------------------------------ */
+const reminderHeaders: { label: string; icon?: React.ReactNode; sortable?: boolean }[] = [
+  { label: "Customer",  icon: ColIcon.text,   sortable: true },
+  { label: "Milestone", icon: ColIcon.status },
+  { label: "Result",    icon: ColIcon.status },
+  { label: "Sent At",   icon: ColIcon.date,   sortable: true },
+  { label: "Recipient", icon: ColIcon.email },
+];
 
-function TenantDashboard({ tenantId }: { tenantId: number }) {
-  const accessToken = useAuthStore((s) => s.accessToken)
-  const ready = !!accessToken
-
-  const summary = useQuery({
-    queryKey: ["dashboard-summary", tenantId],
-    queryFn: () => dashboardApi.summary(tenantId),
-    enabled: ready,
-  })
-  const revenue = useQuery({
-    queryKey: ["dashboard-revenue", tenantId],
-    queryFn: () => dashboardApi.revenue(tenantId),
-    enabled: ready,
-  })
-  const reminderStats = useQuery({
-    queryKey: ["dashboard-reminder-stats", tenantId],
-    queryFn: () => dashboardApi.reminderStats(tenantId),
-    enabled: ready,
-  })
-  const upcoming = useQuery({
-    queryKey: ["dashboard-upcoming", tenantId],
-    queryFn: () => dashboardApi.upcomingReminders(tenantId),
-    enabled: ready,
-  })
-  const { isAtLeast } = useRole()
-  const showActivity = isAtLeast("TENANT_ADMIN")
-  const activity = useQuery({
-    queryKey: ["dashboard-activity", tenantId],
-    queryFn: () => dashboardApi.recentActivity(tenantId),
-    enabled: ready && showActivity,
-  })
-
-  if (summary.isLoading) return <DashboardSkeleton />
-  if (summary.isError || !summary.data) {
-    return <ErrorState onRetry={() => summary.refetch()} />
-  }
-
-  const s = summary.data
-  const failedCount = reminderStats.data?.failed ?? 0
+function ReminderTable() {
+  const cols = [144, 112, 96, 176, 220];
+  const { widths, onMouseDown } = useColumnResize(cols);
 
   return (
-    <div className="space-y-6">
-      {/* Getting started — shown to new workspaces until all steps complete */}
-      <GettingStarted tenantId={tenantId} summary={s} />
-
-      {/* Failed reminders alert — only shown when action is needed */}
-      {failedCount > 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
-          <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
-          <p className="flex-1 text-sm text-foreground">
-            <span className="font-medium">{failedCount} reminder {failedCount === 1 ? "delivery" : "deliveries"} failed.</span>{" "}
-            Check which plans were affected and retry.
-          </p>
-          <Button variant="outline" size="sm" asChild className="shrink-0">
-            <Link href={`/${tenantId}/reminders?status=FAILED`}>Review</Link>
-          </Button>
-        </div>
-      )}
-
-      {/* Stats strip */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        <StatCell label="Customers" value={s.totalCustomers ?? 0} sub={null} delay={0} />
-        <StatCell label="Products" value={s.totalProducts ?? 0} sub={null} delay={80} />
-        <StatCell label="Active plans" value={s.activePlans ?? 0} sub={`${s.pausedPlans ?? 0} paused`} delay={160} />
-        <StatCell label="Reminders sent" value={reminderStats.data?.sent ?? 0} sub={reminderStats.data ? `${reminderStats.data.failed} failed` : null} delay={240} />
-      </div>
-
-      {/* Revenue + Reminder stats row */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Revenue overview</CardTitle>
-            <CardDescription>Active plan amounts by currency</CardDescription>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            {revenue.isLoading ? (
-              <div className="space-y-px px-6 pb-6">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
-              </div>
-            ) : revenue.data?.totals && revenue.data.totals.length > 0 ? (
-              <div className="divide-y divide-border">
-                {revenue.data.totals.map((t) => (
-                  <div key={t.currency} className="flex items-center justify-between px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-xs font-bold text-primary">
-                        {t.currency}
-                      </span>
-                      <p className="text-xs text-muted-foreground">
-                        {t.planCount} active {t.planCount === 1 ? "plan" : "plans"}
-                      </p>
-                    </div>
-                    <p className="font-display text-xl font-semibold tracking-tight">
-                      {formatCurrency(t.totalAmount, t.currency)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="px-6 py-8 text-center">
-                <p className="text-sm text-muted-foreground">No active plans yet.</p>
-                <Button variant="outline" size="sm" className="mt-3" asChild>
-                  <Link href={`/${tenantId}/customers`}>Assign a product to a customer</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Reminder stats</CardTitle>
-            <CardDescription>
-              {reminderStats.data
-                ? `${formatDate(reminderStats.data.from)} – ${formatDate(reminderStats.data.to)}`
-                : "Last 30 days"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            {reminderStats.isLoading ? (
-              <div className="space-y-px px-6 pb-6">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10" />
-                ))}
-              </div>
-            ) : reminderStats.data ? (
-              <div className="divide-y divide-border">
-                {[
-                  { label: "Sent", value: reminderStats.data.sent, icon: Send, color: "text-success" },
-                  { label: "Failed", value: reminderStats.data.failed, icon: XCircle, color: "text-destructive" },
-                  { label: "Skipped", value: reminderStats.data.skipped, icon: SkipForward, color: "text-muted-foreground" },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <row.icon className={`h-3.5 w-3.5 ${row.color}`} />
-                      <span className="text-sm text-muted-foreground">{row.label}</span>
-                    </div>
-                    <span className="font-display text-base font-semibold">
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming reminders</CardTitle>
-            <CardDescription>Plans expiring within 7 days</CardDescription>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            {upcoming.isLoading ? (
-              <div className="space-y-px px-6 pb-6">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
-              </div>
-            ) : upcoming.data && upcoming.data.length > 0 ? (
-              <div className="divide-y divide-border">
-                {upcoming.data.map((u) => (
-                  <div key={u.customerProductId} className="flex items-center justify-between px-6 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{u.customerName}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {u.productName} · {formatCurrency(u.amount, u.currency)}
-                      </p>
-                    </div>
-                    <Badge variant="info" className="shrink-0 ml-3">{formatDate(u.endsAt)}</Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="px-6 py-8 text-center text-sm text-muted-foreground">
-                No upcoming reminders.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent activity — TENANT_ADMIN+ only */}
-        {showActivity && (
-          <Card>
-            <CardHeader className="flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent activity</CardTitle>
-                <CardDescription>Last 10 audit log entries</CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/${tenantId}/audit-logs`}>
-                  View all
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              {activity.isLoading ? (
-                <div className="divide-y divide-border">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-6 py-2">
-                      <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
-                      <Skeleton className="h-3.5 flex-1" />
-                      <Skeleton className="h-3 w-14 shrink-0" />
-                    </div>
-                  ))}
-                </div>
-              ) : activity.data && activity.data.length > 0 ? (
-                <div className="divide-y divide-border">
-                  {activity.data.map((a) => {
-                    const dotColor =
-                      a.action === "CREATE" ? "bg-success" :
-                      a.action === "DELETE" ? "bg-destructive" :
-                      a.action === "STATUS_CHANGE" ? "bg-warning" :
-                      a.action === "LOGIN_FAILED" ? "bg-destructive" :
-                      "bg-muted-foreground/40"
-                    return (
-                      <div key={a.id} className="flex items-center gap-3 px-6 py-2">
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
-                        <p className="flex-1 truncate text-xs text-foreground">
-                          {describeEvent(a)}
-                        </p>
-                        <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                          {timeAgo(a.createdAt)}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <p className="py-6 text-center text-xs text-muted-foreground">
-                  No activity recorded yet.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
+    <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+      <div className="overflow-x-auto">
+        <table style={{ tableLayout: "fixed", width: "100%", minWidth: widths.reduce((a, b) => a + b, 0) }}>
+          <colgroup>{widths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
+          <thead>
+            <tr style={{ backgroundColor: "var(--bg-card)" }}>
+              {reminderHeaders.map((h, i) => (
+                <th key={i} className="relative text-left px-4 py-3 text-sm font-semibold text-gray-700 select-none overflow-hidden">
+                  <span className="truncate flex items-center pr-2">{h.icon}{h.label}{h.sortable && <SortIcon />}</span>
+                  {i < reminderHeaders.length - 1 && <ResizeHandle onMouseDown={(e) => onMouseDown(i, e)} />}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {reminderLog.map((row, i) => (
+              <tr key={i} style={{ borderTop: "1px solid var(--border)", backgroundColor: "#fef7fa" }}>
+                <td className="px-4 py-3 text-sm text-gray-900 truncate overflow-hidden">{row.customer}</td>
+                <td className="px-4 py-3 overflow-hidden"><MilestoneBadge milestone={row.milestone} /></td>
+                <td className="px-4 py-3 overflow-hidden"><ResultBadge result={row.result} /></td>
+                <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.sentAt}</td>
+                <td className="px-4 py-3 text-sm text-gray-500 overflow-hidden"><CopyEmail email={row.recipient} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
-  )
+  );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Page wrapper                                                       */
-/* ------------------------------------------------------------------ */
+const MRRIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="18" height="18">
+    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 11v4m12-6v4m-1-9c2.4487 0 3.7731.3748 4.4321.6654.0878.0388.1317.0581.2583.179.0759.0724.2145.285.2501.3837.0595.1646.0595.2546.0595.4346v10.7484c0 .9088 0 1.3632-.1363 1.5968-.1386.2375-.2723.348-.5318.4393-.255.0897-.7699-.0092-1.7997-.2071A13.45 13.45 0 0 0 17 18c-3 0-6 2-10 2-2.4487 0-3.7731-.3748-4.4321-.6654-.0878-.0388-.1317-.0581-.2583-.179-.076-.0724-.2145-.285-.2501-.3837C2 18.6073 2 18.5173 2 18.3373V7.5889c0-.9088 0-1.3632.1363-1.5968.1386-.2375.2723-.348.5318-.4393.255-.0898.77.0092 1.7997.207A13.44 13.44 0 0 0 7 6c3 0 6-2 10-2m-2.5 8c0 1.3807-1.1193 2.5-2.5 2.5S9.5 13.3807 9.5 12s1.1193-2.5 2.5-2.5 2.5 1.1193 2.5 2.5" />
+  </svg>
+);
+
+function SearchInput({ placeholder, className = "" }: { placeholder: string; className?: string }) {
+  return (
+    <div className={`relative ${className}`}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+      </svg>
+      <input type="text" placeholder={placeholder} readOnly
+        className="text-sm pl-9 pr-4 py-2 rounded-lg outline-none w-full"
+        style={{ border: "1px solid var(--border)", backgroundColor: "var(--bg-search)", color: "#1a1a1a" }}
+      />
+    </div>
+  );
+}
 
 export default function DashboardPage() {
-  const user = useAuthStore((s) => s.user)
-  const { isSuperAdmin } = useRole()
-  const tenantId = user?.tenantId ?? null
-
-  const selectedTenantId = useTenantStore((s) => s.tenantId)
-  const selectedTenantName = useTenantStore((s) => s.tenantName)
-
-  const greeting = (() => {
-    const h = new Date().getHours()
-    if (h < 12) return "Good morning"
-    if (h < 18) return "Good afternoon"
-    return "Good evening"
-  })()
-  const displayName = user?.fullName ?? user?.email?.split("@")[0] ?? "there"
-
-  const pageDescription = isSuperAdmin && selectedTenantName
-    ? `Viewing ${selectedTenantName}'s workspace.`
-    : "Here's what's happening across your billing workspace today."
+  const today = new Date();
+  const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+  const hour = today.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow={greeting}
-        title={`Welcome back, ${displayName}.`}
-        description={pageDescription}
-        actions={
-          isSuperAdmin && selectedTenantId ? (
-            <Button asChild>
-              <Link href={`/${selectedTenantId}/customers`}>
-                <UserCircle2 className="h-4 w-4" />
-                Go to workspace
-              </Link>
-            </Button>
-          ) : null
-        }
-      />
+    <div className="font-sans px-6 py-8 md:px-12 md:py-10 max-w-6xl mx-auto">
 
-      {isSuperAdmin ? (
-        selectedTenantId ? (
-          <TenantDashboard tenantId={selectedTenantId} />
-        ) : (
-          <AdminDashboard />
-        )
-      ) : tenantId ? (
-        <TenantDashboard tenantId={tenantId} />
-      ) : (
-        <DashboardSkeleton />
-      )}
+      {/* Greeting */}
+      <div className="mb-8 border-l-4 pl-5 py-1" style={{ borderColor: "var(--primary)" }}>
+        <p className="text-sm mb-1" style={{ color: "var(--primary)" }}>{greeting}, Levi</p>
+        <h1 className="text-3xl font-bold" style={{ color: "#212529" }}>Today is {dateStr}.</h1>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        {[
+          { label: "MRR",                   value: "$17,224.00", showIcon: true },
+          { label: "Active Subscriptions",  value: "3"          },
+          { label: "Expiring This Week",    value: "1"          },
+          { label: "Reminders Sent Today",  value: "0"          },
+        ].map((card) => (
+          <div key={card.label} className="rounded-lg p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm" style={{ color: "#6c757d" }}>{card.label}</p>
+              {card.showIcon && <span style={{ color: "#adb5bd" }}><MRRIcon /></span>}
+            </div>
+            <p className="text-2xl font-bold" style={{ color: "#212529" }}>{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Expiring Soon */}
+      <div className="mb-10">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Expiring Soon</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Subscriptions ending in the next 14 days</p>
+          </div>
+          <SearchInput placeholder="Search subscriptions..." className="w-full md:w-56 flex-shrink-0" />
+        </div>
+
+        <div className="mb-4">
+          <button className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg" style={{ border: "1px solid var(--border)", backgroundColor: "#fef7fa", color: "#4b4b4b" }}>
+            Product/Plan
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        </div>
+
+        <ExpiringTable />
+      </div>
+
+      {/* Reminder Log */}
+      <div>
+        <div className="flex justify-end mb-3">
+          <SearchInput placeholder="Search" className="w-full md:w-44" />
+        </div>
+
+        <ReminderTable />
+      </div>
     </div>
-  )
+  );
 }
