@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
+import { apiGet } from "@/lib/api";
 
 function useCountUp(target: number, duration = 450) {
   const [val, setVal] = useState(0);
@@ -50,51 +53,64 @@ function useColumnResize(initialWidths: number[]) {
   return { widths, onMouseDown };
 }
 
-function CopyEmail({ email }: { email: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleClick = () => {
-    navigator.clipboard.writeText(email).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-  return (
-    <button
-      onClick={handleClick}
-      className="flex items-center gap-1.5 transition-colors text-left group"
-    >
-      {copied ? (
-        <>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--primary)" }}>
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          <span className="text-xs font-medium" style={{ color: "var(--primary)" }}>Copied!</span>
-        </>
-      ) : (
-        <>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-gray-400 group-hover:text-[--primary] transition-colors">
-            <rect width="20" height="16" x="2" y="4" rx="2" />
-            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-          </svg>
-          <span className="group-hover:text-primary transition-colors">{email}</span>
-        </>
-      )}
-    </button>
-  );
+type UpcomingRow = {
+  id: number;
+  customer: string;
+  plan: string;
+  currency: string;
+  amount: number;
+  endDate: string;
+};
+
+type ReminderRow = {
+  id: number;
+  customer: string;
+  daysBeforeExpiry: number | null;
+  result: string;
+  sentAt: string;
+  product: string;
+};
+
+type TenantSummary = {
+  totalCustomers: number;
+  totalProducts: number;
+  activePlans: number;
+  pausedPlans: number;
+  cancelledPlans: number;
+};
+
+type RevenueTotals = {
+  totals: { currency: string; totalAmount: number; planCount: number }[];
+};
+
+type ApiUpcoming = {
+  customerProductId: number;
+  customerName: string;
+  productName: string;
+  currency: string;
+  amount: number;
+  endsAt: string;
+};
+
+type ApiReminder = {
+  id: number;
+  customerName: string;
+  productName: string;
+  status: string;
+  daysBeforeExpiry: number | null;
+  sentAt: string | null;
+  createdAt: string;
+};
+
+type ApiReminderPage = { content: ApiReminder[] };
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" });
 }
 
-const expiringSoon = [
-  { id: "SUB-8", customer: "Hannah Abbott", plan: "Legacy Pro Plan", status: "Expiring Soon", endDate: "6/13/2026", price: "$380.00" },
-  { id: "SUB-3", customer: "Marcus Reid",   plan: "Starter Monthly",  status: "Expiring Soon", endDate: "6/11/2026", price: "$49.00"  },
-];
-
-const reminderLog = [
-  { customer: "Alice Johnson", milestone: "7-day",  result: "SENT",   sentAt: "5/1/2026, 2:45 PM",  recipient: "alex.smith@example.com"  },
-  { customer: "Alice Johnson", milestone: "3-day",  result: "SENT",   sentAt: "5/4/2026, 4:00 PM",  recipient: "alex.smith@example.com"  },
-  { customer: "Alice Johnson", milestone: "1-day",  result: "SENT",   sentAt: "5/6/2026, 2:15 PM",  recipient: "alex.smith@example.com"  },
-  { customer: "Alice Johnson", milestone: "expiry", result: "SENT",   sentAt: "5/7/2026, 4:45 PM",  recipient: "alex.smith@example.com"  },
-  { customer: "Alice Johnson", milestone: "7-day",  result: "FAILED", sentAt: "5/5/2026, 8:05 PM",  recipient: "jordan.b@techcorp.io"    },
-];
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString("en-US", { month: "numeric", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+}
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; color: string }> = {
@@ -112,17 +128,18 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function MilestoneBadge({ milestone }: { milestone: string }) {
-  const map: Record<string, { bg: string; color: string }> = {
-    "7-day":  { bg: "#386AF5", color: "#ffffff" },
-    "3-day":  { bg: "#EF5F00", color: "#ffffff" },
-    "1-day":  { bg: "#e8a020", color: "#000000" },
-    "expiry": { bg: "#1f2937", color: "#ffffff" },
+function DaysBadge({ days }: { days: number | null }) {
+  if (days === null) return <span className="text-xs text-gray-400">—</span>;
+  const map: Record<number, { bg: string; color: string; label: string }> = {
+    7:  { bg: "#386AF5", color: "#ffffff", label: "7-day" },
+    3:  { bg: "#EF5F00", color: "#ffffff", label: "3-day" },
+    1:  { bg: "#e8a020", color: "#000000", label: "1-day" },
+    0:  { bg: "#1f2937", color: "#ffffff", label: "Expiry" },
   };
-  const s = map[milestone] ?? { bg: "#6b7280", color: "#ffffff" };
+  const s = map[days] ?? { bg: "#6b7280", color: "#fff", label: `${days}d` };
   return (
     <span className="inline-flex items-center justify-center w-12 py-1 rounded-sm text-xs font-semibold" style={{ backgroundColor: s.bg, color: s.color }}>
-      {milestone === "expiry" ? "Expiry" : milestone}
+      {s.label}
     </span>
   );
 }
@@ -141,34 +158,6 @@ function ResultBadge({ result }: { result: string }) {
   );
 }
 
-const ColIcon = {
-  text: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7c0-.9319 0-1.3978.1522-1.7654a2 2 0 0 1 1.0824-1.0824C5.6022 4 6.0681 4 7 4h10c.9319 0 1.3978 0 1.7654.1522.49.203.8794.5924 1.0824 1.0824C20 5.6022 20 6.0681 20 7M9 20h6M12 4v16" />
-    </svg>
-  ),
-  status: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 8h.01M2 5.2v4.4745c0 .4892 0 .7338.0553.964.049.204.1298.3991.2394.5781.1237.2018.2966.3748.6426.7207l7.6686 7.6686c1.188 1.188 1.7821 1.7821 2.467 2.0046a3 3 0 0 0 1.8541 0c.685-.2225 1.2791-.8166 2.4671-2.0046l2.2118-2.2118c1.188-1.188 1.7821-1.7821 2.0046-2.4671a3 3 0 0 0 0-1.8541c-.2225-.6849-.8166-1.279-2.0046-2.467l-7.6686-7.6686c-.3459-.346-.5189-.5189-.7207-.6426a2 2 0 0 0-.5781-.2394C10.4083 2 10.1637 2 9.6745 2H5.2c-1.1201 0-1.6802 0-2.108.218a2 2 0 0 0-.874.874C2 3.5198 2 4.08 2 5.2M8.5 8a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0" />
-    </svg>
-  ),
-  date: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 10H3m13-8v4M8 2v4m-.2 16h8.4c1.6802 0 2.5202 0 3.162-.327a3 3 0 0 0 1.311-1.311C21 19.7202 21 18.8802 21 17.2V8.8c0-1.6802 0-2.5202-.327-3.162a3 3 0 0 0-1.311-1.311C18.7202 4 17.8802 4 16.2 4H7.8c-1.6802 0-2.5202 0-3.162.327a3 3 0 0 0-1.311 1.311C3 6.2798 3 7.1198 3 8.8v8.4c0 1.6802 0 2.5202.327 3.162a3 3 0 0 0 1.311 1.311C5.2798 22 6.1198 22 7.8 22" />
-    </svg>
-  ),
-  price: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m9.5 3-3 18m11-18-3 18m6-13h-17m16 8h-17" />
-    </svg>
-  ),
-  email: (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" className="inline mr-1.5 opacity-60 flex-shrink-0">
-      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m2 7 8.1649 5.7154c.6612.4629.9918.6943 1.3514.7839.3176.0792.6498.0792.9674 0 .3596-.0896.6902-.321 1.3514-.7839L22 7M6.8 20h10.4c1.6802 0 2.5202 0 3.162-.327a3 3 0 0 0 1.311-1.311C22 17.7202 22 16.8802 22 15.2V8.8c0-1.6802 0-2.5202-.327-3.162a3 3 0 0 0-1.311-1.311C19.7202 4 18.8802 4 17.2 4H6.8c-1.6802 0-2.5202 0-3.162.327a3 3 0 0 0-1.311 1.311C2 6.2798 2 7.1198 2 8.8v6.4c0 1.6802 0 2.5202.327 3.162a3 3 0 0 0 1.311 1.311C4.2798 20 5.1198 20 6.8 20" />
-    </svg>
-  ),
-};
-
 function SortIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="inline ml-1.5 opacity-40">
@@ -180,26 +169,31 @@ function SortIcon() {
 
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
-    <div
-      onMouseDown={onMouseDown}
-      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-pink-200 transition-colors"
-    />
+    <div onMouseDown={onMouseDown} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-pink-200 transition-colors" />
   );
 }
 
-const expiringHeaders: { label: string; icon?: React.ReactNode; sortable?: boolean }[] = [
-  { label: "Subscription", icon: ColIcon.text },
-  { label: "Customer",     icon: ColIcon.text,   sortable: true },
-  { label: "Plan",         icon: ColIcon.text,   sortable: true },
-  { label: "Status",       icon: ColIcon.status },
-  { label: "End Date",     icon: ColIcon.date,   sortable: true },
-  { label: "Price",        icon: ColIcon.price },
-  { label: "" },
+const expiringHeaders: { label: string; sortable?: boolean }[] = [
+  { label: "Subscription"             },
+  { label: "Customer",  sortable: true },
+  { label: "Plan",      sortable: true },
+  { label: "Status"                   },
+  { label: "End Date",  sortable: true },
+  { label: "Price"                    },
+  { label: ""                         },
 ];
 
-function ExpiringTable() {
+function ExpiringTable({ rows }: { rows: UpcomingRow[] }) {
   const cols = [112, 160, 176, 144, 112, 96, 40];
   const { widths, onMouseDown } = useColumnResize(cols);
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-10 text-sm text-gray-400 rounded-lg" style={{ border: "1px solid var(--border)" }}>
+        No upcoming expirations.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
@@ -210,21 +204,21 @@ function ExpiringTable() {
             <tr style={{ backgroundColor: "var(--bg-card)" }}>
               {expiringHeaders.map((h, i) => (
                 <th key={i} className="relative text-left px-4 py-3 text-sm font-semibold text-gray-700 select-none overflow-hidden">
-                  <span className="truncate flex items-center pr-2">{h.icon}{h.label}{h.sortable && <SortIcon />}</span>
+                  <span className="truncate flex items-center pr-2">{h.label}{h.sortable && <SortIcon />}</span>
                   {i < expiringHeaders.length - 1 && <ResizeHandle onMouseDown={(e) => onMouseDown(i, e)} />}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {expiringSoon.map((row, i) => (
+            {rows.map((row, i) => (
               <tr key={row.id} className="bg-[#fef7fa] hover:bg-[#fdf2f8] transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${80 + i * 25}ms` }}>
-                <td className="px-4 py-3 text-sm font-medium text-gray-700 truncate overflow-hidden">{row.id}</td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-700 truncate overflow-hidden">#{row.id}</td>
                 <td className="px-4 py-3 text-sm text-gray-900 truncate overflow-hidden">{row.customer}</td>
                 <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.plan}</td>
-                <td className="px-4 py-3 overflow-hidden"><StatusBadge status={row.status} /></td>
+                <td className="px-4 py-3 overflow-hidden"><StatusBadge status="Expiring Soon" /></td>
                 <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.endDate}</td>
-                <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.price}</td>
+                <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.currency} {Number(row.amount).toLocaleString()}</td>
                 <td className="px-4 py-3 text-sm text-gray-400 text-center">
                   <button className="hover:text-gray-600">···</button>
                 </td>
@@ -237,17 +231,25 @@ function ExpiringTable() {
   );
 }
 
-const reminderHeaders: { label: string; icon?: React.ReactNode; sortable?: boolean }[] = [
-  { label: "Customer",  icon: ColIcon.text,   sortable: true },
-  { label: "Milestone", icon: ColIcon.status },
-  { label: "Result",    icon: ColIcon.status },
-  { label: "Sent At",   icon: ColIcon.date,   sortable: true },
-  { label: "Recipient", icon: ColIcon.email },
+const reminderHeaders: { label: string; sortable?: boolean }[] = [
+  { label: "Customer",  sortable: true },
+  { label: "Milestone"                },
+  { label: "Result"                   },
+  { label: "Sent At",   sortable: true },
+  { label: "Plan"                     },
 ];
 
-function ReminderTable() {
+function ReminderTable({ rows }: { rows: ReminderRow[] }) {
   const cols = [144, 112, 96, 176, 220];
   const { widths, onMouseDown } = useColumnResize(cols);
+
+  if (rows.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-10 text-sm text-gray-400 rounded-lg" style={{ border: "1px solid var(--border)" }}>
+        No reminder history.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
@@ -258,20 +260,20 @@ function ReminderTable() {
             <tr style={{ backgroundColor: "var(--bg-card)" }}>
               {reminderHeaders.map((h, i) => (
                 <th key={i} className="relative text-left px-4 py-3 text-sm font-semibold text-gray-700 select-none overflow-hidden">
-                  <span className="truncate flex items-center pr-2">{h.icon}{h.label}{h.sortable && <SortIcon />}</span>
+                  <span className="truncate flex items-center pr-2">{h.label}{h.sortable && <SortIcon />}</span>
                   {i < reminderHeaders.length - 1 && <ResizeHandle onMouseDown={(e) => onMouseDown(i, e)} />}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {reminderLog.map((row, i) => (
-              <tr key={i} className="bg-[#fef7fa] hover:bg-[#fdf2f8] transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${80 + i * 20}ms` }}>
-                <td className="px-4 py-3 text-sm text-gray-1000 truncate overflow-hidden">{row.customer}</td>
-                <td className="px-4 py-3 overflow-hidden"><MilestoneBadge milestone={row.milestone} /></td>
+            {rows.map((row, i) => (
+              <tr key={row.id} className="bg-[#fef7fa] hover:bg-[#fdf2f8] transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${80 + i * 20}ms` }}>
+                <td className="px-4 py-3 text-sm text-gray-900 truncate overflow-hidden">{row.customer}</td>
+                <td className="px-4 py-3 overflow-hidden"><DaysBadge days={row.daysBeforeExpiry} /></td>
                 <td className="px-4 py-3 overflow-hidden"><ResultBadge result={row.result} /></td>
                 <td className="px-4 py-3 text-sm text-gray-700 truncate overflow-hidden">{row.sentAt}</td>
-                <td className="px-4 py-3 text-sm text-gray-500 overflow-hidden"><CopyEmail email={row.recipient} /></td>
+                <td className="px-4 py-3 text-sm text-gray-500 truncate overflow-hidden">{row.product}</td>
               </tr>
             ))}
           </tbody>
@@ -280,12 +282,6 @@ function ReminderTable() {
     </div>
   );
 }
-
-const MRRIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="18" height="18">
-    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 11v4m12-6v4m-1-9c2.4487 0 3.7731.3748 4.4321.6654.0878.0388.1317.0581.2583.179.0759.0724.2145.285.2501.3837.0595.1646.0595.2546.0595.4346v10.7484c0 .9088 0 1.3632-.1363 1.5968-.1386.2375-.2723.348-.5318.4393-.255.0897-.7699-.0092-1.7997-.2071A13.45 13.45 0 0 0 17 18c-3 0-6 2-10 2-2.4487 0-3.7731-.3748-4.4321-.6654-.0878-.0388-.1317-.0581-.2583-.179-.076-.0724-.2145-.285-.2501-.3837C2 18.6073 2 18.5173 2 18.3373V7.5889c0-.9088 0-1.3632.1363-1.5968.1386-.2375.2723-.348.5318-.4393.255-.0898.77.0092 1.7997.207A13.44 13.44 0 0 0 7 6c3 0 6-2 10-2m-2.5 8c0 1.3807-1.1193 2.5-2.5 2.5S9.5 13.3807 9.5 12s1.1193-2.5 2.5-2.5 2.5 1.1193 2.5 2.5" />
-  </svg>
-);
 
 function SearchInput({ placeholder, className = "" }: { placeholder: string; className?: string }) {
   const [hovered, setHovered] = useState(false);
@@ -303,31 +299,88 @@ function SearchInput({ placeholder, className = "" }: { placeholder: string; cla
 }
 
 export default function DashboardPage() {
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const router = useRouter();
+
+  const [summary, setSummary] = useState<TenantSummary | null>(null);
+  const [revenue, setRevenue] = useState<RevenueTotals | null>(null);
+  const [upcoming, setUpcoming] = useState<UpcomingRow[]>([]);
+  const [reminders, setReminders] = useState<ReminderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role === "SUPER_ADMIN") {
+      router.replace("/admin/dashboard");
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (!token || !user || user.role === "SUPER_ADMIN") return;
+    const tid = user.tenantId;
+    if (!tid) return;
+
+    Promise.all([
+      apiGet<TenantSummary>(`/api/v1/tenants/${tid}/dashboard/summary`, token),
+      apiGet<RevenueTotals>(`/api/v1/tenants/${tid}/dashboard/revenue`, token),
+      apiGet<ApiUpcoming[]>(`/api/v1/tenants/${tid}/dashboard/upcoming-reminders`, token),
+      apiGet<ApiReminderPage>(`/api/v1/tenants/${tid}/reminders?size=20&sort=createdAt,desc`, token),
+    ])
+      .then(([sum, rev, upcomingList, reminderPage]) => {
+        setSummary(sum);
+        setRevenue(rev);
+        setUpcoming(
+          upcomingList.map((u) => ({
+            id: u.customerProductId,
+            customer: u.customerName,
+            plan: u.productName,
+            currency: u.currency,
+            amount: Number(u.amount),
+            endDate: formatDate(u.endsAt),
+          }))
+        );
+        setReminders(
+          reminderPage.content.map((r) => ({
+            id: r.id,
+            customer: r.customerName,
+            daysBeforeExpiry: r.daysBeforeExpiry,
+            result: r.status,
+            sentAt: r.sentAt ? formatDateTime(r.sentAt) : formatDateTime(r.createdAt),
+            product: r.productName,
+          }))
+        );
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [token, user]);
+
   const today = new Date();
   const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   const hour = today.getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const displayName = user?.fullName?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there";
 
-  const mrrVal   = useCountUp(17224);
-  const subVal   = useCountUp(3);
-  const expVal   = useCountUp(1);
-  const remVal   = useCountUp(0);
+  const mrrAmount = revenue?.totals?.[0] ? Number(revenue.totals[0].totalAmount) : 0;
+  const mrrCurrency = revenue?.totals?.[0]?.currency ?? "USD";
+
+  const mrrVal   = useCountUp(!loading ? mrrAmount : 0);
+  const subVal   = useCountUp(!loading && summary ? summary.activePlans : 0);
+  const expVal   = useCountUp(!loading ? upcoming.length : 0);
+  const remVal   = useCountUp(!loading ? reminders.filter((r) => r.result === "SENT").length : 0);
 
   return (
     <div className="font-sans px-6 py-8 md:px-12 md:py-10 max-w-6xl mx-auto" style={{ animation: "fade-in-up 0.2s ease-out both" }}>
-      {/* Greeting */}
       <div className="mb-8 border-l-4 pl-5 py-1" style={{ borderColor: "var(--primary)" }}>
-        <p className="text-sm mb-1" style={{ color: "var(--primary)" }}>{greeting}, Levi</p>
+        <p className="text-sm mb-1" style={{ color: "var(--primary)" }}>{greeting}, {displayName}</p>
         <h1 className="text-3xl font-bold" style={{ color: "#212529" }}>Today is {dateStr}.</h1>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {([
-          { label: "MRR",                  display: `$${mrrVal.toLocaleString()}.00` },
-          { label: "Active Subscriptions", display: String(subVal) },
-          { label: "Expiring This Week",   display: String(expVal) },
-          { label: "Reminders Sent Today", display: String(remVal) },
+          { label: "MRR",                  display: loading ? "—" : `${mrrCurrency} ${mrrVal.toLocaleString()}` },
+          { label: "Active Subscriptions", display: loading ? "—" : String(subVal)  },
+          { label: "Expiring This Week",   display: loading ? "—" : String(expVal)  },
+          { label: "Reminders Sent",       display: loading ? "—" : String(remVal)  },
         ] as const).map((card, i) => (
           <div key={card.label} className="rounded-lg p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 35}ms` }}>
             <p className="text-sm mb-3" style={{ color: "#6c757d" }}>{card.label}</p>
@@ -336,35 +389,43 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Expiring Soon */}
       <div className="mb-10">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Expiring Soon</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Subscriptions ending in the next 14 days</p>
+            <p className="text-sm text-gray-500 mt-0.5">Subscriptions ending in the next 7 days</p>
           </div>
           <SearchInput placeholder="Search subscriptions..." className="w-full md:w-56 flex-shrink-0" />
         </div>
 
-        <div className="mb-4">
-          <button className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg" style={{ border: "1px solid var(--border)", backgroundColor: "#fef7fa", color: "#4b4b4b" }}>
-            Product/Plan
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400">
+            <svg className="animate-spin mr-2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
-          </button>
-        </div>
-
-        <ExpiringTable />
+            Loading…
+          </div>
+        ) : (
+          <ExpiringTable rows={upcoming} />
+        )}
       </div>
 
-      {/* Reminder Log */}
       <div>
-        <div className="flex justify-end mb-3">
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold text-gray-900">Reminder History</h2>
           <SearchInput placeholder="Search" className="w-full md:w-44" />
         </div>
 
-        <ReminderTable />
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-gray-400">
+            <svg className="animate-spin mr-2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            Loading…
+          </div>
+        ) : (
+          <ReminderTable rows={reminders} />
+        )}
       </div>
     </div>
   );
