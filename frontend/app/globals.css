@@ -98,6 +98,26 @@
   to   { opacity: 1; }
 }
 
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.93) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slide-in-from-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);    }
+}
+
+@keyframes slide-out-to-right {
+  from { transform: translateX(0);    }
+  to   { transform: translateX(105%); }
+}
+
 * {
   box-sizing: border-box;
 }
