@@ -118,7 +118,7 @@ export default function AcceptInvitePage() {
         <h1 className="text-2xl font-bold text-gray-900">Set up your account</h1>
         <p className="text-sm text-gray-500 mt-1">
           You were invited to <span className="font-semibold text-gray-700">{invite?.tenantName}</span> as{" "}
-          <span className="font-semibold text-gray-700">{invite?.role?.replace("_", " ")}</span>
+          <span className="font-semibold text-gray-700">{{ TENANT_ADMIN: "Admin", TENANT_USER: "User" }[invite?.role ?? ""] ?? invite?.role}</span>
         </p>
         <p className="text-xs text-gray-400 mt-1">{invite?.email}</p>
       </div>

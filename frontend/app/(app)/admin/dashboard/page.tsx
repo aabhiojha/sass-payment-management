@@ -152,7 +152,7 @@ function TenantsTable({ rows }: { rows: TenantRow[] }) {
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={row.id} className="bg-[#f8faf8] hover:bg-[#eef3ee] transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${80 + i * 20}ms` }}>
+              <tr key={row.id} className="bg-[#f8faf8] hover:bg-[#eef3ee] transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}>
                 <td className="px-4 py-3 text-sm font-medium text-gray-500 truncate">#{row.id}</td>
                 <td className="px-4 py-3 text-sm font-semibold text-gray-900 truncate">{row.name}</td>
                 <td className="px-4 py-3 text-sm text-gray-700 truncate">{row.plan ?? <span className="italic text-gray-400">No plan</span>}</td>
@@ -281,7 +281,7 @@ export default function AdminDashboardPage() {
               { label: "Suspended",    value: loading ? "—" : String(suspendedCount), sub: "needs attention"  },
               { label: "New This Week",value: loading ? "—" : String(newThisWeek),    sub: "recently joined"  },
             ].map((c, i) => (
-              <div key={c.label} className="rounded-lg px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 35}ms` }}>
+              <div key={c.label} className="rounded-lg px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 30}ms` }}>
                 <p className="text-xs mb-0.5" style={{ color: "#6c757d" }}>{c.label}</p>
                 <p className="text-xl font-bold tabular-nums" style={{ color: "#212529" }}>{c.value}</p>
                 <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>{c.sub}</p>
@@ -318,7 +318,7 @@ export default function AdminDashboardPage() {
               { label: "Skipped", value: loading ? "—" : (!loading && summary ? String(summary.remainders.skipped) : "—"),                             sub: "no active sub"     },
               { label: "Pending", value: loading ? "—" : String(remindersPending),                                                                     sub: "awaiting delivery" },
             ].map((c, i) => (
-              <div key={c.label} className="rounded-lg px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 35}ms` }}>
+              <div key={c.label} className="rounded-lg px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 30}ms` }}>
                 <p className="text-xs mb-0.5" style={{ color: "#6c757d" }}>{c.label}</p>
                 <p className="text-xl font-bold tabular-nums" style={{ color: "#212529" }}>{c.value}</p>
                 <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>{c.sub}</p>
@@ -347,7 +347,7 @@ export default function AdminDashboardPage() {
             { label: "Inactive",    value: loading ? "—" : (!loading && summary ? String(summary.users.totalUsers - summary.users.activeUsers) : "—"),                                  sub: "not yet active"     },
             { label: "Active Rate", value: loading ? "—" : (!loading && summary && summary.users.totalUsers > 0 ? `${Math.round((summary.users.activeUsers / summary.users.totalUsers) * 100)}%` : "—"), sub: "of all users"       },
           ].map((c, i) => (
-            <div key={c.label} className="rounded-lg px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${140 + i * 35}ms` }}>
+            <div key={c.label} className="rounded-lg px-4 py-3" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 30}ms` }}>
               <p className="text-xs mb-0.5" style={{ color: "#6c757d" }}>{c.label}</p>
               <p className="text-xl font-bold tabular-nums" style={{ color: "#212529" }}>{c.value}</p>
               <p className="text-xs mt-0.5" style={{ color: "#9ca3af" }}>{c.sub}</p>

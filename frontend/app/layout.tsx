@@ -5,7 +5,7 @@ import "./globals.css";
 const lato = Lato({ subsets: ["latin"], weight: ["300", "400", "700"], variable: "--font-lato" });
 
 export const metadata: Metadata = {
-  title: "PayNext — Billing Management",
+  title: "PayNext",
   description: "Recurring billing management for SaaS companies",
 };
 

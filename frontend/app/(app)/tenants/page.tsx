@@ -311,7 +311,7 @@ function TenantsTable({
                 style={{
                   borderTop: "1px solid var(--border)",
                   animation: "fade-in 0.15s ease-out both",
-                  animationDelay: `${80 + i * 18}ms`,
+                  animationDelay: `${i * 15}ms`,
                   opacity: row.status === "ARCHIVED" ? 0.6 : row.status === "SUSPENDED" ? 0.75 : 1,
                   cursor: "pointer",
                 }}
@@ -507,7 +507,7 @@ function CreateTenantModal({
           border: "1px solid var(--border)",
           maxWidth: step === 2 ? "680px" : "480px",
           maxHeight: "92dvh",
-          animation: "fade-in-up 0.18s ease-out both",
+          animation: "fade-in-up 0.2s ease-out both",
         }}
       >
         <div className="flex items-center justify-between px-7 pt-6 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -1357,7 +1357,7 @@ function TenantSidebar({
                 {status === "ACTIVE" && (
                   <>
                     {showInviteForm ? (
-                      <div className="mb-4 space-y-2" style={{ animation: "fade-in-up 0.15s ease-out both" }}>
+                      <div className="mb-4 space-y-2" style={{ animation: "fade-in-up 0.2s ease-out both" }}>
                         <div className="flex gap-1.5 p-1 rounded-lg" style={{ backgroundColor: "var(--border)" }}>
                           {(["user", "admin"] as const).map((r) => (
                             <button
@@ -1614,7 +1614,7 @@ export default function TenantsPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {statCards.map((card, i) => (
-          <div key={card.label} className="rounded-lg p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 35}ms` }}>
+          <div key={card.label} className="rounded-lg p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 30}ms` }}>
             <p className="text-sm mb-3" style={{ color: "#6c757d" }}>{card.label}</p>
             <p className="text-2xl font-bold tabular-nums" style={{ color: "#212529" }}>{loading ? "—" : card.value}</p>
           </div>

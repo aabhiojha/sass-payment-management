@@ -298,7 +298,7 @@ function PlansTable({ data, onSelect }: { data: Plan[]; onSelect: (p: Plan) => v
                 key={row.id}
                 onClick={() => onSelect(row)}
                 className="group bg-[#f8faf8] hover:bg-[#eef3ee] transition-colors cursor-pointer"
-                style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${80 + i * 18}ms`, opacity: row.status === "ARCHIVED" ? 0.65 : 1 }}
+                style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms`, opacity: row.status === "ARCHIVED" ? 0.65 : 1 }}
               >
                 <td className="px-4 py-3 text-sm font-semibold text-gray-900 truncate overflow-hidden">{row.name}</td>
                 <td className="px-4 py-3 text-sm text-gray-500 truncate overflow-hidden">{row.description}</td>
@@ -645,7 +645,7 @@ export default function PlatformPlansPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
         {statCards.map((card, i) => (
-          <div key={card.label} className="rounded-lg p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 35}ms` }}>
+          <div key={card.label} className="rounded-lg p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 30}ms` }}>
             <p className="text-sm mb-3" style={{ color: "#6c757d" }}>{card.label}</p>
             <p className="text-2xl font-bold tabular-nums" style={{ color: "#212529" }}>{loading ? "—" : card.value}</p>
           </div>

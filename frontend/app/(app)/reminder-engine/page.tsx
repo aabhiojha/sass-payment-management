@@ -205,7 +205,7 @@ export default function ReminderEnginePage() {
                 <tr
                   key={row.id}
                   className="hover:bg-[#f8faf8] transition-colors"
-                  style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.12s ease-out both", animationDelay: `${i * 12}ms` }}
+                  style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[160px] truncate">{row.customerName}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{row.productName}</td>

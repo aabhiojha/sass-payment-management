@@ -61,7 +61,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-sm mx-4" style={{ animation: "fade-in-up 0.25s ease-out both" }}>
+    <div className="w-full max-w-sm mx-4" style={{ animation: "fade-in-up 0.2s ease-out both" }}>
       {/* Logo */}
       <div className="flex items-center justify-center gap-2.5 mb-10">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="32" height="32">
