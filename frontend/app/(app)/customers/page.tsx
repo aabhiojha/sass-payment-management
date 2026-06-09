@@ -29,6 +29,15 @@ type Subscription = {
   endsAt: string | null;
 };
 
+type Reminder = {
+  id: number;
+  customerProductId: number;
+  status: string;
+  daysBeforeExpiry: number;
+  sentAt: string | null;
+  createdAt: string;
+};
+
 type SpringPage<T> = {
   content: T[];
   page: { totalElements: number; totalPages: number; size: number; number: number };
@@ -114,9 +123,8 @@ function CopyEmail({ email }: { email: string }) {
 }
 
 const CUSTOMER_STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  ACTIVE:    { bg: "#24A37D", color: "#fff" },
-  PAUSED:    { bg: "#9ca3af", color: "#fff" },
-  CANCELLED: { bg: "#dc2626", color: "#fff" },
+  ACTIVE:  { bg: "#24A37D", color: "#fff" },
+  DELETED: { bg: "#dc2626", color: "#fff" },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -171,7 +179,7 @@ const TABLE_HEADERS: { label: string; icon?: React.ReactNode; sortable?: boolean
   { label: ""                                              },
 ];
 
-const STATUS_FILTERS = ["ALL", "ACTIVE", "PAUSED", "CANCELLED"] as const;
+const STATUS_FILTERS = ["ALL", "ACTIVE", "DELETED"] as const;
 const PAGE_SIZE = 20;
 
 const inputCls   = "w-full text-sm px-3 py-2 rounded-lg outline-none";
@@ -220,9 +228,8 @@ export default function CustomersPage() {
   const [search, setSearch]         = useState("");
 
   // Stat counts
-  const [activeCount,    setActiveCount]    = useState(0);
-  const [pausedCount,    setPausedCount]    = useState(0);
-  const [cancelledCount, setCancelledCount] = useState(0);
+  const [activeCount,  setActiveCount]  = useState(0);
+  const [deletedCount, setDeletedCount] = useState(0);
 
   // Panel
   const [selected,      setSelected]      = useState<Customer | null>(null);
@@ -230,6 +237,11 @@ export default function CustomersPage() {
   const [creating,      setCreating]      = useState(false);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [subsLoading,   setSubsLoading]   = useState(false);
+
+  // Expanded subscription reminders
+  const [expandedSubId, setExpandedSubId] = useState<number | null>(null);
+  const [reminders,     setReminders]     = useState<Reminder[]>([]);
+  const [remLoading,    setRemLoading]    = useState(false);
 
   // Form
   const [editName,    setEditName]    = useState("");
@@ -258,8 +270,8 @@ export default function CustomersPage() {
     const count = (s: string) =>
       apiGet<SpringPage<Customer>>(`/api/v1/tenants/${tid}/customers?size=1&status=${s}`, token)
         .then((d) => d.page.totalElements).catch(() => 0);
-    Promise.all([count("ACTIVE"), count("PAUSED"), count("CANCELLED")]).then(([a, p, c]) => {
-      setActiveCount(a); setPausedCount(p); setCancelledCount(c);
+    Promise.all([count("ACTIVE"), count("DELETED")]).then(([a, d]) => {
+      setActiveCount(a); setDeletedCount(d);
     });
   }, [token, tid]);
 
@@ -272,6 +284,20 @@ export default function CustomersPage() {
       .then((d) => setSubscriptions(d.content))
       .catch(() => setSubscriptions([]))
       .finally(() => setSubsLoading(false));
+  };
+
+  const toggleExpand = (subId: number) => {
+    if (expandedSubId === subId) {
+      setExpandedSubId(null);
+      return;
+    }
+    setExpandedSubId(subId);
+    if (!token || !tid) return;
+    setRemLoading(true);
+    apiGet<Reminder[]>(`/api/v1/tenants/${tid}/reminders/by-customer-product/${subId}`, token)
+      .then((d) => setReminders(d))
+      .catch(() => setReminders([]))
+      .finally(() => setRemLoading(false));
   };
 
   const openCustomer = (c: Customer) => {
@@ -333,16 +359,14 @@ export default function CustomersPage() {
 
   const { widths, onMouseDown } = useColumnResize([180, 240, 130, 110, 120, 44]);
 
-  const totalVal     = useCountUp(total);
-  const activeVal    = useCountUp(activeCount);
-  const pausedVal    = useCountUp(pausedCount);
-  const cancelledVal = useCountUp(cancelledCount);
+  const totalVal   = useCountUp(total);
+  const activeVal  = useCountUp(activeCount);
+  const deletedVal = useCountUp(deletedCount);
 
   const stats = [
-    { label: "Total",     value: totalVal     },
-    { label: "Active",    value: activeVal     },
-    { label: "Paused",    value: pausedVal     },
-    { label: "Cancelled", value: cancelledVal  },
+    { label: "Total",   value: totalVal   },
+    { label: "Active",  value: activeVal  },
+    { label: "Deleted", value: deletedVal },
   ];
 
 
@@ -404,7 +428,7 @@ export default function CustomersPage() {
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); load(filter, e.target.value, 0); }}
               className="w-full text-sm pl-9 pr-3 py-2 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "var(--bg-card)" }}
+              style={{ border: "1px solid var(--border)", backgroundColor: "#eceeec" }}
             />
           </div>
         </div>
@@ -442,7 +466,7 @@ export default function CustomersPage() {
                     <tr
                       key={c.id}
                       className="group cursor-pointer hover:bg-[#eef3ee] transition-colors"
-                      style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === c.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 18}ms` }}
+                      style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === c.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                       onClick={() => openCustomer(c)}
                     >
                       <td className="px-4 py-3 text-sm font-semibold text-gray-900 truncate overflow-hidden">{c.name}</td>
@@ -579,17 +603,76 @@ export default function CustomersPage() {
                             </thead>
                             <tbody>
                               {subscriptions.map((s, i) => (
-                                <tr key={s.id} className="hover:bg-[#eef3ee] transition-colors" style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.12s ease-out both", animationDelay: `${i * 15}ms` }}>
-                                  <td className="px-4 py-3">
-                                    <p className="font-medium text-gray-900">{s.productName}</p>
-                                    {s.productPlanName && <p className="text-xs text-gray-400">{s.productPlanName}</p>}
-                                  </td>
-                                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.currency} {Number(s.amount).toFixed(2)}</td>
-                                  <td className="px-4 py-3"><SubStatusBadge status={s.status} /></td>
-                                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                                    {formatDate(s.startsAt)}{s.endsAt ? ` → ${formatDate(s.endsAt)}` : " → ∞"}
-                                  </td>
-                                </tr>
+                                <React.Fragment key={s.id}>
+                                  <tr
+                                    onClick={() => toggleExpand(s.id)}
+                                    className="cursor-pointer hover:bg-[#eef3ee] transition-colors"
+                                    style={{ borderTop: "1px solid var(--border)", backgroundColor: expandedSubId === s.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                                  >
+                                    <td className="px-4 py-3">
+                                      <div className="flex items-center gap-2">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                          style={{ transform: expandedSubId === s.id ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s", color: "#9ca3af", flexShrink: 0 }}>
+                                          <path d="m9 18 6-6-6-6" />
+                                        </svg>
+                                        <div>
+                                          <p className="font-medium text-gray-900">{s.productName}</p>
+                                          {s.productPlanName && <p className="text-xs text-gray-400">{s.productPlanName}</p>}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{s.currency} {Number(s.amount).toFixed(2)}</td>
+                                    <td className="px-4 py-3"><SubStatusBadge status={s.status} /></td>
+                                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                                      {formatDate(s.startsAt)}{s.endsAt ? ` → ${formatDate(s.endsAt)}` : " → ∞"}
+                                    </td>
+                                  </tr>
+                                  {expandedSubId === s.id && (
+                                    <tr>
+                                      <td colSpan={4} className="px-0 py-0" style={{ borderTop: "1px solid var(--border)" }}>
+                                        <div className="px-6 py-4" style={{ backgroundColor: "#f8faf8" }}>
+                                          {remLoading ? (
+                                            <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
+                                              <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                                              Loading reminders…
+                                            </div>
+                                          ) : reminders.length === 0 ? (
+                                            <p className="text-sm text-gray-400 py-2">No reminders yet.</p>
+                                          ) : (
+                                            <div>
+                                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Reminders</p>
+                                              <table className="w-full text-sm">
+                                                <thead>
+                                                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold text-gray-400 uppercase">Milestone</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold text-gray-400 uppercase">Scheduled</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold text-gray-400 uppercase">Sent</th>
+                                                    <th className="text-left px-3 py-2 text-xs font-semibold text-gray-400 uppercase">Status</th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody>
+                                                  {reminders.map((r) => (
+                                                    <tr key={r.id} style={{ borderTop: "1px solid var(--border)" }}>
+                                                      <td className="px-3 py-2 text-gray-700">{r.daysBeforeExpiry === 0 ? "Due date" : `${r.daysBeforeExpiry}-day reminder`}</td>
+                                                      <td className="px-3 py-2 text-gray-500">{formatDate(r.createdAt)}</td>
+                                                      <td className="px-3 py-2 text-gray-500">{r.sentAt ? formatDate(r.sentAt) : "—"}</td>
+                                                      <td className="px-3 py-2">
+                                                        <span className="text-xs font-semibold px-2 py-0.5 rounded"
+                                                          style={r.status === "SENT" ? { backgroundColor: "#dcfce7", color: "#166534" } : r.status === "FAILED" ? { backgroundColor: "#fee2e2", color: "#991b1b" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}>
+                                                          {r.status.charAt(0) + r.status.slice(1).toLowerCase()}
+                                                        </span>
+                                                      </td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                              </table>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </React.Fragment>
                               ))}
                             </tbody>
                           </table>
