@@ -29,7 +29,13 @@ type Plan = {
 
 type Page<T> = { content: T[]; page: { totalElements: number; totalPages: number; size: number; number: number } };
 
-const STATUS_FILTERS = ["ALL", "ACTIVE", "INACTIVE"] as const;
+const STATUS_FILTERS = ["ALL", "ACTIVE", "INACTIVE", "DELETED"] as const;
+
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  ACTIVE:   { bg: "#dcfce7", color: "#166534" },
+  INACTIVE: { bg: "#f3f4f6", color: "#6b7280" },
+  DELETED:  { bg: "#fee2e2", color: "#dc2626" },
+};
 
 const CADENCES = ["WEEKLY", "FORTNIGHT", "MONTHLY", "QUARTERLY", "ANNUALLY"];
 
@@ -322,7 +328,7 @@ export default function ProductsPage() {
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{p.currency} {Number(p.price).toLocaleString()}</td>
                     <td className="px-4 py-3"><span className="text-xs font-semibold px-2.5 py-1 rounded" style={cadenceBadgeStyle(p.billingCadence)}>{cadenceLabel(p.billingCadence)}</span></td>
                     <td className="px-4 py-3">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={p.status === "ACTIVE" ? { backgroundColor: "#dcfce7", color: "#166534" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={STATUS_STYLE[p.status] ?? { backgroundColor: "#f3f4f6", color: "#6b7280" }}>
                         {p.status.charAt(0) + p.status.slice(1).toLowerCase()}
                       </span>
                     </td>
@@ -396,7 +402,7 @@ export default function ProductsPage() {
                   <h2 className="text-xl font-bold text-gray-900 leading-snug">{selected.name}</h2>
                   <span
                     className="inline-block mt-2 text-xs font-semibold px-2.5 py-0.5 rounded"
-                    style={selected.status === "ACTIVE" ? { backgroundColor: "#dbeafe", color: "#1d4ed8" } : { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+                    style={STATUS_STYLE[selected.status] ?? { backgroundColor: "#f3f4f6", color: "#6b7280" }}
                   >
                     {selected.status.charAt(0) + selected.status.slice(1).toLowerCase()}
                   </span>
@@ -420,10 +426,13 @@ export default function ProductsPage() {
                 {/* Detail rows */}
                 <div className="px-6 py-2">
                   {selected.description && <SlideOverField label="Description">{selected.description}</SlideOverField>}
-                    <SlideOverField label="Active">
-                      {selected.status === "ACTIVE"
-                        ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                        : <span className="text-gray-400">—</span>}
+                    <SlideOverField label="Status">
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={STATUS_STYLE[selected.status] ?? { backgroundColor: "#f3f4f6", color: "#6b7280" }}
+                      >
+                        {selected.status.charAt(0) + selected.status.slice(1).toLowerCase()}
+                      </span>
                     </SlideOverField>
                     <SlideOverField label="Created at">{formatDateTime(selected.createdAt)}</SlideOverField>
                     <SlideOverField label="Base price">{selected.currency} {Number(selected.price).toFixed(2)} / {cadenceLabel(selected.billingCadence)}</SlideOverField>
