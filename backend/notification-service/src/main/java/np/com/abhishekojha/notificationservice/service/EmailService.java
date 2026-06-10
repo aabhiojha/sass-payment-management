@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import np.com.abhishekojha.notificationservice.config.EmailProperties;
 import np.com.abhishekojha.notificationservice.config.FrontendProperties;
 import np.com.abhishekojha.notificationservice.dto.InviteEmailRequest;
+import np.com.abhishekojha.notificationservice.dto.PasswordResetEmailRequest;
 import np.com.abhishekojha.notificationservice.dto.ReminderEmailRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,11 @@ public class EmailService {
     public void sendAdminInvitation(InviteEmailRequest req) {
         String subject = "You've been invited as Administrator of " + req.getTenantName();
         send(req.getRecipientEmail(), subject, renderInviteAdmin(req));
+    }
+
+    public void sendPasswordReset(PasswordResetEmailRequest req) {
+        String subject = "Reset your PayNext password";
+        send(req.getRecipientEmail(), subject, renderPasswordReset(req));
     }
 
     public void sendReminder(ReminderEmailRequest req) {
@@ -112,6 +118,14 @@ public class EmailService {
         ));
     }
 
+    private String renderPasswordReset(PasswordResetEmailRequest req) {
+        return render("email/password-reset", Map.of(
+                "recipientName", req.getRecipientName() != null ? req.getRecipientName() : "there",
+                "resetUrl",      buildPasswordResetUrl(req.getResetToken()),
+                "expiry",        req.getExpiresAt() != null ? DATE_FMT.format(req.getExpiresAt()) : "N/A"
+        ));
+    }
+
     private String renderReminder(ReminderEmailRequest req) {
         Map<String, Object> vars = new java.util.HashMap<>();
         vars.put("customerName",     req.getCustomerName());
@@ -159,6 +173,20 @@ public class EmailService {
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private String buildPasswordResetUrl(String token) {
+        String base = frontend.getBaseUrl();
+        if (base == null || base.isBlank()) {
+            throw new IllegalStateException("frontend.base-url is not configured");
+        }
+        String trimmedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        String path = frontend.getResetPasswordPath();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        String encoded = URLEncoder.encode(token == null ? "" : token, StandardCharsets.UTF_8);
+        return trimmedBase + path + "?token=" + encoded;
+    }
 
     private String buildAcceptInviteUrl(String token) {
         String base = frontend.getBaseUrl();

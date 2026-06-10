@@ -6,7 +6,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     open-in-view: false
-    show-sql: false
+    show-sql: true
     hibernate:
       ddl-auto: validate
     properties:
@@ -35,7 +35,7 @@ logging:
 #    np.com.abhishekojha: DEBUG
 #    org.springframework.web: DEBUG
 #    org.springframework.security: DEBUG
-#    org.hibernate.SQL: info
+    org.hibernate.SQL: info
 #    org.hibernate.orm.jdbc.bind: DEBUG
 
 notification:

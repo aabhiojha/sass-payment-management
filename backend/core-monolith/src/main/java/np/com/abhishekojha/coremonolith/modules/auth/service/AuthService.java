@@ -10,13 +10,18 @@ import np.com.abhishekojha.coremonolith.common.enums.UserStatus;
 import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AcceptInviteRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AuthResponse;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.ForgotPasswordRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.InviteTokenValidationResponse;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.LoginRequest;
-import np.com.abhishekojha.coremonolith.modules.auth.dto.RegisterRequest;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.ResetPasswordRequest;
+import np.com.abhishekojha.coremonolith.modules.auth.model.PasswordResetTokenEntity;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserSessionEntity;
+import np.com.abhishekojha.coremonolith.modules.auth.repository.PasswordResetTokenRepository;
 import np.com.abhishekojha.coremonolith.modules.auth.repository.UserRepository;
 import np.com.abhishekojha.coremonolith.modules.auth.repository.UserSessionRepository;
+import np.com.abhishekojha.coremonolith.modules.invitation.client.PasswordResetNotificationPayload;
+import np.com.abhishekojha.coremonolith.modules.invitation.client.NotificationClient;
 import np.com.abhishekojha.coremonolith.modules.invitation.model.UserInvitationEntity;
 import np.com.abhishekojha.coremonolith.modules.invitation.repository.InvitationRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
@@ -43,13 +48,17 @@ public class AuthService {
 
     private static final long REFRESH_TOKEN_TTL_SECONDS = 30L * 24 * 3600;
 
+    private static final long PASSWORD_RESET_TOKEN_TTL_SECONDS = 30L * 60;
+
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final UserSessionRepository userSessionRepository;
     private final InvitationRepository invitationRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditService auditService;
+    private final NotificationClient notificationClient;
 
     public AuthResponse login(LoginRequest req) {
         UserEntity user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(req.email())
@@ -68,7 +77,8 @@ public class AuthService {
         }
 
         user.setLastLoginAt(Instant.now());
-        auditService.log(user, AuditAction.LOGIN, "USER", user.getId(), null, null);
+        auditService.log(user, AuditAction.USER_LOGIN, "USER", user.getId(), null, null,
+                user.getEmail() + " logged in");
         log.info("Login successful userId={} role={}", user.getId(), user.getRole());
 
         return buildSession(user);
@@ -97,7 +107,8 @@ public class AuthService {
         String tokenHash = sha256Hex(rawRefreshToken);
         userSessionRepository.findByRefreshTokenHash(tokenHash).ifPresent(session -> {
             session.setRevokedAt(Instant.now());
-            auditService.log(session.getUser(), AuditAction.LOGOUT, "USER", session.getUser().getId(), null, null);
+            auditService.log(session.getUser(), AuditAction.USER_LOGOUT, "USER", session.getUser().getId(), null, null,
+                    session.getUser().getEmail() + " logged out");
             log.info("Logout userId={}", session.getUser().getId());
         });
     }
@@ -160,13 +171,73 @@ public class AuthService {
         inv.setStatus(InvitationStatus.ACCEPTED);
         inv.setAcceptedAt(Instant.now());
 
-        auditService.log(user, AuditAction.CREATE, "USER", user.getId(), null,
+        auditService.log(user, AuditAction.USER_CREATED, "USER", user.getId(), null,
                 Map.of("email", user.getEmail(), "role", user.getRole().name(),
-                        "tenantId", inv.getTenant().getId()));
+                        "tenantId", inv.getTenant().getId()),
+                "Created user " + user.getEmail() + " (" + user.getRole().name() + ")");
         log.info("Account created via invite userId={} role={} tenantId={}",
                 user.getId(), user.getRole(), inv.getTenant().getId());
 
         return buildSession(user);
+    }
+
+    public void forgotPassword(ForgotPasswordRequest req) {
+        UserEntity user = userRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(req.email())
+                .orElse(null);
+
+        if (user == null || user.getStatus() != UserStatus.ACTIVE) {
+            log.info("Password reset requested for email={} — no action taken if not found/active", req.email());
+            return;
+        }
+
+        String rawToken = UUID.randomUUID().toString();
+        String tokenHash = sha256Hex(rawToken);
+
+        passwordResetTokenRepository.deleteAllByUserId(user.getId());
+
+        PasswordResetTokenEntity tokenEntity = new PasswordResetTokenEntity();
+        tokenEntity.setUser(user);
+        tokenEntity.setTokenHash(tokenHash);
+        tokenEntity.setExpiresAt(Instant.now().plusSeconds(PASSWORD_RESET_TOKEN_TTL_SECONDS));
+        tokenEntity.setCreatedAt(Instant.now());
+        passwordResetTokenRepository.save(tokenEntity);
+
+        notificationClient.sendPasswordReset(new PasswordResetNotificationPayload(
+                user.getEmail(),
+                user.getFullName(),
+                rawToken,
+                tokenEntity.getExpiresAt()
+        ));
+
+        auditService.log(user, AuditAction.PASSWORD_RESET_REQUESTED, "USER", user.getId(), null, null,
+                "Password reset requested for " + user.getEmail());
+        log.info("Password reset link sent to userId={}", user.getId());
+    }
+
+    public void resetPassword(ResetPasswordRequest req) {
+        String tokenHash = sha256Hex(req.token());
+
+        PasswordResetTokenEntity tokenEntity = passwordResetTokenRepository.findByTokenHash(tokenHash)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "INVALID_TOKEN"));
+
+        if (tokenEntity.getUsedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TOKEN_ALREADY_USED");
+        }
+        if (tokenEntity.getExpiresAt().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TOKEN_EXPIRED");
+        }
+
+        tokenEntity.setUsedAt(Instant.now());
+
+        UserEntity user = tokenEntity.getUser();
+        user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
+
+        userSessionRepository.revokeAllSessionsByUserId(user.getId(), Instant.now());
+
+        auditService.log(user, AuditAction.PASSWORD_RESET_COMPLETED, "USER", user.getId(), null, null,
+                "Password reset completed for " + user.getEmail());
+        log.info("Password reset completed for userId={}", user.getId());
     }
 
     private UserRole toUserRole(InvitationRole role) {

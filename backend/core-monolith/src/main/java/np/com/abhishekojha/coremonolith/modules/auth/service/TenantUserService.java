@@ -52,8 +52,9 @@ public class TenantUserService {
         String oldRole = user.getRole().name();
         user.setRole(req.role());
 
-        auditService.log(AuditAction.UPDATE, "USER", userId,
-                Map.of("role", oldRole), Map.of("role", req.role().name()));
+        auditService.log(AuditAction.USER_ROLE_CHANGED, "USER", userId,
+                Map.of("role", oldRole), Map.of("role", req.role().name()),
+                "Changed role of " + user.getEmail() + " from " + oldRole + " to " + req.role().name());
         log.info("User role updated userId={} tenantId={} oldRole={} newRole={}", userId, tenantId, oldRole, req.role());
         return UserResponse.from(user);
     }
@@ -64,8 +65,9 @@ public class TenantUserService {
         String oldStatus = user.getStatus().name();
         user.setStatus(UserStatus.DISABLED);
 
-        auditService.log(AuditAction.STATUS_CHANGE, "USER", userId,
-                Map.of("status", oldStatus), Map.of("status", "DISABLED"));
+        auditService.log(AuditAction.USER_DISABLED, "USER", userId,
+                Map.of("status", oldStatus), Map.of("status", "DISABLED"),
+                "Disabled user " + user.getEmail());
         log.info("User disabled userId={} tenantId={}", userId, tenantId);
         return UserResponse.from(user);
     }
@@ -77,8 +79,9 @@ public class TenantUserService {
         user.setDeletedAt(Instant.now());
         user.setDeletedBy(guard.currentUser());
 
-        auditService.log(AuditAction.DELETE, "USER", userId,
-                Map.of("email", user.getEmail(), "role", user.getRole().name()), null);
+        auditService.log(AuditAction.USER_DELETED, "USER", userId,
+                Map.of("email", user.getEmail(), "role", user.getRole().name()), null,
+                "Deleted user " + user.getEmail());
         log.info("User deleted userId={} tenantId={}", userId, tenantId);
     }
 

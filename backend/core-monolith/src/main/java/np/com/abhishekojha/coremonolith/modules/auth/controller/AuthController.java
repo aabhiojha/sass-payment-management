@@ -8,9 +8,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AcceptInviteRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.AuthResponse;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.ForgotPasswordRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.InviteTokenValidationResponse;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.LoginRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.dto.RefreshTokenRequest;
+import np.com.abhishekojha.coremonolith.modules.auth.dto.ResetPasswordRequest;
 import np.com.abhishekojha.coremonolith.modules.auth.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "Login, token refresh, and logout")
+@Tag(name = "Auth", description = "Login, token refresh, logout, and password reset")
 public class AuthController {
 
     private final AuthService authService;
@@ -65,6 +67,28 @@ public class AuthController {
     @PostMapping("/accept-invite")
     public ResponseEntity<AuthResponse> acceptInvite(@Valid @RequestBody AcceptInviteRequest req) {
         return ResponseEntity.ok(authService.acceptInvite(req));
+    }
+
+    @Operation(summary = "Forgot password", description = "Send a password reset link to the user's email")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reset link sent if email exists"),
+            @ApiResponse(responseCode = "400", description = "Validation error")
+    })
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        authService.forgotPassword(req);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Reset password", description = "Reset password using a reset token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid, expired, or already-used token")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Logout", description = "Revoke the provided refresh token")

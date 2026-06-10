@@ -27,6 +27,10 @@ public class NotificationClient {
         dispatch("/internal/notify/invitation-admin", payload, payload.recipientEmail());
     }
 
+    public void sendPasswordReset(PasswordResetNotificationPayload payload) {
+        dispatch("/internal/notify/password-reset", payload, payload.recipientEmail());
+    }
+
     public void sendReminder(ReminderNotificationPayload payload) {
         // Intentionally does NOT swallow — callers must handle failure to record correct status
         restClient.post()

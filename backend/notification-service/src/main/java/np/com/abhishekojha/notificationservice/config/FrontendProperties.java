@@ -10,4 +10,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class FrontendProperties {
     private String baseUrl;
     private String acceptInvitePath = "/accept-invite";
+    private String resetPasswordPath = "/reset-password";
 }

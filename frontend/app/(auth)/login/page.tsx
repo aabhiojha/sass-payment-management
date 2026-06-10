@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuthStore, type AuthUser, type UserRole } from "@/store/authStore";
 import { apiPost } from "@/lib/api";
 
@@ -134,6 +135,11 @@ export default function LoginPage() {
                   </svg>
                 )}
               </button>
+            </div>
+            <div className="flex justify-end mt-1">
+              <Link href="/forgot-password" className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
+                Forgot password?
+              </Link>
             </div>
           </div>
 
