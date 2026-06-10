@@ -13,6 +13,7 @@ public record AuditLogResponse(
         Long resourceId,
         String oldValue,
         String newValue,
+        String description,
         String userAgent,
         Instant createdAt
 ) {
@@ -21,11 +22,12 @@ public record AuditLogResponse(
                 e.getId(),
                 e.getActor().getId(),
                 e.getActor().getEmail(),
-                e.getAction().name(),
+                e.getAction().getValue(),
                 e.getResourceType(),
                 e.getResourceId(),
                 e.getOldValue(),
                 e.getNewValue(),
+                e.getDescription(),
                 e.getUserAgent(),
                 e.getCreatedAt()
         );

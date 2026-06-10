@@ -22,7 +22,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> 
     @Query("""
             SELECT a FROM AuditLogEntity a JOIN FETCH a.actor
             WHERE (:actorId IS NULL OR a.actor.id = :actorId)
-              AND (:#{#actions.isEmpty()} = true OR CAST(a.action AS string) IN :actions)
+              AND (:#{#actions.isEmpty()} = true OR a.action IN :actions)
               AND (:#{#resourceTypes.isEmpty()} = true OR a.resourceType IN :resourceTypes)
               AND (:resourceId IS NULL OR a.resourceId = :resourceId)
               AND (:actorEmail IS NULL OR a.actor.email LIKE CONCAT('%', CAST(:actorEmail AS string), '%'))
@@ -41,7 +41,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> 
             SELECT a FROM AuditLogEntity a JOIN FETCH a.actor
             WHERE a.actor.tenant.id = :tenantId
               AND (:actorId IS NULL OR a.actor.id = :actorId)
-              AND (:#{#actions.isEmpty()} = true OR CAST(a.action AS string) IN :actions)
+              AND (:#{#actions.isEmpty()} = true OR a.action IN :actions)
               AND (:#{#resourceTypes.isEmpty()} = true OR a.resourceType IN :resourceTypes)
               AND (:resourceId IS NULL OR a.resourceId = :resourceId)
               AND (:actorEmail IS NULL OR a.actor.email LIKE CONCAT('%', CAST(:actorEmail AS string), '%'))

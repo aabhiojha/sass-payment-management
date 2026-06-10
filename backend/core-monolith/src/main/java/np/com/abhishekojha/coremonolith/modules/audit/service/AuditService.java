@@ -26,11 +26,21 @@ public class AuditService {
 
     public void log(AuditAction action, String resourceType, Long resourceId,
                     Object oldValue, Object newValue) {
-        log(currentUser(), action, resourceType, resourceId, oldValue, newValue);
+        log(currentUser(), action, resourceType, resourceId, oldValue, newValue, null);
+    }
+
+    public void log(AuditAction action, String resourceType, Long resourceId,
+                    Object oldValue, Object newValue, String description) {
+        log(currentUser(), action, resourceType, resourceId, oldValue, newValue, description);
     }
 
     public void log(UserEntity actor, AuditAction action, String resourceType, Long resourceId,
                     Object oldValue, Object newValue) {
+        log(actor, action, resourceType, resourceId, oldValue, newValue, null);
+    }
+
+    public void log(UserEntity actor, AuditAction action, String resourceType, Long resourceId,
+                    Object oldValue, Object newValue, String description) {
         try {
             AuditLogEntity entry = new AuditLogEntity();
             entry.setActor(actor);
@@ -39,6 +49,7 @@ public class AuditService {
             entry.setResourceId(resourceId);
             entry.setOldValue(toJson(oldValue));
             entry.setNewValue(toJson(newValue));
+            entry.setDescription(description);
             entry.setUserAgent(userAgent());
             auditLogRepository.save(entry);
         } catch (Throwable e) {

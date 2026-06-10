@@ -1,10 +1,9 @@
 package np.com.abhishekojha.coremonolith.modules.audit.model;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import np.com.abhishekojha.coremonolith.common.enums.AuditAction;
+import np.com.abhishekojha.coremonolith.common.enums.AuditActionConverter;
 import np.com.abhishekojha.coremonolith.modules.auth.model.UserEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -44,9 +44,8 @@ public class AuditLogEntity {
     @JoinColumn(name = "actor_id")
     private UserEntity actor;
 
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false, columnDefinition = "audit_action")
+    @Convert(converter = AuditActionConverter.class)
+    @Column(nullable = false, length = 100)
     private AuditAction action;
 
     @Column(name = "resource_type", nullable = false, length = 50)
@@ -62,6 +61,9 @@ public class AuditLogEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "new_value", columnDefinition = "jsonb")
     private String newValue;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "user_agent", columnDefinition = "TEXT")
     private String userAgent;
