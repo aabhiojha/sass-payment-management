@@ -16,6 +16,19 @@ type Reminder = {
   createdAt: string;
 };
 
+type UpcomingReminder = {
+  customerProductId: number;
+  customerId: number;
+  customerName: string;
+  productId: number;
+  productName: string;
+  planName: string | null;
+  amount: string;
+  endsAt: string;
+  daysBeforeExpiry: number;
+  reminderDate: string;
+};
+
 type Page<T> = { content: T[]; page: { totalElements: number; totalPages: number; size: number; number: number } };
 
 const STATUS_FILTERS = ["ALL", "SENT", "PENDING", "FAILED", "SKIPPED"] as const;
@@ -59,6 +72,10 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function ReminderEnginePage() {
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
@@ -71,6 +88,9 @@ export default function ReminderEnginePage() {
   const [page, setPage] = useState(0);
   const [triggering, setTriggering] = useState(false);
   const [triggerResult, setTriggerResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const [upcoming, setUpcoming] = useState<UpcomingReminder[]>([]);
+  const [upcomingLoading, setUpcomingLoading] = useState(true);
 
   const PAGE_SIZE = 25;
   const tid = user?.tenantId;
@@ -86,7 +106,16 @@ export default function ReminderEnginePage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, [token, user]);
+  const loadUpcoming = () => {
+    if (!token || !tid) return;
+    setUpcomingLoading(true);
+    apiGet<UpcomingReminder[]>(`/api/v1/tenants/${tid}/reminders/upcoming?days=7`, token)
+      .then(setUpcoming)
+      .catch(() => {})
+      .finally(() => setUpcomingLoading(false));
+  };
+
+  useEffect(() => { load(); loadUpcoming(); }, [token, user]);
 
   const handleFilter = (f: string) => { setFilter(f); setPage(0); load(f, 0); };
 
@@ -98,6 +127,7 @@ export default function ReminderEnginePage() {
       await apiPost(`/api/v1/tenants/${tid}/reminders/trigger`, {}, token);
       setTriggerResult({ ok: true, msg: "Reminders triggered successfully. Check the list for new entries." });
       load();
+      loadUpcoming();
     } catch (e) {
       setTriggerResult({ ok: false, msg: e instanceof Error ? e.message : "Failed to trigger reminders." });
     } finally {
@@ -177,6 +207,56 @@ export default function ReminderEnginePage() {
             {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
           </button>
         ))}
+      </div>
+
+      {/* Upcoming reminders */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Upcoming Reminders</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Due to go out in the next 7 days, not yet sent</p>
+        </div>
+
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+          {upcomingLoading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400">
+              <svg className="animate-spin mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+              Loading…
+            </div>
+          ) : upcoming.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+              No reminders due in the next 7 days.
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: "var(--bg-card)" }}>
+                  {["Customer", "Product", "Plan", "Amount", "Milestone", "Reminder Date", "Expires"].map((h, i) => (
+                    <th key={i} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {upcoming.map((row, i) => (
+                  <tr
+                    key={`${row.customerProductId}-${row.daysBeforeExpiry}`}
+                    className="hover:bg-[#eef3ee] transition-colors"
+                    style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[160px] truncate">{row.customerName}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{row.productName}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 max-w-[140px] truncate">{row.planName ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{row.amount}</td>
+                    <td className="px-4 py-3"><MilestoneBadge days={row.daysBeforeExpiry} /></td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{formatDate(row.reminderDate)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{formatDate(row.endsAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Table */}

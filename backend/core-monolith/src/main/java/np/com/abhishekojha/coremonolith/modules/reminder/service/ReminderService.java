@@ -13,6 +13,7 @@ import np.com.abhishekojha.coremonolith.modules.audit.service.AuditService;
 import np.com.abhishekojha.coremonolith.modules.invitation.client.NotificationClient;
 import np.com.abhishekojha.coremonolith.modules.reminder.client.ReminderNotificationPayload;
 import np.com.abhishekojha.coremonolith.modules.reminder.dto.ReminderResponse;
+import np.com.abhishekojha.coremonolith.modules.reminder.dto.UpcomingReminderResponse;
 import np.com.abhishekojha.coremonolith.modules.reminder.model.ReminderEntity;
 import np.com.abhishekojha.coremonolith.modules.reminder.repository.ReminderRepository;
 import np.com.abhishekojha.coremonolith.modules.tenant.model.TenantEntity;
@@ -140,6 +141,60 @@ public class ReminderService {
     }
 
 
+    /**
+     * Reminders that are due to fire within the next {@code days} days but haven't
+     * been sent/skipped yet — computed live from active subscriptions, not persisted.
+     */
+    @Transactional(readOnly = true)
+    public List<UpcomingReminderResponse> listUpcoming(Long tenantId, int days) {
+        guard.requireTenantAccess(tenantId);
+
+        Instant now = Instant.now();
+        Instant lookAheadEnd = now.plus(MAX_LOOKAHEAD_DAYS, ChronoUnit.DAYS);
+
+        List<CustomerProductEntity> candidates = customerProductRepository
+                .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBetween(
+                        tenantId, SubscriptionStatus.ACTIVE, now, lookAheadEnd);
+
+        List<UpcomingReminderResponse> results = new ArrayList<>();
+
+        for (CustomerProductEntity cp : candidates) {
+            if (cp.getStartsAt() == null || cp.getEndsAt() == null) continue;
+
+            long durationDays = ChronoUnit.DAYS.between(cp.getStartsAt(), cp.getEndsAt());
+            int daysUntilExpiry = (int) ChronoUnit.DAYS.between(now, cp.getEndsAt());
+
+            for (int milestone : milestonesForDuration(durationDays)) {
+                if (milestone > daysUntilExpiry) continue;
+
+                int daysUntilReminder = daysUntilExpiry - milestone;
+                if (daysUntilReminder > days) continue;
+
+                boolean alreadyHandled = reminderRepository
+                        .existsByCustomerProductIdAndDaysBeforeExpiryAndStatusIn(
+                                cp.getId(), milestone,
+                                List.of(ReminderStatus.SENT, ReminderStatus.SKIPPED));
+                if (alreadyHandled) continue;
+
+                results.add(new UpcomingReminderResponse(
+                        cp.getId(),
+                        cp.getCustomer().getId(),
+                        cp.getCustomer().getName(),
+                        cp.getProduct().getId(),
+                        cp.getProduct().getName(),
+                        cp.getProductPlan() != null ? cp.getProductPlan().getName() : null,
+                        formatAmount(cp),
+                        cp.getEndsAt(),
+                        milestone,
+                        now.plus(daysUntilReminder, ChronoUnit.DAYS)
+                ));
+            }
+        }
+
+        results.sort(java.util.Comparator.comparing(UpcomingReminderResponse::reminderDate));
+        return results;
+    }
+
     public int cancelOverduePlans(TenantEntity tenant) {
         List<CustomerProductEntity> overdue = customerProductRepository
                 .findAllByTenantIdAndStatusAndDeletedAtIsNullAndEndsAtBefore(
@@ -147,7 +202,7 @@ public class ReminderService {
 
         for (CustomerProductEntity cp : overdue) {
             cp.setStatus(SubscriptionStatus.CANCELLED);
-            auditService.log(AuditAction.STATUS_CHANGE, "CUSTOMER_PRODUCT", cp.getId(),
+            auditService.log(null, AuditAction.STATUS_CHANGE, "CUSTOMER_PRODUCT", cp.getId(),
                     Map.of("status", "ACTIVE"),
                     Map.of("status", "CANCELLED", "reason", "expired"));
             log.info("Auto-cancelled overdue plan id={} endsAt={} customer={}",
@@ -178,16 +233,18 @@ public class ReminderService {
         return ReminderResponse.from(reminder);
     }
 
-    private ReminderNotificationPayload buildPayload(TenantEntity tenant, CustomerProductEntity cp, int daysBeforeExpiry) {
-        String amount;
+    private String formatAmount(CustomerProductEntity cp) {
         if (cp.getCustomPrice() != null) {
-            amount = cp.getProduct().getCurrency() + " " + cp.getCustomPrice().toPlainString();
+            return cp.getProduct().getCurrency() + " " + cp.getCustomPrice().toPlainString();
         } else if (cp.getProductPlan() != null) {
-            amount = cp.getProductPlan().getCurrency() + " " + cp.getProductPlan().getPrice().toPlainString();
+            return cp.getProductPlan().getCurrency() + " " + cp.getProductPlan().getPrice().toPlainString();
         } else {
-            amount = cp.getProduct().getCurrency() + " " + cp.getProduct().getPrice().toPlainString();
+            return cp.getProduct().getCurrency() + " " + cp.getProduct().getPrice().toPlainString();
         }
+    }
 
+    private ReminderNotificationPayload buildPayload(TenantEntity tenant, CustomerProductEntity cp, int daysBeforeExpiry) {
+        String amount = formatAmount(cp);
         String planName = cp.getProductPlan() != null ? cp.getProductPlan().getName() : null;
         String dueDate = cp.getEndsAt() != null ? DUE_DATE_FMT.format(cp.getEndsAt()) : "N/A";
 

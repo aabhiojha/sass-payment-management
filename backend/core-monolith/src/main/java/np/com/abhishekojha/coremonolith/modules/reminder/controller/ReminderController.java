@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import np.com.abhishekojha.coremonolith.common.enums.ReminderStatus;
 import np.com.abhishekojha.coremonolith.modules.reminder.dto.ReminderResponse;
+import np.com.abhishekojha.coremonolith.modules.reminder.dto.UpcomingReminderResponse;
 import np.com.abhishekojha.coremonolith.modules.reminder.service.ReminderService;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,16 @@ public class ReminderController {
             @RequestParam(required = false) ReminderStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
         return ResponseEntity.ok(reminderService.list(tenantId, status, pageable));
+    }
+
+    @Operation(summary = "List upcoming reminders",
+            description = "Reminders due to fire within the next N days that haven't been sent or skipped yet")
+    @ApiResponse(responseCode = "200", description = "OK")
+    @GetMapping("/upcoming")
+    public ResponseEntity<List<UpcomingReminderResponse>> listUpcoming(
+            @PathVariable Long tenantId,
+            @RequestParam(defaultValue = "7") int days) {
+        return ResponseEntity.ok(reminderService.listUpcoming(tenantId, days));
     }
 
     @Operation(summary = "List reminders for a specific subscription")
