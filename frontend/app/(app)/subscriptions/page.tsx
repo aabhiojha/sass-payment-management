@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import {
+  SubscriptionCreatedIcon, SubscriptionUpdatedIcon, SubscriptionActivatedIcon, SubscriptionPausedIcon,
+  SubscriptionCancelledIcon, SubscriptionAutoCancelledIcon, SubscriptionDeletedIcon,
+} from "@/components/Icons";
 import SlideOver, { SlideOverField } from "@/components/SlideOver";
 import { addCadence, cadenceLabel } from "@/lib/cadence";
 import SearchSelect, { SearchOption } from "@/components/SearchSelect";
 import Pagination from "@/components/Pagination";
+
+const PAGE_SIZE = 15;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -42,6 +48,7 @@ type HistoryEntry = {
   action: string;
   oldValue: string | null;
   newValue: string | null;
+  description: string | null;
   createdAt: string;
 };
 
@@ -79,10 +86,13 @@ function todayInput() {
 }
 
 const ACTION_LABEL: Record<string, string> = {
-  CREATE:        "Created",
-  UPDATE:        "Updated",
-  STATUS_CHANGE: "Status changed",
-  DELETE:        "Deleted",
+  "SUBSCRIPTION.CREATED":        "Assigned",
+  "SUBSCRIPTION.UPDATED":        "Updated",
+  "SUBSCRIPTION.ACTIVATED":      "Activated",
+  "SUBSCRIPTION.PAUSED":         "Paused",
+  "SUBSCRIPTION.CANCELLED":      "Cancelled",
+  "SUBSCRIPTION.AUTO_CANCELLED": "Auto-cancelled",
+  "SUBSCRIPTION.DELETED":        "Deleted",
 };
 
 function parseStatus(json: string | null): string | null {
@@ -101,7 +111,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
 function StatusBadge({ status }: { status: string }) {
   const s = STATUS_STYLES[status] ?? { bg: "#f3f4f6", color: "#374151" };
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold" style={s}>
+    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style={s}>
       {status.charAt(0) + status.slice(1).toLowerCase()}
     </span>
   );
@@ -195,8 +205,30 @@ function AssignFormFields({ form, onChange, onSearchCustomers, products, plans, 
   );
 }
 
+const STAT_ICONS: Record<string, React.ReactNode> = {
+  total: (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    </svg>
+  ),
+  active: (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="M22 4 12 14.01l-3-3" />
+    </svg>
+  ),
+  paused: (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" />
+    </svg>
+  ),
+  cancelled: (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" />
+    </svg>
+  ),
+};
+
 const STATUS_FILTERS = ["ALL", "ACTIVE", "PAUSED", "CANCELLED"] as const;
-const PAGE_SIZE = 20;
 const EMPTY_ASSIGN: AssignForm = { customerId: "", customerName: "", productId: "", planId: "", customPrice: "", startsAt: todayInput(), endsAt: "", notes: "" };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -228,6 +260,8 @@ export default function SubscriptionsPage() {
   const [editStartsAt, setEditStartsAt] = useState("");
   const [editEndsAt,   setEditEndsAt]   = useState("");
   const [editNotes,    setEditNotes]    = useState("");
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   // Assign panel
   const [assigning,  setAssigning]  = useState(false);
@@ -272,7 +306,7 @@ export default function SubscriptionsPage() {
     });
   }, [token, tid]);
 
-  useEffect(() => { load(); }, [token, user]);
+  useEffect(() => { setPage(0); load(filter, search, 0); }, [token, user]);
 
   // ── Assign form helpers ──────────────────────────────────────────────────
 
@@ -393,8 +427,18 @@ export default function SubscriptionsPage() {
 
   const openDetail = (row: Subscription) => {
     setSelected(row); setEditing(false); setAssigning(false); setFormError(null);
+    setMoreMenuOpen(false);
     setHistory([]); loadHistory(row);
   };
+
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) setMoreMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [moreMenuOpen]);
 
   const startEdit = () => {
     if (!selected) return;
@@ -449,15 +493,15 @@ export default function SubscriptionsPage() {
   const panelOpen = !!selected || assigning;
 
   const stats = [
-    { label: "Total",     value: total          },
-    { label: "Active",    value: activeCount     },
-    { label: "Paused",    value: pausedCount     },
-    { label: "Cancelled", value: cancelledCount  },
+    { label: "Total",     value: total,          icon: STAT_ICONS.total     },
+    { label: "Active",    value: activeCount,    icon: STAT_ICONS.active    },
+    { label: "Paused",    value: pausedCount,    icon: STAT_ICONS.paused    },
+    { label: "Cancelled", value: cancelledCount, icon: STAT_ICONS.cancelled },
   ];
 
   return (
     <>
-      <div className="px-6 py-8 md:px-10 max-w-7xl mx-auto space-y-6" style={{ animation: "fade-in-up 0.2s ease-out both" }}>
+      <div className="px-6 py-8 md:px-10 max-w-7xl mx-auto space-y-6 min-h-full flex flex-col" style={{ animation: "fade-in-up 0.2s ease-out both" }}>
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -480,7 +524,18 @@ export default function SubscriptionsPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((s, i) => (
-            <div key={s.label} className="rounded-xl p-5" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", animation: "fade-in-up 0.2s ease-out both", animationDelay: `${i * 30}ms` }}>
+            <div
+              key={s.label}
+              className="relative overflow-hidden rounded-xl p-5"
+              style={{
+                backgroundColor: s.label === "Active" ? "#f3fbf6" : "var(--bg-card)",
+                border: "1px solid var(--border)",
+                borderTop: s.label === "Active" ? "3px solid #22c55e" : "1px solid var(--border)",
+                animation: "fade-in-up 0.2s ease-out both",
+                animationDelay: `${i * 30}ms`,
+              }}
+            >
+              <div className="absolute -right-2 -bottom-2 opacity-10 text-gray-900">{s.icon}</div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{s.label}</p>
               <p className="text-2xl font-bold text-gray-900 tabular-nums">{loading ? "—" : s.value.toLocaleString()}</p>
             </div>
@@ -519,6 +574,7 @@ export default function SubscriptionsPage() {
         </div>
 
         {/* Table */}
+        <div className="flex-1 min-h-0 flex flex-col">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
             <svg className="animate-spin mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
@@ -532,13 +588,13 @@ export default function SubscriptionsPage() {
             <p className="text-sm">No subscriptions found.</p>
           </div>
         ) : (
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-            <div className="overflow-x-auto">
+          <div className="rounded-xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ border: "1px solid var(--border)" }}>
+            <div className="overflow-auto flex-1 min-h-0">
             <table className="w-full text-sm min-w-[640px]">
-              <thead>
-                <tr style={{ backgroundColor: "var(--bg-card)" }}>
+              <thead className="sticky top-0 z-10">
+                <tr>
                   {["Customer", "Product / Plan", "Amount", "Start date", "End date", "Status", ""].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                    <th key={h} className={`px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${h === "Amount" ? "text-right" : "text-left"}`} style={{ backgroundColor: "var(--bg-card)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -553,16 +609,16 @@ export default function SubscriptionsPage() {
                     <td className="px-4 py-3 font-medium text-gray-900">{row.customerName}</td>
                     <td className="px-4 py-3">
                       <p className="text-gray-900">{row.productName}</p>
-                      {row.productPlanName && <p className="text-xs text-gray-400">{row.productPlanName}</p>}
+                      {row.productPlanName && <p className="text-xs text-gray-500">{row.productPlanName}</p>}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-gray-900 whitespace-nowrap">
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900 whitespace-nowrap tabular-nums">
                       {row.currency} {Number(row.amount).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(row.startsAt)}</td>
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.endsAt ? formatDate(row.endsAt) : <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} /></td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => openDetail(row)} className="text-gray-300 hover:text-gray-500 transition-colors p-1 rounded">
+                      <button onClick={() => openDetail(row)} className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
                       </button>
                     </td>
@@ -573,6 +629,7 @@ export default function SubscriptionsPage() {
             </div>
           </div>
         )}
+        </div>
 
         {!loading && (
           <Pagination
@@ -707,37 +764,61 @@ export default function SubscriptionsPage() {
 
                   {/* Actions */}
                   {isAdmin && (
-                    <div className="px-6 pb-5 pt-2 space-y-3">
-                      {/* Edit + Delete row */}
-                      <div className="flex gap-3">
+                    <div className="px-6 pb-5 pt-2">
+                      <div className="flex items-center gap-2">
+                        {/* Primary action */}
                         <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: "var(--primary)" }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
                           Edit dates & notes
                         </button>
-                        <button onClick={deleteSubscription} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors" style={{ border: "1px solid #fecaca" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
-                          Delete
-                        </button>
-                      </div>
 
-                      {/* Status transitions */}
-                      {(selected.status === "ACTIVE" || selected.status === "PAUSED") && (
-                        <div className="flex gap-2">
-                          {selected.status === "ACTIVE" && (
-                            <button onClick={() => updateStatus("PAUSED")} className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors hover:bg-yellow-50" style={{ color: "#854d0e", border: "1px solid #fde68a" }}>
-                              Pause
-                            </button>
-                          )}
-                          {selected.status === "PAUSED" && (
-                            <button onClick={() => updateStatus("ACTIVE")} className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors hover:bg-green-50" style={{ color: "#166534", border: "1px solid #bbf7d0" }}>
-                              Resume
-                            </button>
-                          )}
-                          <button onClick={() => updateStatus("CANCELLED")} className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors hover:bg-red-50" style={{ color: "#991b1b", border: "1px solid #fecaca" }}>
-                            Cancel subscription
+                        {/* Secondary: status transitions (non-destructive) */}
+                        {selected.status === "ACTIVE" && (
+                          <button onClick={() => updateStatus("PAUSED")} className="text-xs px-3 py-2 rounded-lg font-medium transition-colors hover:bg-yellow-50" style={{ color: "#854d0e", border: "1px solid #fde68a" }}>
+                            Pause
                           </button>
+                        )}
+                        {selected.status === "PAUSED" && (
+                          <button onClick={() => updateStatus("ACTIVE")} className="text-xs px-3 py-2 rounded-lg font-medium transition-colors hover:bg-green-50" style={{ color: "#166534", border: "1px solid #bbf7d0" }}>
+                            Resume
+                          </button>
+                        )}
+
+                        {/* Tertiary: destructive actions, grouped */}
+                        <div className="relative ml-auto" ref={moreMenuRef}>
+                          <button
+                            onClick={() => setMoreMenuOpen((o) => !o)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                          >
+                            More
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                          </button>
+                          {moreMenuOpen && (
+                            <div
+                              className="absolute right-0 top-full mt-1 w-52 rounded-lg overflow-hidden z-10"
+                              style={{ backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", animation: "fade-in 0.12s ease-out both" }}
+                            >
+                              {(selected.status === "ACTIVE" || selected.status === "PAUSED") && (
+                                <button
+                                  onClick={() => { updateStatus("CANCELLED"); setMoreMenuOpen(false); }}
+                                  className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg>
+                                  Cancel subscription
+                                </button>
+                              )}
+                              <button
+                                onClick={() => { setMoreMenuOpen(false); deleteSubscription(); }}
+                                className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                style={{ borderTop: "1px solid var(--border)" }}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                Delete subscription
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
 
@@ -745,7 +826,7 @@ export default function SubscriptionsPage() {
                   {isAdmin && (
                     <div className="px-6 pb-6 pt-2">
                       <div style={{ borderTop: "1px solid var(--border)" }} className="pt-5">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">History</p>
+                        <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">History</p>
                         {historyLoading ? (
                           <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
                             <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
@@ -754,40 +835,32 @@ export default function SubscriptionsPage() {
                         ) : history.length === 0 ? (
                           <p className="text-sm text-gray-400 italic">No history found.</p>
                         ) : (
-                          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr style={{ backgroundColor: "var(--bg-card)", borderBottom: "1px solid var(--border)" }}>
-                                  <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
-                                  <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Detail</th>
-                                  <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">By</th>
-                                  <th className="text-left px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Date</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {history.map((h, i) => {
-                                  const fromStatus = parseStatus(h.oldValue);
-                                  const toStatus   = parseStatus(h.newValue);
-                                  return (
-                                    <tr
-                                      key={h.id}
-                                      style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
-                                    >
-                                      <td className="px-3 py-2.5 font-medium text-gray-800 whitespace-nowrap">
-                                        {ACTION_LABEL[h.action] ?? h.action}
-                                      </td>
-                                      <td className="px-3 py-2.5 text-gray-500 text-xs">
-                                        {h.action === "STATUS_CHANGE" && fromStatus && toStatus
-                                          ? <span>{fromStatus.toLowerCase()} → <span className="font-medium text-gray-700">{toStatus.toLowerCase()}</span></span>
-                                          : "—"}
-                                      </td>
-                                      <td className="px-3 py-2.5 text-gray-500 text-xs truncate max-w-[120px]">{h.actorEmail}</td>
-                                      <td className="px-3 py-2.5 text-gray-500 text-xs whitespace-nowrap">{formatDateTime(h.createdAt)}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                          <div className="space-y-2">
+                            {history.map((h) => {
+                              const SUB_ICON: Record<string, (p?: any) => React.ReactNode> = {
+                                "SUBSCRIPTION.CREATED":      (p) => <SubscriptionCreatedIcon size={16} {...p} />,
+                                "SUBSCRIPTION.UPDATED":      (p) => <SubscriptionUpdatedIcon size={16} {...p} />,
+                                "SUBSCRIPTION.ACTIVATED":    (p) => <SubscriptionActivatedIcon size={16} {...p} />,
+                                "SUBSCRIPTION.PAUSED":       (p) => <SubscriptionPausedIcon size={16} {...p} />,
+                                "SUBSCRIPTION.CANCELLED":    (p) => <SubscriptionCancelledIcon size={16} {...p} />,
+                                "SUBSCRIPTION.AUTO_CANCELLED": (p) => <SubscriptionAutoCancelledIcon size={16} {...p} />,
+                                "SUBSCRIPTION.DELETED":      (p) => <SubscriptionDeletedIcon size={16} {...p} />,
+                              };
+                              const SubIcon = SUB_ICON[h.action];
+                              return (
+                                <div key={h.id} className="flex gap-2.5 px-1 py-1.5 rounded-lg hover:bg-[#f3f6f3] transition-colors">
+                                  <span className="flex-shrink-0 mt-0.5" style={{ color: "var(--primary)" }}>
+                                    {SubIcon ? <SubIcon /> : null}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-800 leading-snug">{h.description ?? ACTION_LABEL[h.action] ?? h.action}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                      {h.actorEmail} · {formatDateTime(h.createdAt)}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
