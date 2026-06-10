@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import SlideOver, { SlideOverField } from "@/components/SlideOver";
 import Pagination from "@/components/Pagination";
+import { addCadence } from "@/lib/cadence";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ type Product = {
   price: number;
   currency: string;
   status: string;
+  billingCadence: string;
 };
 
 type Plan = {
@@ -47,6 +49,7 @@ type Plan = {
   name: string;
   price: number;
   currency: string;
+  billingCadence: string;
 };
 
 const SUBSCRIPTION_STATUSES = ["ACTIVE", "PAUSED", "CANCELLED"] as const;
@@ -264,10 +267,25 @@ function SubscriptionModal({
   const [closing, setClosing] = useState(false);
   const close = () => { setClosing(true); setTimeout(onClose, 150); };
 
+  // Auto-fill "Ends At" from "Starts At" + the selected plan's (or product's) billing
+  // cadence, until the user manually edits the field.
+  const [endsAtAuto, setEndsAtAuto] = useState(mode === "create");
+
+  useEffect(() => {
+    if (mode !== "create" || !endsAtAuto || !form.startsAt) return;
+    const cadence = plans.find((p) => p.id === form.planId)?.billingCadence
+      ?? products.find((p) => p.id === form.productId)?.billingCadence;
+    if (!cadence) return;
+    const next = addCadence(form.startsAt, cadence);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const value = `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T${pad(next.getHours())}:${pad(next.getMinutes())}`;
+    setForm((f) => (f.endsAt === value ? f : { ...f, endsAt: value }));
+  }, [mode, endsAtAuto, form.startsAt, form.productId, form.planId, products, plans, setForm]);
+
   return (
     <div
       className="absolute inset-0 z-10 flex items-center justify-center p-5"
-      style={{ backgroundColor: "rgba(0,0,0,0.32)", backdropFilter: "blur(4px)", animation: closing ? "fade-out 0.15s ease-out both" : "fade-in 0.15s ease-out both" }}
+      style={{ backgroundColor: "rgba(0,0,0,0.08)", animation: closing ? "fade-out 0.15s ease-out both" : "fade-in 0.15s ease-out both" }}
       onClick={close}
     >
       <div
@@ -343,8 +361,11 @@ function SubscriptionModal({
                 type="datetime-local"
                 className={inputCls} style={inputStyle}
                 value={form.endsAt}
-                onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
+                onChange={(e) => { setEndsAtAuto(false); setForm((f) => ({ ...f, endsAt: e.target.value })); }}
               />
+              {mode === "create" && endsAtAuto && form.endsAt && (
+                <p className="text-xs text-gray-400 mt-1">Auto-set from billing cadence</p>
+              )}
             </div>
           </div>
 

@@ -24,3 +24,17 @@ export function cadenceBadgeStyle(c: string): { backgroundColor: string; color: 
   const color = CADENCE_COLORS[c] ?? { bg: "#f3f4f6", text: "#6b7280" };
   return { backgroundColor: color.bg, color: color.text };
 }
+
+/** Returns a new date offset from `date` by one billing cycle of `cadence`. */
+export function addCadence(date: Date | string, cadence: string): Date {
+  const d = new Date(date);
+  switch (cadence) {
+    case "WEEKLY":       d.setDate(d.getDate() + 7); break;
+    case "FORTNIGHT":    d.setDate(d.getDate() + 14); break;
+    case "MONTHLY":      d.setMonth(d.getMonth() + 1); break;
+    case "QUARTERLY":    d.setMonth(d.getMonth() + 3); break;
+    case "SEMIANNUALLY": d.setMonth(d.getMonth() + 6); break;
+    case "ANNUALLY":     d.setFullYear(d.getFullYear() + 1); break;
+  }
+  return d;
+}
