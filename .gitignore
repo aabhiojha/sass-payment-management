@@ -42,3 +42,6 @@ application-dev.yaml
 
 # Runtime logs
 backend/core-monolith/logs/
+
+# Next.js build output
+.next/

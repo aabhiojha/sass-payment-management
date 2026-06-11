@@ -43,14 +43,15 @@ function NavLink({
   return (
     <Link
       href={item.href}
-      className="flex items-center gap-3 pl-[7px] pr-2 py-1.5 rounded-sm text-sm font-medium mb-0.5 transition-colors hover:bg-[#e3eef2]"
+      aria-current={isActive ? "page" : undefined}
+      className="flex items-center gap-3 px-3 py-2 rounded-full text-sm font-medium mb-0.5 transition-all duration-300 ease-emphasized hover:bg-md-primary/10 active:scale-95"
       style={
         isActive
-          ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)", borderLeft: "3px solid var(--primary)" }
-          : { color: "#4b4b4b", borderLeft: "3px solid transparent" }
+          ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
+          : { color: "#49454F" }
       }
     >
-      <span style={isActive ? { color: "var(--nav-active-text)" } : { color: "#111111" }}>
+      <span style={{ color: isActive ? "var(--nav-active-text)" : "#49454F" }}>
         {item.icon}
       </span>
       {item.label}
@@ -110,28 +111,28 @@ export default function Sidebar() {
   return (
     <aside
       className="flex-shrink-0 h-full flex flex-col relative"
-      style={{ width, backgroundColor: "#f3f8fa", borderRight: "1px solid var(--border)" }}
+      style={{ width, backgroundColor: "var(--bg-card)" }}
     >
       {/* Resize handle */}
       <div
         onMouseDown={onMouseDown}
-        className="absolute top-0 right-0 w-1 h-full z-10 cursor-col-resize transition-colors hover:bg-[#dcebf2]"
+        className="absolute top-0 right-0 w-1 h-full z-10 cursor-col-resize transition-colors hover:bg-md-primary/20"
         style={{ marginRight: "-1px" }}
       />
 
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2">
-          <PayNextLogo size={30} color="#197caf" />
+          <PayNextLogo size={30} color="var(--primary)" />
           <span className="font-bold text-xl text-gray-900">PayNext</span>
         </div>
       </div>
 
       {/* Role context banner for super admin */}
       {isAdmin && (
-        <div className="mx-3 mb-2 px-3 py-1.5 rounded-lg flex items-center gap-2" style={{ backgroundColor: "#e3f0f7", border: "1px solid #cde4f0" }}>
-          <ShieldIcon size={13} color="#14638b" />
-          <span className="text-xs font-semibold" style={{ color: "#14638b" }}>Platform Super Admin</span>
+        <div className="mx-3 mb-2 px-3 py-1.5 rounded-full flex items-center gap-2 bg-md-secondary-container">
+          <ShieldIcon size={13} color="#1D192B" />
+          <span className="text-xs font-medium text-md-on-secondary-container">Platform Super Admin</span>
         </div>
       )}
 
@@ -162,7 +163,7 @@ export default function Sidebar() {
       <div className="px-3 pb-1">
         <Link
           href="/profile"
-          className="flex items-center gap-2.5 px-2 py-2 rounded-lg transition-colors hover:bg-[#e3eef2] group"
+          className="flex items-center gap-2.5 px-2.5 py-2 rounded-full transition-all duration-300 ease-emphasized hover:bg-md-primary/10 active:scale-95 group"
           style={pathname === "/profile" ? { backgroundColor: "var(--nav-active)" } : {}}
         >
           <div
@@ -178,7 +179,7 @@ export default function Sidebar() {
           <div className="min-w-0 flex-1">
             <p
               className="text-xs font-semibold truncate leading-tight"
-              style={pathname === "/profile" ? { color: "var(--nav-active-text)" } : { color: "#111" }}
+              style={pathname === "/profile" ? { color: "var(--nav-active-text)" } : { color: "#1C1B1F" }}
             >
               {user?.fullName || user?.email?.split("@")[0] || "My profile"}
             </p>
@@ -191,7 +192,7 @@ export default function Sidebar() {
       <div className="px-3 pb-3 pt-0.5">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-full text-sm font-medium text-gray-600 hover:bg-md-error-container hover:text-md-error transition-all duration-300 ease-emphasized active:scale-95"
           title="Sign out"
         >
           <LogoutIcon size={18} />

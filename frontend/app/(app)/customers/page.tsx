@@ -185,7 +185,7 @@ function SortIcon() {
 }
 
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
-  return <div onMouseDown={onMouseDown} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-blue-200 transition-colors" />;
+  return <div onMouseDown={onMouseDown} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-md-primary/20 transition-colors" />;
 }
 
 const ColIcon = {
@@ -206,9 +206,9 @@ const TABLE_HEADERS: { label: string; icon?: React.ReactNode; sortable?: boolean
 
 const STATUS_FILTERS = ["ALL", "ACTIVE", "DELETED"] as const;
 
-const inputCls   = "w-full text-sm px-3 py-2 rounded-lg outline-none";
-const inputStyle = { border: "1px solid var(--border)", backgroundColor: "#fff" };
-const labelCls   = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1";
+const inputCls   = "w-full text-sm px-4 h-11 rounded-t-[12px] rounded-b-none outline-none transition-colors duration-200";
+const inputStyle = { borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" };
+const labelCls   = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
 
 type FormFieldsProps = {
   name: string; onName: (v: string) => void;
@@ -292,7 +292,7 @@ function SubscriptionModal({
     >
       <div
         className="w-full rounded-2xl overflow-hidden flex flex-col"
-        style={{ maxWidth: "440px", maxHeight: "85dvh", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: closing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        style={{ maxWidth: "440px", maxHeight: "85dvh", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: closing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -385,11 +385,11 @@ function SubscriptionModal({
         </div>
 
         <div className="px-6 py-4 flex gap-3 flex-shrink-0" style={{ borderTop: "1px solid var(--border)" }}>
-          <button onClick={close} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+          <button onClick={close} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
           <button
             onClick={onSubmit}
             disabled={saving || (mode === "create" && !form.productId)}
-            className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60"
+            className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60"
             style={{ backgroundColor: "var(--primary)" }}
           >
             {saving ? "Saving…" : mode === "create" ? "Add Subscription" : "Save Changes"}
@@ -676,7 +676,7 @@ export default function CustomersPage() {
           {isAdmin && (
             <button
               onClick={openCreate}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95"
               style={{ backgroundColor: "var(--primary)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -694,7 +694,7 @@ export default function CustomersPage() {
                 onClick={() => { setFilter(f); setPage(0); load(f, search, 0); }}
                 className="text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
                 style={filter === f
-                  ? { backgroundColor: "#fff", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }
+                  ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                   : { color: "#6b7280" }}
               >
                 {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
@@ -710,8 +710,8 @@ export default function CustomersPage() {
               placeholder="Search customers…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); load(filter, e.target.value, 0); }}
-              className="w-full text-sm pl-9 pr-3 py-2 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#eceeec" }}
+              className="w-full text-sm pl-9 pr-4 py-2 rounded-full outline-none transition-colors duration-200"
+              style={{ border: "1px solid transparent", backgroundColor: "var(--bg-search)" }}
             />
           </div>
         </div>
@@ -749,8 +749,8 @@ export default function CustomersPage() {
                   {customers.map((c, i) => (
                     <tr
                       key={c.id}
-                      className="group cursor-pointer hover:bg-[#eef3ee] transition-colors"
-                      style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === c.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                      className="group cursor-pointer hover:bg-md-primary/5 transition-colors"
+                      style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === c.id ? "var(--nav-active)" : "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                       onClick={() => openCustomer(c)}
                     >
                       <td className="px-4 py-3 text-sm font-semibold text-gray-900 truncate overflow-hidden">{c.name}</td>
@@ -788,7 +788,7 @@ export default function CustomersPage() {
 
         {creating ? (
           <>
-            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fff" }}>
+            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-app)" }}>
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-bold text-gray-900">New Customer</h2>
                 <button onClick={closePanel} className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5">
@@ -800,8 +800,8 @@ export default function CustomersPage() {
               <FormFields name={editName} onName={setEditName} email={editEmail} onEmail={setEditEmail} phone={editPhone} onPhone={setEditPhone} address={editAddress} onAddress={setEditAddress} notes={editNotes} onNotes={setEditNotes} error={formError} />
             </div>
             <div className="px-6 py-4 flex gap-3" style={{ borderTop: "1px solid var(--border)" }}>
-              <button onClick={closePanel} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-              <button onClick={createCustomer} disabled={saving} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
+              <button onClick={closePanel} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+              <button onClick={createCustomer} disabled={saving} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
                 {saving ? "Creating…" : "Create Customer"}
               </button>
             </div>
@@ -810,7 +810,7 @@ export default function CustomersPage() {
         ) : selected ? (
           <>
             {/* Header */}
-            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fff" }}>
+            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-app)" }}>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   {editing && (
@@ -833,8 +833,8 @@ export default function CustomersPage() {
                 <div className="px-6 py-5">
                   <FormFields name={editName} onName={setEditName} email={editEmail} onEmail={setEditEmail} phone={editPhone} onPhone={setEditPhone} address={editAddress} onAddress={setEditAddress} notes={editNotes} onNotes={setEditNotes} error={formError} />
                   <div className="flex gap-3 pt-4 mt-4" style={{ borderTop: "1px solid var(--border)" }}>
-                    <button onClick={() => setEditing(false)} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-                    <button onClick={saveEdit} disabled={saving} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>{saving ? "Saving…" : "Save"}</button>
+                    <button onClick={() => setEditing(false)} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+                    <button onClick={saveEdit} disabled={saving} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>{saving ? "Saving…" : "Save"}</button>
                   </div>
                 </div>
               ) : (
@@ -851,11 +851,11 @@ export default function CustomersPage() {
                   {/* Action buttons */}
                   {isAdmin && (
                     <div className="px-6 pb-5 pt-2 flex gap-3">
-                      <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: "var(--primary)" }}>
+                      <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95" style={{ backgroundColor: "var(--primary)" }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
                         Edit customer
                       </button>
-                      <button onClick={deleteCustomer} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors" style={{ border: "1px solid #fecaca" }}>
+                      <button onClick={deleteCustomer} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-md-error hover:bg-md-error-container active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid #fecaca" }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
                         Delete
                       </button>
@@ -870,7 +870,7 @@ export default function CustomersPage() {
                       <h3 className="text-base font-semibold text-gray-900">Subscriptions</h3>
                       <button
                         onClick={openAddSubscription}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-white active:scale-95"
                         style={{ backgroundColor: "var(--primary)" }}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -901,8 +901,8 @@ export default function CustomersPage() {
                                 <React.Fragment key={s.id}>
                                   <tr
                                     onClick={() => toggleExpand(s.id)}
-                                    className="cursor-pointer hover:bg-[#eef3ee] transition-colors"
-                                    style={{ borderTop: "1px solid var(--border)", backgroundColor: expandedSubId === s.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                                    className="cursor-pointer hover:bg-md-primary/5 transition-colors"
+                                    style={{ borderTop: "1px solid var(--border)", backgroundColor: expandedSubId === s.id ? "var(--nav-active)" : "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                                   >
                                     <td className="px-4 py-3">
                                       <div className="flex items-center gap-2">
@@ -957,7 +957,7 @@ export default function CustomersPage() {
                                   {expandedSubId === s.id && (
                                     <tr>
                                       <td colSpan={5} className="px-0 py-0" style={{ borderTop: "1px solid var(--border)" }}>
-                                        <div className="px-6 py-4" style={{ backgroundColor: "#f8faf8" }}>
+                                        <div className="px-6 py-4" style={{ backgroundColor: "var(--bg-app)" }}>
                                           {remLoading ? (
                                             <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
                                               <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>

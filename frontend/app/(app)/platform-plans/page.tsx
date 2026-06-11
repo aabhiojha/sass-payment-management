@@ -100,7 +100,7 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   return (
     <div
       onMouseDown={onMouseDown}
-      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#bcd9e8] transition-colors"
+      className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-md-primary/20 transition-colors"
     />
   );
 }
@@ -166,7 +166,7 @@ function PlanModal({
 
   const modal = (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.18)" }}>
-      <div className="rounded-xl shadow-2xl w-full max-w-md mx-4 p-7" style={{ backgroundColor: "#f8faf8", border: "1px solid var(--border)" }}>
+      <div className="rounded-xl shadow-2xl w-full max-w-md mx-4 p-7" style={{ backgroundColor: "var(--bg-app)", border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-gray-900">{mode === "create" ? "Create Plan" : "Edit Plan"}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -184,7 +184,7 @@ function PlanModal({
               onChange={(e) => set("name", e.target.value)}
               placeholder="e.g. Growth Monthly"
               className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+              style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
             />
           </div>
 
@@ -196,7 +196,7 @@ function PlanModal({
               placeholder="Short description shown to tenants"
               rows={2}
               className="w-full text-sm px-3 py-2 rounded-lg outline-none resize-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+              style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
             />
           </div>
 
@@ -209,7 +209,7 @@ function PlanModal({
                 onChange={(e) => set("price", e.target.value)}
                 placeholder="0.00"
                 className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
               />
             </div>
             <div>
@@ -218,7 +218,7 @@ function PlanModal({
                 value={form.currency}
                 onChange={(e) => set("currency", e.target.value)}
                 className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
               >
                 {["USD", "EUR", "GBP", "NPR", "AUD", "CAD"].map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -233,7 +233,7 @@ function PlanModal({
               value={form.billingCadence}
               onChange={(e) => set("billingCadence", e.target.value)}
               className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+              style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
             >
               {Object.entries(cadenceLabel).map(([v, label]) => (
                 <option key={v} value={v}>{label}</option>
@@ -254,7 +254,7 @@ function PlanModal({
           <button
             onClick={() => { if (form.name && form.price) onSubmit(form); }}
             disabled={saving || !form.name || !form.price}
-            className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
             style={{ backgroundColor: "var(--primary)", opacity: saving ? 0.7 : 1 }}
           >
             {saving && (
@@ -297,7 +297,7 @@ function PlansTable({ data, onSelect }: { data: Plan[]; onSelect: (p: Plan) => v
               <tr
                 key={row.id}
                 onClick={() => onSelect(row)}
-                className="group bg-[#f8faf8] hover:bg-[#eef3ee] transition-colors cursor-pointer"
+                className="group bg-md-surface hover:bg-md-primary/5 transition-colors cursor-pointer"
                 style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms`, opacity: row.status === "ARCHIVED" ? 0.65 : 1 }}
               >
                 <td className="px-4 py-3 text-sm font-semibold text-gray-900 truncate overflow-hidden">{row.name}</td>
@@ -453,7 +453,7 @@ function PlanSidebar({
               ) : (
                 <div className="space-y-1">
                   {tenants.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between py-1.5 px-2 rounded-md" style={{ backgroundColor: "#f8faf8" }}>
+                    <div key={t.id} className="flex items-center justify-between py-1.5 px-2 rounded-md" style={{ backgroundColor: "var(--bg-app)" }}>
                       <span className="text-sm font-medium text-gray-800">{t.name}</span>
                       <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${t.status === "ACTIVE" ? "text-green-700 bg-green-100" : t.status === "SUSPENDED" ? "text-yellow-700 bg-yellow-100" : "text-gray-500 bg-gray-100"}`}>
                         {t.status.charAt(0) + t.status.slice(1).toLowerCase()}
@@ -475,7 +475,7 @@ function PlanSidebar({
                 onChange={(e) => set("name", e.target.value)}
                 placeholder="e.g. Growth Monthly"
                 className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
               />
             </div>
             <div>
@@ -486,7 +486,7 @@ function PlanSidebar({
                 placeholder="Short description shown to tenants"
                 rows={2}
                 className="w-full text-sm px-3 py-2 rounded-lg outline-none resize-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -498,7 +498,7 @@ function PlanSidebar({
                   onChange={(e) => set("price", e.target.value)}
                   placeholder="0.00"
                   className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                  style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                  style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                 />
               </div>
               <div>
@@ -507,7 +507,7 @@ function PlanSidebar({
                   value={form.currency}
                   onChange={(e) => set("currency", e.target.value)}
                   className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                  style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                  style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                 >
                   {["USD", "EUR", "GBP", "NPR", "AUD", "CAD"].map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -521,7 +521,7 @@ function PlanSidebar({
                 value={form.billingCadence}
                 onChange={(e) => set("billingCadence", e.target.value)}
                 className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
               >
                 {cadenceOptions.map(([v, label]) => (
                   <option key={v} value={v}>{label}</option>
@@ -540,7 +540,7 @@ function PlanSidebar({
               <button
                 onClick={() => { if (form.name && form.price) onSave(form); }}
                 disabled={saving || !form.name || !form.price}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                 style={{ backgroundColor: "var(--primary)", opacity: saving ? 0.7 : 1 }}
               >
                 {saving && (
@@ -657,7 +657,7 @@ export default function PlatformPlansPage() {
           {(["ALL", "ACTIVE", "ARCHIVED"] as const).map((s) => (
             <button key={s} onClick={() => setFilterStatus(s)} className="text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
               style={filterStatus === s
-                ? { backgroundColor: "#fff", color: "var(--primary)", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                 : { color: "#6b7280" }}>
               {s === "ALL" ? "All" : s === "ACTIVE" ? "Active" : "Archived"}
             </button>

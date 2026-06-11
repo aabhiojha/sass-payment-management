@@ -290,7 +290,7 @@ export default function UsersPage() {
           {isAdmin && (
             <button
               onClick={() => { setInviteEmail(""); setInviteError(null); setInviteSuccess(null); setInviteDialogOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95"
               style={{ backgroundColor: "var(--primary)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -307,9 +307,9 @@ export default function UsersPage() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className="text-xs font-semibold px-3 py-1.5 rounded-md transition-all capitalize"
+                className="text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-300 ease-emphasized active:scale-95 capitalize"
                 style={tab === t
-                  ? { backgroundColor: "#fff", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }
+                  ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                   : { color: "#6b7280" }}
               >
                 {t === "invitations" ? `Invitations${pendingInvites > 0 ? ` (${pendingInvites})` : ""}` : "Users"}
@@ -349,8 +349,8 @@ export default function UsersPage() {
                       {users.map((u, i) => (
                         <tr
                           key={u.id}
-                          className="group cursor-pointer hover:bg-[#eef3ee] transition-colors"
-                          style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === u.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                          className="group cursor-pointer hover:bg-md-primary/5 transition-colors"
+                          style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === u.id ? "var(--nav-active)" : "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                           onClick={() => { setSelected(u); setActionError(null); }}
                         >
                           <td className="px-4 py-3">
@@ -407,7 +407,7 @@ export default function UsersPage() {
               {isAdmin && (
                 <button
                   onClick={() => { setInviteEmail(""); setInviteError(null); setInviteSuccess(null); setInviteDialogOpen(true); }}
-                  className="mt-3 text-sm font-semibold px-4 py-2 rounded-lg text-white"
+                  className="mt-3 text-sm font-medium px-4 py-2 rounded-full text-white active:scale-95"
                   style={{ backgroundColor: "var(--primary)" }}
                 >
                   Send first invite
@@ -431,8 +431,8 @@ export default function UsersPage() {
                       return (
                         <tr
                           key={inv.id}
-                          className="hover:bg-[#eef3ee] transition-colors"
-                          style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                          className="hover:bg-md-primary/5 transition-colors"
+                          style={{ borderTop: "1px solid var(--border)", backgroundColor: "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                         >
                           <td className="px-4 py-3 font-medium text-gray-900">{inv.email}</td>
                           <td className="px-4 py-3">{roleBadge(inv.role)}</td>
@@ -479,7 +479,7 @@ export default function UsersPage() {
         {selected && (
           <>
             {/* Header */}
-            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fff" }}>
+            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-app)" }}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar name={selected.fullName} email={selected.email} role={selected.role} />
@@ -524,7 +524,7 @@ export default function UsersPage() {
                     <button
                       onClick={() => changeRole(selected)}
                       disabled={acting}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60"
+                      className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95 disabled:opacity-60"
                       style={{ backgroundColor: "var(--primary)" }}
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -537,7 +537,7 @@ export default function UsersPage() {
                       <button
                         onClick={() => disableUser(selected)}
                         disabled={acting}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium disabled:opacity-60 active:scale-95 transition-all duration-300 ease-emphasized"
                         style={{ color: "#854d0e", border: "1px solid #fde68a" }}
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -552,7 +552,7 @@ export default function UsersPage() {
                   <button
                     onClick={() => deleteUser(selected)}
                     disabled={acting}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-md-error hover:bg-md-error-container active:scale-95 transition-all duration-300 ease-emphasized disabled:opacity-60"
                     style={{ border: "1px solid #fecaca" }}
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -577,7 +577,7 @@ export default function UsersPage() {
           <>
             <button
               onClick={() => { setInviteDialogOpen(false); setInviteSuccess(null); setInviteError(null); }}
-              className="flex-1 py-2.5 text-sm font-medium rounded-lg text-gray-600"
+              className="flex-1 py-2.5 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized"
               style={{ border: "1px solid var(--border)" }}
             >
               {inviteSuccess ? "Close" : "Cancel"}
@@ -586,7 +586,7 @@ export default function UsersPage() {
               <button
                 onClick={sendInvite}
                 disabled={inviting || !inviteEmail.trim()}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white disabled:opacity-60 flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
                 style={{ backgroundColor: "var(--primary)" }}
               >
                 {inviting && (
@@ -611,7 +611,7 @@ export default function UsersPage() {
             <p className="text-sm text-gray-500 mt-1">{inviteSuccess}</p>
             <button
               onClick={() => { setInviteSuccess(null); setInviteEmail(""); }}
-              className="mt-4 text-sm font-semibold px-4 py-1.5 rounded-lg"
+              className="mt-4 text-sm font-medium px-4 py-1.5 rounded-full active:scale-95"
               style={{ color: "var(--primary)", border: "1px solid var(--primary)" }}
             >
               Invite another
@@ -628,9 +628,9 @@ export default function UsersPage() {
                     key={r}
                     type="button"
                     onClick={() => setInviteRole(r)}
-                    className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all capitalize"
+                    className="flex-1 py-1.5 text-xs font-medium rounded-full transition-all duration-300 ease-emphasized active:scale-95 capitalize"
                     style={inviteRole === r
-                      ? { backgroundColor: "#fff", color: "var(--primary)", boxShadow: "0 1px 3px rgba(0,0,0,0.10)" }
+                      ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                       : { color: "#6b7280" }}
                   >
                     {r === "admin" ? "Admin" : "Member"}
@@ -654,8 +654,8 @@ export default function UsersPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendInvite()}
                 placeholder="colleague@company.com"
-                className="w-full text-sm px-3 py-2.5 rounded-lg outline-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                className="w-full text-sm px-4 h-12 rounded-t-[12px] rounded-b-none outline-none transition-colors duration-200"
+                style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
               />
             </div>
 

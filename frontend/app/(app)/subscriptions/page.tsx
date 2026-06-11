@@ -118,9 +118,9 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-const inputCls   = "w-full text-sm px-3 py-2 rounded-lg outline-none";
-const inputStyle = { border: "1px solid var(--border)", backgroundColor: "#fff" };
-const labelCls   = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1";
+const inputCls   = "w-full text-sm px-4 h-11 rounded-t-[12px] rounded-b-none outline-none transition-colors duration-200";
+const inputStyle = { borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" };
+const labelCls   = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
 
 type AssignFormFieldsProps = {
   form:              AssignForm;
@@ -135,7 +135,7 @@ type AssignFormFieldsProps = {
 };
 
 function AssignFormFields({ form, onChange, onSearchCustomers, products, plans, plansLoading, onCreatePlan, error, endsAtAuto }: AssignFormFieldsProps) {
-  const selectCls = `${inputCls} bg-white`;
+  const selectCls = `${inputCls}`;
   return (
     <div className="space-y-4">
       <div>
@@ -173,7 +173,7 @@ function AssignFormFields({ form, onChange, onSearchCustomers, products, plans, 
                   </option>
                 ))}
               </select>
-              <button type="button" onClick={onCreatePlan} className="flex-shrink-0 px-3 py-2 rounded-lg text-sm font-semibold text-white whitespace-nowrap" style={{ backgroundColor: "var(--primary)" }}>
+              <button type="button" onClick={onCreatePlan} className="flex-shrink-0 px-3 py-2 rounded-full text-sm font-medium text-white active:scale-95 whitespace-nowrap" style={{ backgroundColor: "var(--primary)" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
               </button>
             </div>
@@ -513,7 +513,7 @@ export default function SubscriptionsPage() {
           {isAdmin && (
             <button
               onClick={openAssign}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95"
               style={{ backgroundColor: "var(--primary)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -552,7 +552,7 @@ export default function SubscriptionsPage() {
                 onClick={() => { setFilter(f); setPage(0); load(f, search, 0); }}
                 className="text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
                 style={filter === f
-                  ? { backgroundColor: "#fff", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }
+                  ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                   : { color: "#6b7280" }}
               >
                 {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
@@ -568,8 +568,8 @@ export default function SubscriptionsPage() {
               placeholder="Search customer or product…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); load(filter, e.target.value, 0); }}
-              className="w-full text-sm pl-9 pr-3 py-2 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#eceeec" }}
+              className="w-full text-sm pl-9 pr-4 py-2 rounded-full outline-none transition-colors duration-200"
+              style={{ border: "1px solid transparent", backgroundColor: "var(--bg-search)" }}
             />
           </div>
         </div>
@@ -603,8 +603,8 @@ export default function SubscriptionsPage() {
                 {rows.map((row, i) => (
                   <tr
                     key={row.id}
-                    className="group cursor-pointer hover:bg-[#eef3ee] transition-colors"
-                    style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === row.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                    className="group cursor-pointer hover:bg-md-primary/5 transition-colors"
+                    style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === row.id ? "var(--nav-active)" : "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                     onClick={() => openDetail(row)}
                   >
                     <td className="px-4 py-3 font-medium text-gray-900">{row.customerName}</td>
@@ -649,7 +649,7 @@ export default function SubscriptionsPage() {
         {/* ── Assign form ─────────────────────────────────────────────────── */}
         {assigning && (
           <>
-            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fff" }}>
+            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-app)" }}>
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-bold text-gray-900">Assign Subscription</h2>
                 <button onClick={closePanel} className="text-gray-400 hover:text-gray-600 transition-colors mt-0.5">
@@ -669,8 +669,8 @@ export default function SubscriptionsPage() {
               />
             </div>
             <div className="px-6 py-4 flex gap-3 flex-shrink-0" style={{ borderTop: "1px solid var(--border)" }}>
-              <button onClick={closePanel} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-              <button onClick={submitAssign} disabled={saving} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
+              <button onClick={closePanel} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+              <button onClick={submitAssign} disabled={saving} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
                 {saving ? "Assigning…" : "Assign"}
               </button>
             </div>
@@ -684,7 +684,7 @@ export default function SubscriptionsPage() {
                 >
                   <div
                     className="w-full rounded-2xl overflow-hidden"
-                    style={{ maxWidth: "360px", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: planCreateClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+                    style={{ maxWidth: "360px", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: planCreateClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -719,8 +719,8 @@ export default function SubscriptionsPage() {
                       {formError && <p className="text-sm text-red-600">{formError}</p>}
                     </div>
                     <div className="px-5 py-4 flex gap-3" style={{ borderTop: "1px solid var(--border)" }}>
-                      <button onClick={() => { setPlanCreateClosing(true); setTimeout(() => { setPlanCreateOpen(false); setPlanCreateClosing(false); setFormError(null); }, 160); }} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-                      <button onClick={createPlan} disabled={saving || !newPlanName.trim() || !newPlanPrice} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
+                      <button onClick={() => { setPlanCreateClosing(true); setTimeout(() => { setPlanCreateOpen(false); setPlanCreateClosing(false); setFormError(null); }, 160); }} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+                      <button onClick={createPlan} disabled={saving || !newPlanName.trim() || !newPlanPrice} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
                         {saving ? "Creating…" : "Create"}
                       </button>
                     </div>
@@ -734,7 +734,7 @@ export default function SubscriptionsPage() {
         {selected && (
           <>
             {/* Header */}
-            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fff" }}>
+            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-app)" }}>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold text-gray-900">{selected.customerName}</h2>
@@ -768,19 +768,19 @@ export default function SubscriptionsPage() {
                     <div className="px-6 pb-5 pt-2">
                       <div className="flex items-center gap-2">
                         {/* Primary action */}
-                        <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white" style={{ backgroundColor: "var(--primary)" }}>
+                        <button onClick={startEdit} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95" style={{ backgroundColor: "var(--primary)" }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
                           Edit dates & notes
                         </button>
 
                         {/* Secondary: status transitions (non-destructive) */}
                         {selected.status === "ACTIVE" && (
-                          <button onClick={() => updateStatus("PAUSED")} className="text-xs px-3 py-2 rounded-lg font-medium transition-colors hover:bg-yellow-50" style={{ color: "#854d0e", border: "1px solid #fde68a" }}>
+                          <button onClick={() => updateStatus("PAUSED")} className="text-xs px-3 py-2 rounded-full font-medium transition-colors hover:bg-yellow-50" style={{ color: "#854d0e", border: "1px solid #fde68a" }}>
                             Pause
                           </button>
                         )}
                         {selected.status === "PAUSED" && (
-                          <button onClick={() => updateStatus("ACTIVE")} className="text-xs px-3 py-2 rounded-lg font-medium transition-colors hover:bg-green-50" style={{ color: "#166534", border: "1px solid #bbf7d0" }}>
+                          <button onClick={() => updateStatus("ACTIVE")} className="text-xs px-3 py-2 rounded-full font-medium transition-colors hover:bg-green-50" style={{ color: "#166534", border: "1px solid #bbf7d0" }}>
                             Resume
                           </button>
                         )}
@@ -789,7 +789,7 @@ export default function SubscriptionsPage() {
                         <div className="relative ml-auto" ref={moreMenuRef}>
                           <button
                             onClick={() => setMoreMenuOpen((o) => !o)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-md-primary/10 active:scale-95 transition-all duration-300 ease-emphasized"
                           >
                             More
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
@@ -797,7 +797,7 @@ export default function SubscriptionsPage() {
                           {moreMenuOpen && (
                             <div
                               className="absolute right-0 top-full mt-1 w-52 rounded-lg overflow-hidden z-10"
-                              style={{ backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", animation: "fade-in 0.12s ease-out both" }}
+                              style={{ backgroundColor: "var(--bg-app)", boxShadow: "0 8px 24px rgba(28,27,31,0.14)", animation: "fade-in 0.12s ease-out both" }}
                             >
                               {(selected.status === "ACTIVE" || selected.status === "PAUSED") && (
                                 <button
@@ -849,7 +849,7 @@ export default function SubscriptionsPage() {
                               };
                               const SubIcon = SUB_ICON[h.action];
                               return (
-                                <div key={h.id} className="flex gap-2.5 px-1 py-1.5 rounded-lg hover:bg-[#f3f6f3] transition-colors">
+                                <div key={h.id} className="flex gap-2.5 px-1 py-1.5 rounded-lg hover:bg-md-primary/5 transition-colors">
                                   <span className="flex-shrink-0 mt-0.5" style={{ color: "var(--primary)" }}>
                                     {SubIcon ? <SubIcon /> : null}
                                   </span>
@@ -879,7 +879,7 @@ export default function SubscriptionsPage() {
               >
                 <div
                   className="w-full rounded-2xl overflow-hidden"
-                  style={{ maxWidth: "400px", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: editClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+                  style={{ maxWidth: "400px", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: editClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -906,8 +906,8 @@ export default function SubscriptionsPage() {
                     {formError && <p className="text-sm text-red-600">{formError}</p>}
                   </div>
                   <div className="px-5 py-4 flex gap-3" style={{ borderTop: "1px solid var(--border)" }}>
-                    <button onClick={closeEdit} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-                    <button onClick={saveEdit} disabled={saving} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>{saving ? "Saving…" : "Save"}</button>
+                    <button onClick={closeEdit} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+                    <button onClick={saveEdit} disabled={saving} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>{saving ? "Saving…" : "Save"}</button>
                   </div>
                 </div>
               </div>

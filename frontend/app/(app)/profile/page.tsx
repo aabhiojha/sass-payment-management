@@ -204,10 +204,10 @@ export default function ProfilePage() {
                     onChange={(e) => { setFullName(e.target.value); setSaveError(null); }}
                     maxLength={100}
                     placeholder="Your full name"
-                    className="w-full text-sm px-3 py-2 rounded-lg outline-none"
+                    className="w-full text-sm px-4 py-2 rounded-t-[12px] rounded-b-none outline-none"
                     style={{
-                      border: "1.5px solid var(--primary)",
-                      backgroundColor: "var(--bg-app)",
+                      borderBottom: "2px solid var(--primary)",
+                      backgroundColor: "var(--bg-search)",
                       color: "var(--foreground)",
                     }}
                     onKeyDown={(e) => {

@@ -91,7 +91,7 @@ type ApiTenantPage = {
 
 type ApiPlan = { id: number; name: string; status: string };
 
-const PLAN_COLORS = ["#DC4D96", "#7c3aed", "#2563eb", "#059669", "#f59e0b", "#6b7280"];
+const PLAN_COLORS = ["#6750A4", "#7D5260", "#2563eb", "#059669", "#f59e0b", "#79747E"];
 
 function StatCard({
   label,
@@ -188,7 +188,7 @@ function TenantsTable({ rows, loading }: { rows: TenantRow[]; loading: boolean }
                 <th key={i} className="relative text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide select-none overflow-hidden">
                   <span className="truncate flex items-center pr-2">{h.label}{h.sortable && <SortIcon />}</span>
                   {i < headers.length - 1 && (
-                    <div onMouseDown={(e) => onMouseDown(i, e)} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#bcd9e8] transition-colors" />
+                    <div onMouseDown={(e) => onMouseDown(i, e)} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-md-primary/20 transition-colors" />
                   )}
                 </th>
               ))}
@@ -196,7 +196,7 @@ function TenantsTable({ rows, loading }: { rows: TenantRow[]; loading: boolean }
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={row.id} className="hover:bg-[#eef3ee] transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}>
+              <tr key={row.id} className="hover:bg-md-primary/5 transition-colors" style={{ borderTop: "1px solid var(--border)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}>
                 <td className="px-4 py-2.5 text-sm font-semibold text-gray-900 truncate">{row.name}</td>
                 <td className="px-4 py-2.5 text-sm text-gray-700 truncate">{row.plan ?? <span className="italic text-gray-400">No plan</span>}</td>
                 <td className="px-4 py-2.5"><StatusBadge status={row.status} /></td>

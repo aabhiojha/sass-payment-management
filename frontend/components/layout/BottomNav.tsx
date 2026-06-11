@@ -66,8 +66,8 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 flex items-center justify-around px-2 pt-2 md:hidden z-50"
-      style={{ backgroundColor: "var(--primary)", paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
+      className="fixed bottom-0 left-0 right-0 flex items-center justify-around px-2 pt-2 md:hidden z-50 bg-md-surface-container shadow-[0_-1px_8px_rgba(28,27,31,0.08)]"
+      style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
     >
       {items.map((item) => {
         const isActive =
@@ -78,21 +78,30 @@ export default function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-opacity"
-            style={{ color: "white", opacity: isActive ? 1 : 0.75 }}
+            className="flex flex-col items-center gap-0.5 px-2 py-1 transition-all duration-300 ease-emphasized active:scale-95 group"
             aria-current={isActive ? "page" : undefined}
           >
-            {item.icon}
-            <span className={`text-[10px] whitespace-nowrap ${isActive ? "font-bold" : "font-medium"}`}>{item.label}</span>
+            <span
+              className={`flex items-center justify-center px-4 py-0.5 rounded-full transition-colors duration-300 ${
+                isActive ? "bg-md-secondary-container text-md-on-secondary-container" : "text-md-on-surface-variant group-hover:bg-md-primary/10"
+              }`}
+            >
+              {item.icon}
+            </span>
+            <span className={`text-[10px] whitespace-nowrap ${isActive ? "font-bold text-md-on-surface" : "font-medium text-md-on-surface-variant"}`}>
+              {item.label}
+            </span>
           </Link>
         );
       })}
 
-      <button onClick={handleLogout} className="flex flex-col items-center gap-0.5 px-3 py-1 opacity-75 hover:opacity-100 transition-opacity">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-        </svg>
-        <span className="text-[10px] font-medium text-white whitespace-nowrap">Sign out</span>
+      <button onClick={handleLogout} className="flex flex-col items-center gap-0.5 px-2 py-1 transition-all duration-300 ease-emphasized active:scale-95 group">
+        <span className="flex items-center justify-center px-4 py-0.5 rounded-full text-md-on-surface-variant group-hover:bg-md-primary/10 transition-colors duration-300">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+          </svg>
+        </span>
+        <span className="text-[10px] font-medium text-md-on-surface-variant whitespace-nowrap">Sign out</span>
       </button>
     </nav>
   );

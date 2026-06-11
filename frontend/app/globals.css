@@ -1,70 +1,108 @@
 @import "tailwindcss";
 
+/* ────────────────────────────────────────────────────────────────────────────
+   Material You (Material Design 3) token system — purple seed #6750A4
+   Tonal hierarchy: surface → surface-container → surface-container-low
+   ──────────────────────────────────────────────────────────────────────────── */
+
 @theme {
   /* Font stacks */
-  --font-sans: var(--font-lato), "Lato", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-roboto), "Roboto", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  /* App colors (kept in sync with :root below) */
-  --color-bg-app: #f8faf8;
-  --color-bg-card: #ffffff;
-  --color-bg-search: #eceeec;
-  --color-nav-active: #dcebf2;
-  --color-nav-active-text: #14638b;
-  --color-primary: #0b79b0;
-  --color-border: #eeeeee;
+  /* MD3 color roles (use as md-* utilities: bg-md-primary, text-md-on-surface…) */
+  --color-md-primary: #6750A4;
+  --color-md-on-primary: #FFFFFF;
+  --color-md-primary-container: #EADDFF;
+  --color-md-on-primary-container: #21005D;
+  --color-md-secondary-container: #E8DEF8;
+  --color-md-on-secondary-container: #1D192B;
+  --color-md-tertiary: #7D5260;
+  --color-md-on-tertiary: #FFFFFF;
+  --color-md-tertiary-container: #FFD8E4;
+  --color-md-surface: #FFFBFE;
+  --color-md-surface-container: #F3EDF7;
+  --color-md-surface-container-low: #E7E0EC;
+  --color-md-on-surface: #1C1B1F;
+  --color-md-on-surface-variant: #49454F;
+  --color-md-outline: #79747E;
+  --color-md-outline-variant: #CAC4D0;
+  --color-md-error: #B3261E;
+  --color-md-error-container: #F9DEDC;
+  --color-md-on-error-container: #410E0B;
 
-  /* Gray scale */
-  --color-gray-400: #99a1af;
-  --color-gray-500: #6a7282;
-  --color-gray-600: #4a5565;
-  --color-gray-700: #364153;
-  --color-gray-900: #101828;
+  /* Legacy app aliases (inline styles reference these heavily) */
+  --color-bg-app: #FFFBFE;
+  --color-bg-card: #F3EDF7;
+  --color-bg-search: #E7E0EC;
+  --color-nav-active: #E8DEF8;
+  --color-nav-active-text: #1D192B;
+  --color-primary: #6750A4;
+  --color-border: #E7E0EC;
+
+  /* Gray scale remapped to MD3 neutral-variant tones so existing
+     text-gray-* / bg-gray-* classes inherit the warm MD3 neutrals */
+  --color-gray-50: #F3EDF7;
+  --color-gray-100: #ECE6F0;
+  --color-gray-200: #E7E0EC;
+  --color-gray-300: #CAC4D0;
+  --color-gray-400: #938F99;
+  --color-gray-500: #79747E;
+  --color-gray-600: #625B71;
+  --color-gray-700: #49454F;
+  --color-gray-800: #322F35;
+  --color-gray-900: #1C1B1F;
   --color-white: #fff;
 
-  /* Text sizes */
+  /* Text sizes (MD3 type scale subset) */
   --text-xs: .75rem;
   --text-xs--line-height: calc(1 / .75);
   --text-sm: .875rem;
   --text-sm--line-height: calc(1.25 / .875);
   --text-base: 1rem;
-  --text-base--line-height: calc(1.5 / 1);
+  --text-base--line-height: 1.5;
   --text-xl: 1.25rem;
   --text-xl--line-height: calc(1.75 / 1.25);
   --text-2xl: 1.5rem;
-  --text-2xl--line-height: calc(2 / 1.5);
-  --text-3xl: 1.875rem;
-  --text-3xl--line-height: calc(2.25 / 1.875);
-  --text-4xl: 2.25rem;
-  --text-4xl--line-height: calc(2.5 / 2.25);
+  --text-2xl--line-height: 1.3;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.25;
+  --text-4xl: 3rem;
+  --text-4xl--line-height: 1.2;
 
-  /* Font weights */
+  /* Font weights — Medium-forward per MD3 */
   --font-weight-medium: 500;
-  --font-weight-semibold: 600;
+  --font-weight-semibold: 500;
   --font-weight-bold: 700;
 
   /* Tracking */
-  --tracking-tight: -.025em;
+  --tracking-tight: -.01em;
   --tracking-wider: .05em;
 
-  /* Radius */
-  --radius-md: .375rem;
-  --radius-lg: .5rem;
+  /* Radius scale lifted to MD3 organic values:
+     rounded-lg → 16px (medium), rounded-xl → 24px (large, default cards),
+     rounded-2xl → 28px (dialogs/sheets), rounded-3xl → 32px (major containers) */
+  --radius-md: .75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2rem;
 
-  /* Transitions */
-  --default-transition-duration: .15s;
-  --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+  /* Motion — MD3 emphasized easing */
+  --ease-emphasized: cubic-bezier(.2, 0, 0, 1);
+  --default-transition-duration: .3s;
+  --default-transition-timing-function: cubic-bezier(.2, 0, 0, 1);
 }
 
 :root {
-  --bg-app: #f8faf8;
-  --bg-card: #ffffff;
-  --bg-search: #eceeec;
-  --nav-active: #dcebf2;
-  --nav-active-text: #14638b;
-  --primary: #0b79b0;
-  --primary-ring: rgba(11, 121, 176, 0.18);
-  --border: #eeeeee;
+  --bg-app: #FFFBFE;
+  --bg-card: #F3EDF7;
+  --bg-search: #E7E0EC;
+  --nav-active: #E8DEF8;
+  --nav-active-text: #1D192B;
+  --primary: #6750A4;
+  --primary-ring: rgba(103, 80, 164, 0.18);
+  --border: #E7E0EC;
 }
 
 @keyframes fade-in-up {
@@ -152,16 +190,16 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c8cdc8;
+  background: #CAC4D0;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #aab0aa;
+  background: #938F99;
 }
 
 * {
-  scrollbar-color: #c8cdc8 transparent;
+  scrollbar-color: #CAC4D0 transparent;
   scrollbar-width: thin;
 }
 
@@ -177,11 +215,11 @@ body {
 
 body {
   margin: 0;
-  font-family: var(--font-lato), "Lato", "Segoe UI", -apple-system, sans-serif;
+  font-family: var(--font-roboto), "Roboto", "Segoe UI", -apple-system, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
-  color: #212529;
+  color: #1C1B1F;
   text-align: left;
   background-color: var(--bg-app);
 }

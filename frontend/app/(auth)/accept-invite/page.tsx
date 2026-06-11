@@ -93,7 +93,7 @@ function AcceptInviteContent() {
   if (tokenError) {
     return (
       <div className="w-full max-w-md mx-auto px-4 py-16 text-center" style={{ animation: "fade-in-up 0.2s ease-out both" }}>
-        <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#fef2f2" }}>
+        <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-md-error-container">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
@@ -134,8 +134,7 @@ function AcceptInviteContent() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your full name"
-              className="w-full text-sm px-3 py-2.5 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+              className="w-full text-sm px-4 h-12 rounded-t-[12px] rounded-b-none bg-md-surface-container-low text-md-on-surface placeholder:text-md-on-surface/50 border-0 border-b-2 border-md-outline focus:border-md-primary outline-none transition-colors duration-200"
             />
           </div>
 
@@ -150,8 +149,7 @@ function AcceptInviteContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 8 characters"
                 required
-                className="w-full text-sm px-3 py-2.5 pr-10 rounded-lg outline-none"
-                style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                className="w-full text-sm px-4 pr-10 h-12 rounded-t-[12px] rounded-b-none bg-md-surface-container-low text-md-on-surface placeholder:text-md-on-surface/50 border-0 border-b-2 border-md-outline focus:border-md-primary outline-none transition-colors duration-200"
               />
               <button
                 type="button"
@@ -183,8 +181,7 @@ function AcceptInviteContent() {
           <button
             type="submit"
             disabled={submitting || !password}
-            className="w-full py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
-            style={{ backgroundColor: "var(--primary)", opacity: submitting || !password ? 0.6 : 1 }}
+            className="w-full h-12 text-sm font-medium rounded-full bg-md-primary text-md-on-primary hover:bg-md-primary/90 active:bg-md-primary/80 hover:shadow-md active:scale-95 transition-all duration-300 ease-emphasized disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {submitting && (
               <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

@@ -28,8 +28,8 @@ export default function Pagination({ page, totalPages, totalElements, pageSize, 
       ? `${(page * pageSize + 1).toLocaleString()}–${Math.min((page + 1) * pageSize, totalElements).toLocaleString()} of ${totalElements.toLocaleString()}`
       : `Page ${page + 1} of ${totalPages}`;
 
-  const btn = "min-w-[32px] h-8 px-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
-  const inactive = "text-gray-600 hover:bg-gray-100";
+  const btn = "min-w-[32px] h-8 px-2 rounded-full text-sm font-medium transition-all duration-200 ease-emphasized active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed";
+  const inactive = "text-gray-600 hover:bg-md-primary/10";
 
   return (
     <div className="flex items-center justify-between text-sm select-none">

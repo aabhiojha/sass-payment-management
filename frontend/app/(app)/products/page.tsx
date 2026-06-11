@@ -245,9 +245,9 @@ export default function ProductsPage() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const filteredPlans = plans.filter((pl) => pl.name.toLowerCase().includes(planSearch.toLowerCase()));
 
-  const inputCls = "w-full text-sm px-3 py-2 rounded-lg outline-none";
-  const inputStyle = { border: "1px solid var(--border)", backgroundColor: "#fff" };
-  const labelCls = "block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1";
+  const inputCls = "w-full text-sm px-4 h-11 rounded-t-[12px] rounded-b-none outline-none transition-colors duration-200";
+  const inputStyle = { borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" };
+  const labelCls = "block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1";
 
   return (
     <>
@@ -261,7 +261,7 @@ export default function ProductsPage() {
           {isAdmin && (
             <button
               onClick={() => { setSelected(null); setEditing(true); setEditName(""); setEditDesc(""); setEditPrice(""); setEditCurrency("USD"); setEditCadence("MONTHLY"); setFormError(null); }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95"
               style={{ backgroundColor: "var(--primary)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -280,7 +280,7 @@ export default function ProductsPage() {
                 className="text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
                 style={
                   filter === f
-                    ? { backgroundColor: "#fff", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }
+                    ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                     : { color: "#6b7280" }
                 }
               >
@@ -297,8 +297,8 @@ export default function ProductsPage() {
               placeholder="Search products…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(0); load(filter, e.target.value, 0); }}
-              className="w-full text-sm pl-9 pr-3 py-2 rounded-lg outline-none"
-              style={{ border: "1px solid var(--border)", backgroundColor: "#eceeec" }}
+              className="w-full text-sm pl-9 pr-4 py-2 rounded-full outline-none transition-colors duration-200"
+              style={{ border: "1px solid transparent", backgroundColor: "var(--bg-search)" }}
             />
           </div>
         </div>
@@ -332,8 +332,8 @@ export default function ProductsPage() {
                   <tr
                     key={p.id}
                     onClick={() => openProduct(p)}
-                    className="cursor-pointer hover:bg-[#eef3ee] transition-colors"
-                    style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === p.id ? "#eef3ee" : "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                    className="cursor-pointer hover:bg-md-primary/5 transition-colors"
+                    style={{ borderTop: "1px solid var(--border)", backgroundColor: selected?.id === p.id ? "var(--nav-active)" : "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                   >
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">{titleCase(p.name)}</div>
@@ -392,7 +392,7 @@ export default function ProductsPage() {
               {formError && <p className="text-sm text-red-600">{formError}</p>}
             </div>
             <div className="px-6 py-4 flex gap-3" style={{ borderTop: "1px solid var(--border)" }}>
-              <button onClick={() => setEditing(false)} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+              <button onClick={() => setEditing(false)} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
               <button onClick={async () => {
                 if (!token || !tid || !editName.trim() || !editPrice) { setFormError("Name and price are required."); return; }
                 setSaving(true); setFormError(null);
@@ -401,7 +401,7 @@ export default function ProductsPage() {
                   load(); setEditing(false);
                 } catch (e) { setFormError(e instanceof Error ? e.message : "Failed to create."); }
                 finally { setSaving(false); }
-              }} disabled={saving} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
+              }} disabled={saving} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
                 {saving ? "Creating…" : "Create Product"}
               </button>
             </div>
@@ -409,7 +409,7 @@ export default function ProductsPage() {
         ) : selected ? (
           <>
             {/* Header */}
-            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "#fff" }}>
+            <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-app)" }}>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold text-gray-900 leading-snug">{titleCase(selected.name)}</h2>
@@ -456,7 +456,7 @@ export default function ProductsPage() {
                     <div className="px-6 pb-5 pt-2 flex gap-3">
                       <button
                         onClick={startEdit}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95"
                         style={{ backgroundColor: "var(--primary)" }}
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
@@ -464,7 +464,7 @@ export default function ProductsPage() {
                       </button>
                       <button
                         onClick={deleteProduct}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-md-error hover:bg-md-error-container active:scale-95 transition-all duration-300 ease-emphasized"
                         style={{ border: "1px solid #fecaca" }}
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
@@ -490,13 +490,13 @@ export default function ProductsPage() {
                             value={planSearch}
                             onChange={(e) => setPlanSearch(e.target.value)}
                             className="text-sm pl-8 pr-3 py-1.5 rounded-lg outline-none"
-                            style={{ border: "1px solid var(--border)", width: "160px", backgroundColor: "#eceeec" }}
+                            style={{ border: "1px solid transparent", width: "160px", backgroundColor: "var(--bg-search)" }}
                           />
                         </div>
                         {isAdmin && (
                           <button
                             onClick={openAddPlan}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white whitespace-nowrap"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white active:scale-95 whitespace-nowrap"
                             style={{ backgroundColor: "var(--primary)" }}
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -526,8 +526,8 @@ export default function ProductsPage() {
                                 {filteredPlans.map((pl, i) => (
                                   <tr
                                     key={pl.id}
-                                    className="hover:bg-[#eef3ee] transition-colors"
-                                    style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                                    className="hover:bg-md-primary/5 transition-colors"
+                                    style={{ borderTop: "1px solid var(--border)", backgroundColor: "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                                   >
                                     <td className="px-4 py-3 font-medium text-gray-900">{titleCase(pl.name)}</td>
                                     <td className="px-4 py-3 text-gray-600">{pl.currency} {Number(pl.price).toFixed(2)}</td>
@@ -548,10 +548,10 @@ export default function ProductsPage() {
                                           {planDropdownId === pl.id && (
                                             <div
                                               className="absolute right-3 z-20 rounded-xl overflow-hidden py-1"
-                                              style={{ top: "100%", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", minWidth: "120px" }}
+                                              style={{ top: "100%", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 24px rgba(28,27,31,0.14)", minWidth: "120px" }}
                                               onClick={(e) => e.stopPropagation()}
                                             >
-                                              <button onClick={() => openEditPlan(pl)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#f0f7f0] transition-colors flex items-center gap-2">
+                                              <button onClick={() => openEditPlan(pl)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-md-primary/10 transition-colors flex items-center gap-2">
                                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
                                                 Edit
                                               </button>
@@ -591,7 +591,7 @@ export default function ProductsPage() {
               >
                 <div
                   className="w-full rounded-2xl overflow-hidden"
-                  style={{ maxWidth: "360px", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: planDialogClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+                  style={{ maxWidth: "360px", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: planDialogClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Header */}
@@ -631,8 +631,8 @@ export default function ProductsPage() {
                   </div>
                   {/* Footer */}
                   <div className="px-5 py-4 flex gap-3" style={{ borderTop: "1px solid var(--border)" }}>
-                    <button onClick={closePlanDialog} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-                    <button onClick={savePlan} disabled={saving || !planName.trim() || !planPrice} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
+                    <button onClick={closePlanDialog} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+                    <button onClick={savePlan} disabled={saving || !planName.trim() || !planPrice} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
                       {saving ? (planDialogMode === "edit" ? "Saving…" : "Adding…") : (planDialogMode === "edit" ? "Save plan" : "Add plan")}
                     </button>
                   </div>
@@ -649,7 +649,7 @@ export default function ProductsPage() {
               >
                 <div
                   className="w-full rounded-2xl overflow-hidden"
-                  style={{ maxWidth: "400px", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: productEditClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+                  style={{ maxWidth: "400px", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: productEditClosing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-between px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -691,8 +691,8 @@ export default function ProductsPage() {
                     {formError && <p className="text-sm text-red-600">{formError}</p>}
                   </div>
                   <div className="px-5 py-4 flex gap-3" style={{ borderTop: "1px solid var(--border)" }}>
-                    <button onClick={closeProductEdit} className="flex-1 py-2 text-sm font-medium rounded-lg text-gray-600" style={{ border: "1px solid var(--border)" }}>Cancel</button>
-                    <button onClick={saveProduct} disabled={saving} className="flex-1 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
+                    <button onClick={closeProductEdit} className="flex-1 py-2 text-sm font-medium rounded-full text-gray-600 hover:bg-md-primary/5 active:scale-95 transition-all duration-300 ease-emphasized" style={{ border: "1px solid var(--border)" }}>Cancel</button>
+                    <button onClick={saveProduct} disabled={saving} className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 disabled:opacity-60" style={{ backgroundColor: "var(--primary)" }}>
                       {saving ? "Saving…" : "Save"}
                     </button>
                   </div>

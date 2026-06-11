@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Lato } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 
-const lato = Lato({ subsets: ["latin"], weight: ["300", "400", "700"], variable: "--font-lato" });
+const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-roboto" });
 
 export const metadata: Metadata = {
   title: "PayNext",
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${lato.variable} ${lato.className}`}>
+    <html lang="en" className={`${roboto.variable} ${roboto.className}`}>
       <body className="h-full">{children}</body>
     </html>
   );

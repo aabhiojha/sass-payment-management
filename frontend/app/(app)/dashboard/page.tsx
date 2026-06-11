@@ -173,7 +173,7 @@ function RenewalTable({ rows, loading }: { rows: ApiUpcoming[]; loading: boolean
           {rows.map((row, i) => (
             <tr
               key={row.customerProductId}
-              className="hover:bg-[#eef3ee] transition-colors"
+              className="hover:bg-md-primary/5 transition-colors"
               style={{
                 borderTop: i > 0 ? "1px solid var(--border)" : undefined,
                 animation: "fade-in 0.15s ease-out both",
@@ -302,7 +302,7 @@ function RecentActivity({ logs, loading }: { logs: AuditLog[]; loading: boolean 
         {logs.map((log, i) => (
           <div
             key={log.id}
-            className="flex items-start gap-3 px-4 py-3 hover:bg-[#f8faf8] transition-colors"
+            className="flex items-start gap-3 px-4 py-3 hover:bg-md-primary/5 transition-colors"
             style={{ animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms`, borderTop: i > 0 ? "1px solid var(--border)" : undefined }}
           >
             <ActivityIcon action={log.action} />

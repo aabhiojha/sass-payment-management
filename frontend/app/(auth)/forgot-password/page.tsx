@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
         <span className="text-2xl font-bold text-gray-900">PayNext</span>
       </div>
 
-      <div className="rounded-2xl p-8" style={{ backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
+      <div className="rounded-2xl p-8" style={{ backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.12)" }}>
         {sent ? (
           <>
             <h1 className="text-xl font-bold text-gray-900 mb-1">Check your email</h1>
@@ -45,8 +45,7 @@ export default function ForgotPasswordPage() {
             </p>
             <Link
               href="/login"
-              className="block text-center w-full py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity"
-              style={{ backgroundColor: "var(--primary)" }}
+              className="block text-center w-full py-3 text-sm font-medium rounded-full bg-md-primary text-md-on-primary hover:bg-md-primary/90 active:scale-95 transition-all duration-300 ease-emphasized"
             >
               Back to sign in
             </Link>
@@ -73,14 +72,13 @@ export default function ForgotPasswordPage() {
                     placeholder="you@company.com"
                     autoComplete="email"
                     required
-                    className="w-full text-sm pl-9 pr-4 py-2.5 rounded-lg outline-none transition-colors"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fefefe" }}
+                    className="w-full text-sm pl-9 pr-4 h-12 rounded-t-[12px] rounded-b-none bg-md-surface-container-low text-md-on-surface placeholder:text-md-on-surface/50 border-0 border-b-2 border-md-outline focus:border-md-primary outline-none transition-colors duration-200"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg" style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626" }}>
+                <div className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-lg bg-md-error-container text-md-on-error-container">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" x2="12" y1="8" y2="12" />
@@ -93,8 +91,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity mt-2"
-                style={{ backgroundColor: "var(--primary)", opacity: loading ? 0.7 : 1 }}
+                className="w-full h-12 text-sm font-medium rounded-full bg-md-primary text-md-on-primary hover:bg-md-primary/90 active:bg-md-primary/80 hover:shadow-md active:scale-95 transition-all duration-300 ease-emphasized disabled:opacity-60 mt-2"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

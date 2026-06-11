@@ -54,8 +54,8 @@ export default function Dialog({
       <div
         className="fixed inset-0 z-50"
         style={{
-          backgroundColor: "rgba(129, 127, 127, 0.32)",
-          backdropFilter: "blur(0.5px)",
+          backgroundColor: "rgba(28, 27, 31, 0.35)",
+          backdropFilter: "blur(1px)",
           animation: entering ? "fade-in 0.15s ease both" : "fade-out 0.18s ease both",
           pointerEvents: entering ? "auto" : "none",
         }}
@@ -74,8 +74,8 @@ export default function Dialog({
           className="flex flex-col w-full rounded-2xl overflow-hidden"
           style={{
             maxWidth: `min(${width}, calc(100vw - 2rem))`,
-            backgroundColor: "#fff",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+            backgroundColor: "var(--bg-app)",
+            boxShadow: "0 20px 60px rgba(28,27,31,0.15)",
             pointerEvents: "auto",
             animation: entering
               ? "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both"
@@ -88,7 +88,7 @@ export default function Dialog({
             <button
               onClick={onClose}
               aria-label="Close dialog"
-              className="text-gray-400 hover:text-gray-600 transition-colors -mr-1 rounded-md p-1 -m-1"
+              className="text-md-on-surface-variant hover:bg-md-primary/10 active:scale-95 transition-all duration-200 rounded-full p-2 -m-2 -mr-2"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 6 6 18M6 6l12 12" />

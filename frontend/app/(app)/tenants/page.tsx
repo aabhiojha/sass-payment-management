@@ -240,7 +240,7 @@ function SortIcon({ dir, active }: { dir: "asc" | "desc"; active: boolean }) {
 
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
-    <div onMouseDown={onMouseDown} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-[#bcd9e8] transition-colors" />
+    <div onMouseDown={onMouseDown} className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-md-primary/20 transition-colors" />
   );
 }
 
@@ -310,7 +310,7 @@ function TenantsTable({
               {data.map((row, i) => (
               <tr
                 key={row.id}
-                className="group bg-[#f8faf8] hover:bg-[#eef3ee] transition-colors"
+                className="group bg-md-surface hover:bg-md-primary/5 transition-colors"
                 style={{
                   borderTop: "1px solid var(--border)",
                   animation: "fade-in 0.15s ease-out both",
@@ -506,7 +506,7 @@ function CreateTenantModal({
       <div
         className="rounded-2xl shadow-2xl w-full mx-auto flex flex-col"
         style={{
-          backgroundColor: "#f8faf8",
+          backgroundColor: "var(--bg-app)",
           border: "1px solid var(--border)",
           maxWidth: step === 2 ? "680px" : "480px",
           maxHeight: "92dvh",
@@ -542,7 +542,7 @@ function CreateTenantModal({
                   onChange={(e) => set("name", e.target.value)}
                   placeholder="e.g. Acme Corporation"
                   className="w-full text-sm px-3 py-2.5 rounded-lg outline-none"
-                  style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                  style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                 />
               </div>
 
@@ -560,7 +560,7 @@ function CreateTenantModal({
                     onChange={(e) => set("email", e.target.value)}
                     placeholder="admin@company.com"
                     className="w-full text-sm pl-9 pr-4 py-2.5 rounded-lg outline-none"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                    style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                   />
                 </div>
               </div>
@@ -577,7 +577,7 @@ function CreateTenantModal({
                     value={form.timezone}
                     onChange={(e) => set("timezone", e.target.value)}
                     className="w-full text-sm pl-9 pr-4 py-2.5 rounded-lg outline-none appearance-none"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                    style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                   >
                     {timezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
                   </select>
@@ -612,7 +612,7 @@ function CreateTenantModal({
               )}
 
               {selectedPlan && (
-                <div className="mt-4 rounded-xl p-4" style={{ backgroundColor: "#fff", border: "1px solid var(--border)" }}>
+                <div className="mt-4 rounded-xl p-4" style={{ backgroundColor: "var(--bg-card)" }}>
                   <button
                     type="button"
                     onClick={() => setShowCustomPrice(!showCustomPrice)}
@@ -664,7 +664,7 @@ function CreateTenantModal({
               <button
                 onClick={() => setStep(2)}
                 disabled={!canProceed}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity"
+                className="flex-1 py-2.5 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity"
                 style={{ backgroundColor: "var(--primary)", opacity: canProceed ? 1 : 0.45 }}
               >
                 Continue
@@ -689,7 +689,7 @@ function CreateTenantModal({
               <button
                 onClick={() => onSubmit(form)}
                 disabled={saving}
-                className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                 style={{ backgroundColor: "var(--primary)", opacity: saving ? 0.7 : 1 }}
               >
                 {saving && (
@@ -742,7 +742,7 @@ function EditPlanModal({
     >
       <div
         className="w-full rounded-2xl overflow-hidden flex flex-col"
-        style={{ maxWidth: "440px", maxHeight: "85dvh", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: closing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        style={{ maxWidth: "440px", maxHeight: "85dvh", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: closing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -797,7 +797,7 @@ function EditPlanModal({
                     onChange={(e) => setCustomPrice(e.target.value)}
                     placeholder={`Default: ${selectedPlan.price}`}
                     className="w-full text-sm pl-11 pr-3 py-2 rounded-lg outline-none"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                    style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                   />
                 </div>
               )}
@@ -812,7 +812,7 @@ function EditPlanModal({
           <button
             onClick={() => onSubmit(selectedPlanId, customPrice)}
             disabled={saving}
-            className="flex-1 py-2 text-sm font-semibold rounded-lg text-white flex items-center justify-center gap-2"
+            className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 flex items-center justify-center gap-2"
             style={{ backgroundColor: "var(--primary)", opacity: saving ? 0.7 : 1 }}
           >
             {saving && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>}
@@ -849,7 +849,7 @@ function InviteUserModal({
     >
       <div
         className="w-full rounded-2xl overflow-hidden"
-        style={{ maxWidth: "380px", backgroundColor: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 40px rgba(0,0,0,0.12)", animation: closing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        style={{ maxWidth: "380px", backgroundColor: "var(--bg-app)", boxShadow: "0 8px 40px rgba(28,27,31,0.14)", animation: closing ? "dialog-out 0.15s ease-in both" : "dialog-in 0.18s cubic-bezier(0.34,1.56,0.64,1) both" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -875,7 +875,7 @@ function InviteUserModal({
                 <button key={r} type="button" onClick={() => setRole(r)}
                   className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors"
                   style={role === r
-                    ? { backgroundColor: "#fff", color: "var(--primary)", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                    ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                     : { color: "#6b7280" }}>
                   {r === "admin" ? "Admin" : "User"}
                 </button>
@@ -909,7 +909,7 @@ function InviteUserModal({
           <button
             onClick={() => onSubmit(email, role)}
             disabled={inviting || !email.trim()}
-            className="flex-1 py-2 text-sm font-semibold rounded-lg text-white flex items-center justify-center gap-2"
+            className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 flex items-center justify-center gap-2"
             style={{ backgroundColor: "var(--primary)", opacity: inviting || !email.trim() ? 0.6 : 1 }}
           >
             {inviting && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>}
@@ -1212,7 +1212,7 @@ function TenantSidebar({
                     value={editForm.name}
                     onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
                     className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                    style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                   />
                 </div>
                 <div>
@@ -1221,7 +1221,7 @@ function TenantSidebar({
                     value={editForm.email}
                     onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))}
                     className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                    style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                   />
                 </div>
                 <div>
@@ -1230,7 +1230,7 @@ function TenantSidebar({
                     value={editForm.timezone}
                     onChange={(e) => setEditForm((p) => ({ ...p, timezone: e.target.value }))}
                     className="w-full text-sm px-3 py-2 rounded-lg outline-none"
-                    style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                    style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                   >
                     {timezoneOptions.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
                   </select>
@@ -1247,7 +1247,7 @@ function TenantSidebar({
                   <button
                     onClick={handleSaveEdit}
                     disabled={actionLoading || !editForm.name || !editForm.email}
-                    className="flex-1 py-2.5 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                     style={{ backgroundColor: "var(--primary)", opacity: actionLoading ? 0.7 : 1 }}
                   >
                     {actionLoading && (
@@ -1312,7 +1312,7 @@ function TenantSidebar({
                   placeholder="Reason for suspension (optional)"
                   rows={2}
                   className="w-full text-sm px-3 py-2 rounded-lg outline-none resize-none"
-                  style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                  style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                 />
                 <div className="flex gap-3">
                   <button
@@ -1326,7 +1326,7 @@ function TenantSidebar({
                   <button
                     onClick={handleSuspend}
                     disabled={actionLoading}
-                    className="flex-1 py-2 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                     style={{ backgroundColor: "#dc2626", opacity: actionLoading ? 0.7 : 1 }}
                   >
                     {actionLoading && (
@@ -1350,7 +1350,7 @@ function TenantSidebar({
                   placeholder="Reason for archival (optional)"
                   rows={2}
                   className="w-full text-sm px-3 py-2 rounded-lg outline-none resize-none"
-                  style={{ border: "1px solid var(--border)", backgroundColor: "#fff" }}
+                  style={{ borderBottom: "2px solid var(--color-md-outline)", backgroundColor: "var(--bg-search)" }}
                 />
                 <div className="flex gap-3">
                   <button
@@ -1364,7 +1364,7 @@ function TenantSidebar({
                   <button
                     onClick={handleArchive}
                     disabled={actionLoading}
-                    className="flex-1 py-2 text-sm font-semibold rounded-lg text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm font-medium rounded-full text-white active:scale-95 transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                     style={{ backgroundColor: "#6b7280", opacity: actionLoading ? 0.7 : 1 }}
                   >
                     {actionLoading && (
@@ -1396,7 +1396,7 @@ function TenantSidebar({
                         SUSPENDED: "#ef4444",
                       };
                       return (
-                        <div key={u.id} className="flex items-center gap-3 rounded-lg px-3 py-2.5" style={{ backgroundColor: "#fff", border: "1px solid var(--border)" }}>
+                        <div key={u.id} className="flex items-center gap-3 rounded-lg px-3 py-2.5" style={{ backgroundColor: "var(--bg-card)" }}>
                           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white" style={{ backgroundColor: roleColor[u.role] ?? "#6b7280" }}>
                             {(u.fullName ?? u.email).charAt(0).toUpperCase()}
                           </div>
@@ -1456,7 +1456,7 @@ function TenantSidebar({
                         PENDING: "#e8a020", ACCEPTED: "#24A37D", REVOKED: "#6b7280", EXPIRED: "#ef4444",
                       };
                       return (
-                        <div key={inv.id} className="rounded-lg px-3 py-2.5" style={{ backgroundColor: "#fff", border: "1px solid var(--border)" }}>
+                        <div key={inv.id} className="rounded-lg px-3 py-2.5" style={{ backgroundColor: "var(--bg-card)" }}>
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-800 truncate">{inv.email}</p>
@@ -1684,7 +1684,7 @@ export default function TenantsPage() {
           {(["ALL", "ACTIVE", "SUSPENDED"] as const).map((s) => (
             <button key={s} onClick={() => { setFilterStatus(s); loadTenants(0, s); }} className="text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
               style={filterStatus === s
-                ? { backgroundColor: "#fff", color: "var(--primary)", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                 : { color: "#6b7280" }}>
               {s === "ALL" ? "All" : s === "ACTIVE" ? "Active" : "Suspended"}
             </button>

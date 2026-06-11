@@ -158,7 +158,7 @@ export default function ReminderEnginePage() {
             <button
               onClick={triggerReminders}
               disabled={triggering}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-60 transition-opacity"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-white active:scale-95 disabled:opacity-60 transition-opacity"
               style={{ backgroundColor: "var(--primary)" }}
             >
               {triggering ? (
@@ -202,7 +202,7 @@ export default function ReminderEnginePage() {
             className="text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
             style={
               filter === f
-                ? { backgroundColor: "#fff", color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }
+                ? { backgroundColor: "var(--nav-active)", color: "var(--nav-active-text)" }
                 : { color: "#6b7280" }
             }
           >
@@ -243,8 +243,8 @@ export default function ReminderEnginePage() {
                 {upcoming.map((row, i) => (
                   <tr
                     key={`${row.customerProductId}-${row.daysBeforeExpiry}`}
-                    className="hover:bg-[#eef3ee] transition-colors"
-                    style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                    className="hover:bg-md-primary/5 transition-colors"
+                    style={{ borderTop: "1px solid var(--border)", backgroundColor: "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                   >
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[160px] truncate">{row.customerName}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{titleCase(row.productName)}</td>
@@ -292,8 +292,8 @@ export default function ReminderEnginePage() {
               {rows.map((row, i) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-[#eef3ee] transition-colors"
-                  style={{ borderTop: "1px solid var(--border)", backgroundColor: "#f8faf8", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
+                  className="hover:bg-md-primary/5 transition-colors"
+                  style={{ borderTop: "1px solid var(--border)", backgroundColor: "var(--bg-app)", animation: "fade-in 0.15s ease-out both", animationDelay: `${i * 15}ms` }}
                 >
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[160px] truncate">{row.customerName}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{titleCase(row.productName)}</td>
