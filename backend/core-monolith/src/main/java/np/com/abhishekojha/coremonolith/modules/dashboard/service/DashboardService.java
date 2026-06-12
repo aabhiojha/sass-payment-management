@@ -6,6 +6,7 @@ import np.com.abhishekojha.coremonolith.common.enums.*;
 import np.com.abhishekojha.coremonolith.config.TenantAccessGuard;
 import np.com.abhishekojha.coremonolith.modules.audit.dto.AuditLogResponse;
 import np.com.abhishekojha.coremonolith.modules.audit.repository.AuditLogRepository;
+import np.com.abhishekojha.coremonolith.modules.audit.service.AuditTargetResolver;
 import np.com.abhishekojha.coremonolith.modules.auth.repository.UserRepository;
 import np.com.abhishekojha.coremonolith.modules.customer.repository.CustomerRepository;
 import np.com.abhishekojha.coremonolith.modules.subscription.repository.CustomerProductRepository;
@@ -32,6 +33,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -47,6 +49,7 @@ public class DashboardService {
     private final CustomerProductRepository customerProductRepository;
     private final ReminderRepository reminderRepository;
     private final AuditLogRepository auditLogRepository;
+    private final AuditTargetResolver auditTargetResolver;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final TenantAccessGuard guard;
@@ -120,9 +123,12 @@ public class DashboardService {
     public List<AuditLogResponse> getRecentActivity(Long tenantId) {
         guard.requireTenantAccess(tenantId);
         log.info("Fetching recent activity for tenant={}", tenantId);
-        return auditLogRepository.findTop10ByTenantId(tenantId, PageRequest.of(0, 10))
-                .stream()
-                .map(AuditLogResponse::from)
+        List<AuditAction> excluded = List.of(AuditAction.USER_LOGIN, AuditAction.USER_LOGOUT, AuditAction.USER_LOGIN_FAILED);
+        var logs = auditLogRepository.findTop10ByTenantId(tenantId, excluded, PageRequest.of(0, 10));
+        Map<String, String> targets = auditTargetResolver.resolveLabels(logs);
+        return logs.stream()
+                .map(e -> AuditLogResponse.from(e,
+                        targets.get(AuditTargetResolver.key(e.getResourceType(), e.getResourceId()))))
                 .toList();
     }
 

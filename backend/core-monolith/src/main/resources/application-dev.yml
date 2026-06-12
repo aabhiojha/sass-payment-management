@@ -32,11 +32,11 @@ spring:
 logging:
   level:
     root: INFO
-#    np.com.abhishekojha: DEBUG
-#    org.springframework.web: DEBUG
-#    org.springframework.security: DEBUG
+    np.com.abhishekojha: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
     org.hibernate.SQL: info
-#    org.hibernate.orm.jdbc.bind: DEBUG
+    org.hibernate.orm.jdbc.bind: DEBUG
 
 notification:
   service:

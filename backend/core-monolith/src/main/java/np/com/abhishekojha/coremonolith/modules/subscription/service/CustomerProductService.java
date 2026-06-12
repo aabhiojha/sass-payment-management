@@ -89,7 +89,7 @@ public class CustomerProductService {
                 ? "Assigned " + cp.getCustomer().getName() + " to " + cp.getProduct().getName() + " (" + planName + ")"
                 : "Assigned " + cp.getCustomer().getName() + " to " + cp.getProduct().getName();
         auditService.log(AuditAction.SUBSCRIPTION_CREATED, "CUSTOMER_PRODUCT", cp.getId(),
-                null, Map.of("customerId", customerId, "productId", req.productId()), desc);
+                null, SubscriptionResponse.from(cp), desc);
         log.debug("Plan assigned id={} customerId={} productId={} tenantId={}", cp.getId(), customerId, req.productId(), tenantId);
         return SubscriptionResponse.from(cp);
     }
@@ -155,7 +155,7 @@ public class CustomerProductService {
 
         String planLabel = cp.getProductPlan() != null ? " (" + cp.getProductPlan().getName() + ")" : "";
         auditService.log(AuditAction.SUBSCRIPTION_DELETED, "CUSTOMER_PRODUCT", cpId,
-                Map.of("customerId", customerId, "productId", cp.getProduct().getId()), null,
+                SubscriptionResponse.from(cp), null,
                 "Deleted subscription for " + cp.getCustomer().getName() + " (" + cp.getProduct().getName() + planLabel + ")");
         log.debug("Plan deleted id={} customerId={} tenantId={}", cpId, customerId, tenantId);
     }
