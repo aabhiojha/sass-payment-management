@@ -281,8 +281,7 @@ function TenantsTable({
   const { widths, onMouseDown } = useColumnResize(cols);
 
   return (
-    <div className="rounded-lg overflow-hidden flex-1 min-h-0 flex flex-col" style={{ border: "1px solid var(--border)" }}>
-      <div className="overflow-auto flex-1 min-h-0">
+    <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
         <table style={{ tableLayout: "fixed", width: "100%", minWidth: widths.reduce((a, b) => a + b, 0) }}>
           <colgroup>{widths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>
           <thead className="sticky top-0 z-10">
@@ -366,7 +365,6 @@ function TenantsTable({
             ))}
           </tbody>
         </table>
-      </div>
     </div>
   );
 }
